@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseHR — AI Performance Platform</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root{--ink:#0f0f14;--surface:#17171f;--card:#1e1e2a;--border:#2a2a38;--accent:#6c63ff;--accent2:#ff6584;--accent3:#43e97b;--text:#e8e8f0;--muted:#7a7a9a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  /* OFFLINE OVERLAY */
+  #offlineOverlay{position:fixed;inset:0;background:var(--ink);color:var(--text);display:none;z-index:10000;align-items:center;justify-content:center;padding:1.5rem}
+  #offlineOverlay .offline-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;width:90%;max-width:420px;text-align:center}
+  #offlineOverlay .offline-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin:.5rem 0}
+  #offlineOverlay .offline-sub{color:var(--muted);font-size:.9rem}
+  #offlineOverlay .offline-icon{font-size:2rem;color:var(--accent2);margin-bottom:.75rem}
+  .bg-grid{position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.3;z-index:0}
+  .blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.15;z-index:0;animation:float 8s ease-in-out infinite}
+  .blob1{width:500px;height:500px;background:var(--accent);top:-100px;left:-100px;animation-delay:0s}
+  .blob2{width:400px;height:400px;background:var(--accent2);bottom:-80px;right:-80px;animation-delay:3s}
+  .blob3{width:300px;height:300px;background:var(--accent3);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:1.5s}
+  @keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+  .login-wrap{position:relative;z-index:10;width:100%;max-width:480px;padding:2rem}
+  .brand{text-align:center;margin-bottom:2rem}
+  .brand-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;box-shadow:0 0 30px rgba(108,99,255,.4)}
+  .brand h1{font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .brand p{color:var(--muted);font-size:.9rem;margin-top:.25rem}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .form-group{margin-bottom:1.2rem}
+  label{font-size:.82rem;color:var(--muted);font-weight:500;margin-bottom:.4rem;display:block;text-transform:uppercase;letter-spacing:.05em}
+  .input-wrap{position:relative}
+  .input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem;pointer-events:none}
+  input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem .75rem 2.5rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;transition:.2s;outline:none}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+  .btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;padding:.85rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:.2s;margin-top:.5rem;letter-spacing:.03em}
+  .btn-login:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 8px 25px rgba(108,99,255,.4)}
+  .error-msg{background:rgba(255,101,132,.12);border:1px solid var(--accent2);color:var(--accent2);padding:.6rem 1rem;border-radius:8px;font-size:.85rem;margin-bottom:1rem;display:none}
+  .spinner{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top:2px solid white;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div class="login-wrap">
+  <div class="brand">
+    <div class="brand-logo"><i class="fas fa-brain"></i></div>
+    <h1>PulseHR</h1>
+    <p>AI-Powered Employee Performance Platform</p>
+  </div>
+
+  <div class="card">
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="form-group">
+      <label>Email Address</label>
+      <div class="input-wrap">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="emailInput" placeholder="your@email.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="passInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+    </div>
+
+    <button class="btn-login" onclick="doLogin()">
+      <span id="btnText"><i class="fas fa-sign-in-alt me-2"></i>Sign In to Dashboard</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+
+  </div>
+</div>
+
+<script>
+async function checkOnlineStatus() {
+  try {
+    const response = await fetch('/favicon.ico', {
+      method: 'HEAD',
+      cache: 'no-store'
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+window.addEventListener('online', async () => {
+  if (await checkOnlineStatus()) {
+    document.getElementById('offlineOverlay').style.display = 'none';
+  }
+});
+
+window.addEventListener('offline', async () => {
+  if (!(await checkOnlineStatus())) {
+    document.getElementById('offlineOverlay').style.display = 'flex';
+  }
+});
+
+// Initial check
+(async () => {
+  if (!(await checkOnlineStatus())) {
+    document.getElementById('offlineOverlay').style.display = 'flex';
+  }
+})();
+
+async function doLogin() {
+  if (!navigator.onLine) { window.location.href = '/offline.html'; return; }
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passInput').value.trim();
+  if (!email || !password) { showError('Please fill in all fields'); return; }
+  document.getElementById('btnText').style.display = 'none';
+  document.getElementById('spinner').style.display = 'block';
+  try {
+    const res = await fetch('/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if (data.success) { window.location.href = window.location.origin + data.redirect; }
+    else { showError(data.message || 'Invalid credentials'); resetBtn(); }
+  } catch(e) { showError('Connection error. Please try again.'); resetBtn(); }
+}
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+function resetBtn() {
+  document.getElementById('btnText').style.display = 'block';
+  document.getElementById('spinner').style.display = 'none';
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+<!-- Offline Overlay -->
+<div id="offlineOverlay">
+  <div class="offline-card">
+    <div class="offline-icon"><i class="fas fa-wifi-slash"></i></div>
+    <div class="offline-title">No Internet Connection</div>
+    <div class="offline-sub">Please check your connection. This application works only online.</div>
+  </div>
+</div>
+</body>
+</html>

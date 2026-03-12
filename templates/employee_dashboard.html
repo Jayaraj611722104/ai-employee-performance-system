@@ -1,0 +1,741 @@
+{% extends "base.html" %}
+{% block title %}Employee Dashboard — PulseHR{% endblock %}
+{% block page_title %}Employee Dashboard{% endblock %}
+
+{% block sidebar_nav %}
+<span class="nav-section">My Workspace</span>
+<a class="nav-item active" data-section="overview" onclick="navigate('overview')"><i class="fas fa-th-large"></i>Overview</a>
+<a class="nav-item" data-section="profile" onclick="navigate('profile')"><i class="fas fa-id-card"></i>My Profile</a>
+<a class="nav-item" data-section="tasks" onclick="navigate('tasks')"><i class="fas fa-tasks"></i>My Tasks</a>
+<a class="nav-item" data-section="attendance" onclick="navigate('attendance')"><i class="fas fa-calendar-check"></i>Attendance</a>
+<a class="nav-item" data-section="performance" onclick="navigate('performance')"><i class="fas fa-chart-line"></i>Performance</a>
+<span class="nav-section">Team Management</span>
+<a class="nav-item" data-section="team" onclick="navigate('team')"><i class="fas fa-users"></i>My Team</a>
+<a class="nav-item" data-section="leave" onclick="navigate('leave')"><i class="fas fa-calendar-times"></i>Leave Management</a>
+<span class="nav-section">Growth</span>
+<a class="nav-item" data-section="weekly" onclick="navigate('weekly')"><i class="fas fa-calendar-week"></i>Weekly Update</a>
+<a class="nav-item" data-section="learning" onclick="navigate('learning')"><i class="fas fa-graduation-cap"></i>Learning & Skills</a>
+{% endblock %}
+
+{% block content %}
+<div id="sectionContent"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SECTIONS = {
+  overview: renderOverview,
+  profile: renderProfile,
+  tasks: renderTasks,
+  attendance: renderAttendance,
+  performance: renderPerformance,
+  team: renderMyTeam,
+  leave: renderLeave,
+  weekly: renderWeekly,
+  learning: renderLearning
+};
+window.loadSection = (s) => { if (SECTIONS[s]) SECTIONS[s](); };
+let empData = {}, perfData = {}, tasksData = [], myTeamObj={}, myLeaves=[], attendanceData={};
+
+async function init() {
+  try {
+    const results = await Promise.allSettled([
+      fetch('/api/employee/profile').then(r=>r.json()),
+      fetch('/api/employee/performance').then(r=>r.json()),
+      fetch('/api/employee/tasks').then(r=>r.json()),
+      fetch('/api/employee/my-team').then(r=>r.json()),
+      fetch('/api/employee/my-leaves').then(r=>r.json()),
+      fetch('/api/employee/attendance-history').then(r=>r.json())
+    ]);
+    
+    empData = results[0].status === 'fulfilled' ? results[0].value || {} : {};
+    perfData = results[1].status === 'fulfilled' ? results[1].value || {} : {};
+    tasksData = results[2].status === 'fulfilled' ? results[2].value || [] : [];
+    myTeamObj = results[3].status === 'fulfilled' ? results[3].value || {} : {};
+    myLeaves = results[4].status === 'fulfilled' ? results[4].value || [] : [];
+    attendanceData = results[5].status === 'fulfilled' ? results[5].value || {} : {};
+
+    // Fallback if profile API returns null but we have sessionData
+    if (!empData.name && sessionData.name) {
+        empData = { ...sessionData, ...empData };
+    }
+    
+    // Restore last section
+    const lastSection = sessionStorage.getItem('lastSection_' + window.location.pathname);
+    if (lastSection && SECTIONS[lastSection]) {
+      navigate(lastSection);
+    } else {
+      renderOverview();
+    }
+  } catch (e) { console.error("Init failed", e); }
+}
+
+function renderOverview() {
+  document.getElementById('pageTitle').textContent = 'My Dashboard';
+  const pending = tasksData.filter(t=>t.status==='Pending').length;
+  const inprog = tasksData.filter(t=>t.status==='In Progress').length;
+  const done = tasksData.filter(t=>t.status==='Completed').length;
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="label">Productivity Score</div>
+        <div class="value" style="color:var(--accent)">${perfData.productivity_score || 0}%</div>
+        <div class="change" style="color:var(--accent3)">↑ +3% this month</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card" onclick="navigate('attendance')" style="cursor:pointer">
+        <div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-calendar-check"></i></div>
+        <div class="label">Attendance</div>
+        <div class="value" style="color:var(--accent3)">${perfData.attendance_pct || 0}%</div>
+        <div class="change" style="color:var(--muted)">This month</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-tasks"></i></div>
+        <div class="label">Active Tasks</div>
+        <div class="value" style="color:var(--accent4)">${inprog + pending}</div>
+        <div class="change" style="color:var(--muted)">${done} completed</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(255,101,132,.15);color:var(--accent2)"><i class="fas fa-star"></i></div>
+        <div class="label">TL Score</div>
+        <div class="value" style="color:var(--accent2)">${perfData.tl_score || 0}/10</div>
+        <div class="change" style="color:var(--muted)">Team Leader Rating</div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div class="panel-title" style="margin-bottom:0"><i class="fas fa-fingerprint" style="color:var(--accent3)"></i>Quick Attendance</div>
+          <div id="quickAttendAction">
+            ${attendanceData.today_marked ? 
+              `<span class="badge-role badge-completed"><i class="fas fa-check-circle me-1"></i>Marked Today ${attendanceData.history && attendanceData.history.length > 0 ? 'at ' + attendanceData.history[0].check_in_time : ''}</span>` :
+              `<button class="btn-primary-custom" style="padding:.4rem 1rem;font-size:.8rem" onclick="markPresent()">Mark Present Today</button>`
+            }
+          </div>
+        </div>
+      </div>
+      <div class="panel" onclick="navigate('team')" style="cursor:pointer">
+        <div class="panel-title"><i class="fas fa-users" style="color:var(--accent)"></i>My Team & Project</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;font-size:1.1rem">${myTeamObj.team_name || 'No Team'}</div>
+            <div style="color:var(--muted);font-size:.85rem">${myTeamObj.project_name || 'No Project'}</div>
+          </div>
+          <div style="text-align:right;min-width:180px">
+            <div style="font-size:.85rem;margin-bottom:.3rem">Project Progress: <strong>${myTeamObj.project_completion || 0}%</strong></div>
+            <div class="progress-bar-wrap" style="height:8px"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%;background:linear-gradient(90deg,var(--accent),var(--accent3))"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent)"></i>Performance Trend</div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Recent Tasks</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Task</th><th>Priority</th><th>Status</th><th>Progress</th></tr></thead>
+            <tbody>
+              ${tasksData.slice(0,4).map(t=>`<tr>
+                <td style="font-weight:500">${t.title}</td>
+                <td><span class="badge-role badge-${t.priority.toLowerCase()}">${t.priority}</span></td>
+                <td><span class="badge-role badge-${t.status.replace(' ','').toLowerCase()}">${t.status}</span></td>
+                <td style="min-width:120px">
+                  <div style="display:flex;align-items:center;gap:.5rem">
+                    <div class="progress-bar-wrap"><div class="progress-fill" style="width:${t.progress}%;background:var(--accent)"></div></div>
+                    <span style="font-size:.78rem;color:var(--muted);min-width:30px">${t.progress}%</span>
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-radar" style="color:var(--accent2)"></i>Performance Radar</div>
+        <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-user" style="color:var(--accent3)"></i>Quick Info</div>
+        <div style="font-size:.85rem">
+          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Name</span><strong>${empData.name||'—'}</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Role</span><strong>${empData.role||'—'}</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Dept</span><strong>${empData.department||'—'}</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:.4rem 0"><span style="color:var(--muted)">Projects</span><strong>${empData.projects_completed||0}</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => {
+    createChart('trendChart','line',['Aug','Sep','Oct','Nov','Dec','Jan'],
+      [{label:'Performance Score',data:perfData.monthly_trend||[70,72,74,76,75,77],borderColor:'var(--accent)',backgroundColor:'rgba(108,99,255,.1)',fill:true,tension:.4}]);
+    new Chart(document.getElementById('radarChart'),{type:'radar',data:{
+      labels:['Productivity','Attendance','Task Comp.','Quality','TL Score'],
+      datasets:[{label:'You',data:[perfData.productivity_score||0,perfData.attendance_pct||0,perfData.task_completion||0,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],backgroundColor:'rgba(108,99,255,.15)',borderColor:'var(--accent)',pointBackgroundColor:'var(--accent)'}]
+    },options:{responsive:true,maintainAspectRatio:false,scales:{r:{ticks:{color:'#7a7a9a',backdropColor:'transparent',font:{size:9}},grid:{color:'#2a2a38'},pointLabels:{color:'#7a7a9a',font:{size:10}},min:0,max:100}},plugins:{legend:{labels:{color:'#7a7a9a'}}}}});
+  }, 100);
+}
+
+function renderProfile() {
+  document.getElementById('pageTitle').textContent = 'My Profile';
+  const skills = (empData.skills||'').split(',').map(s=>`<span class="tag skill">${s.trim()}</span>`).join('');
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="panel" style="text-align:center">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;margin:0 auto 1rem">${(empData.name||'?')[0]}</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:700">${empData.name||'—'}</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin:.25rem 0">${empData.role||'—'}</p>
+        <span class="badge-role badge-inprogress">${empData.department||'—'}</span>
+        <div style="margin-top:1rem">${skills}</div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-id-card" style="color:var(--accent)"></i>Employee Details</div>
+        <div class="row g-2" style="font-size:.87rem">
+          ${[['Employee ID',empData.employee_id],['Department',empData.department],['Role',empData.role],['Experience',empData.experience+' Years'],['Joining Date',empData.joining_date],['Projects Completed',empData.projects_completed],['Status',empData.status]].map(([l,v])=>`
+          <div class="col-md-6">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem">
+              <div style="color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">${l}</div>
+              <div style="font-weight:600;margin-top:.2rem">${v||'—'}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTasks() {
+  document.getElementById('pageTitle').textContent = 'My Tasks';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Assigned Tasks</div>
+    ${tasksData.length === 0 ? '<p style="color:var(--muted);text-align:center;padding:2rem">No tasks assigned yet</p>' : ''}
+    ${tasksData.map(t => {
+      const ddl = new Date(t.deadline);
+      const days = Math.ceil((ddl - new Date()) / 86400000);
+      const timerColor = days < 2 ? 'var(--accent2)' : days < 5 ? 'var(--accent4)' : 'var(--accent3)';
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.75rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+          <div>
+            <div style="font-weight:600;font-family:'Syne',sans-serif">${t.title}</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">${t.description}</div>
+            <div style="margin-top:.5rem">${(t.required_skills||[]).map(s=>`<span class="tag skill">${s}</span>`).join('')}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="badge-role badge-${t.priority.toLowerCase()}">${t.priority}</span>
+            <div style="font-size:.78rem;color:${timerColor};margin-top:.3rem"><i class="fas fa-clock"></i> ${days > 0 ? days+' days left' : 'OVERDUE'}</div>
+          </div>
+        </div>
+        <div style="margin-top:.75rem;display:flex;align-items:center;gap:.75rem">
+          <div class="progress-bar-wrap"><div class="progress-fill" style="width:${t.progress}%;background:var(--accent)"></div></div>
+          <span style="font-size:.78rem;color:var(--muted);min-width:30px">${t.progress}%</span>
+          <select class="form-ctrl" style="width:140px;padding:.3rem .5rem" onchange="updateTask('${t.id}',this.value)">
+            <option ${t.status==='Pending'?'selected':''}>Pending</option>
+            <option ${t.status==='In Progress'?'selected':''}>In Progress</option>
+            <option ${t.status==='Completed'?'selected':''}>Completed</option>
+          </select>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function updateTask(taskId, status) {
+  await fetch('/api/employee/update-task', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({task_id: taskId, status, progress: status==='Completed'?100:status==='In Progress'?50:0})
+  });
+  tasksData = await fetch('/api/employee/tasks').then(r=>r.json());
+  renderTasks();
+}
+
+async function renderAttendance() {
+  document.getElementById('pageTitle').textContent = 'My Attendance';
+  const res = await fetch('/api/employee/attendance-history');
+  const data = await res.json();
+  
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="panel text-center">
+        <div class="panel-title"><i class="fas fa-calendar-check" style="color:var(--accent3)"></i> Today's Attendance</div>
+        <div id="attendanceAction">
+          ${data.today_marked ? 
+            `<div class="badge-role badge-completed p-3" style="font-size:1rem"><i class="fas fa-check-circle me-2"></i>Attendance Marked</div>
+             <div class="text-muted mt-2" style="font-size:.8rem">Marked at ${data.history[0]?.check_in_time || 'N/A'}</div>` :
+            `<button class="btn-primary-custom w-100 p-3" onclick="markPresent()"><i class="fas fa-fingerprint me-2"></i>Mark Present</button>`
+          }
+        </div>
+        <hr style="border-color:var(--border)">
+        <div class="label">Monthly Attendance</div>
+        <div class="value" style="color:var(--accent3);font-size:2rem;margin-top:.5rem">${data.monthly_score}%</div>
+        <div class="progress-bar-wrap mt-2"><div class="progress-fill" style="width:${data.monthly_score}%;background:var(--accent3)"></div></div>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center">
+          <span><i class="fas fa-history" style="color:var(--accent)"></i> Attendance History (Last 30 Days)</span>
+          <span style="font-size:.7rem; color:var(--muted); font-weight:400">Showing recent activity</span>
+        </div>
+        <div id="attendanceHistoryList" style="padding:0 .5rem">
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; padding:0 1.5rem .75rem; color:var(--muted); font-size:.7rem; text-transform:uppercase; font-weight:700; letter-spacing:.1em">
+            <span>Date</span><span>Status</span><span>Check-in Time</span>
+          </div>
+          ${data.history.length === 0 ? '<div class="text-center py-5 text-muted">No attendance history found. Mark present to get started!</div>' : 
+            data.history.map(h => `
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-bottom:1rem; transition:all .3s ease; box-shadow:0 4px 12px rgba(0,0,0,.1)" onmouseover="this.style.borderColor='var(--accent3)'; this.style.transform='translateX(5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,.2)'" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'">
+              <div style="font-weight:700; font-size:1.05rem; color:var(--text); display:flex; align-items:center; gap:.75rem">
+                <div style="width:8px; height:8px; background:var(--accent3); border-radius:50%"></div>
+                ${h.date}
+              </div>
+              <div>
+                <span class="badge-role badge-completed" style="padding:.5rem 1rem; font-size:.75rem; border-radius:30px; background:rgba(67,233,123,.1); color:var(--accent3); border:1px solid rgba(67,233,123,.2)">
+                  <i class="fas fa-check-circle me-2"></i>${h.status}
+                </span>
+              </div>
+              <div style="font-weight:700; color:var(--accent3); font-family:'Syne',sans-serif; font-size:1.1rem; letter-spacing:.02em">
+                <i class="far fa-clock me-2" style="font-size:.9rem; opacity:.7"></i>${h.check_in_time}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function markPresent() {
+  const res = await fetch('/api/employee/mark-attendance', {method:'POST'});
+  const r = await res.json();
+  if(r.success) {
+    showToast('Success', 'Attendance marked successfully!');
+    // Re-fetch all relevant data to ensure UI consistency
+    const [perfRes, attendRes] = await Promise.all([
+        fetch('/api/employee/performance').then(r=>r.json()),
+        fetch('/api/employee/attendance-history').then(r=>r.json())
+    ]);
+    perfData = perfRes || {};
+    attendanceData = attendRes || {};
+    
+    // Refresh current view
+    const activeSection = document.querySelector('.nav-item.active').dataset.section;
+    if (SECTIONS[activeSection]) SECTIONS[activeSection]();
+  } else {
+    showToast('Error', r.message);
+  }
+}
+
+function renderPerformance() {
+  document.getElementById('pageTitle').textContent = 'Performance Analytics';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Performance Metrics</div>
+        <div class="chart-wrap"><canvas id="perfBarChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Monthly Trend</div>
+        <div class="chart-wrap"><canvas id="trendLineChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      ${[['Productivity Score',perfData.productivity_score,'accent'],['Attendance %',perfData.attendance_pct,'accent3'],['Task Completion',perfData.task_completion,'accent4'],['Quality Rating',(perfData.quality_rating||0)*10,'accent2'],['TL Work Score',(perfData.tl_score||0)*10,'accent']].map(([l,v,c])=>`
+      <div class="stat-card mb-2">
+        <div class="label">${l}</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem">
+          <div class="progress-bar-wrap"><div class="progress-fill" style="width:${v}%;background:var(--${c})"></div></div>
+          <span style="font-weight:700;color:var(--${c})">${v}${l.includes('Score')?'%':l.includes('%')?'%':''}</span>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  setTimeout(() => {
+    createChart('perfBarChart','bar',['Productivity','Attendance','Task Comp.','Quality (×10)','TL Score (×10)'],
+      [{label:'Your Scores',data:[perfData.productivity_score,perfData.attendance_pct,perfData.task_completion,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],
+      backgroundColor:['rgba(108,99,255,.7)','rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)','rgba(108,99,255,.5)']}]);
+    createChart('trendLineChart','line',['Aug','Sep','Oct','Nov','Dec','Jan'],
+      [{label:'Performance',data:perfData.monthly_trend||[],borderColor:'var(--accent3)',backgroundColor:'rgba(67,233,123,.1)',fill:true,tension:.4}]);
+  }, 100);
+}
+
+function renderWeekly() {
+  document.getElementById('pageTitle').textContent = 'Weekly Self Update';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel" style="max-width:700px">
+    <div class="panel-title"><i class="fas fa-calendar-week" style="color:var(--accent)"></i>Submit Weekly Update</div>
+    <div class="mb-3"><label class="form-label-sm">Project Work Done This Week</label>
+      <textarea class="form-ctrl" id="proj_work" rows="3" placeholder="Describe what you accomplished..."></textarea></div>
+    <div class="mb-3"><label class="form-label-sm">New Technologies / Skills Learned</label>
+      <input class="form-ctrl" id="tech_learned" placeholder="e.g., Docker, Redis, GraphQL..."></div>
+    <div class="mb-3"><label class="form-label-sm">Problems / Blockers Faced</label>
+      <textarea class="form-ctrl" id="problems" rows="2" placeholder="Any challenges or blockers..."></textarea></div>
+    <div class="mb-3"><label class="form-label-sm">Task Completion Level</label>
+      <input type="range" class="form-range" id="completion" min="0" max="100" value="75" oninput="document.getElementById('compVal').textContent=this.value+'%'">
+      <span id="compVal" style="color:var(--accent);font-weight:700">75%</span></div>
+    <button class="btn-primary-custom" onclick="submitWeekly()"><i class="fas fa-paper-plane me-2"></i>Submit Weekly Update</button>
+    <div id="weeklyMsg" style="margin-top:1rem;display:none"></div>
+  </div>`;
+}
+
+async function submitWeekly() {
+  const data = {
+    project_work: document.getElementById('proj_work').value,
+    tech_learned: document.getElementById('tech_learned').value,
+    problems: document.getElementById('problems').value,
+    task_completion: document.getElementById('completion').value
+  };
+  const res = await fetch('/api/employee/weekly-update', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  const json = await res.json();
+  const msg = document.getElementById('weeklyMsg');
+  msg.style.display='block';
+  
+  if (json.success) {
+    msg.innerHTML='<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>Weekly update submitted successfully!</div></div>';
+    // Re-fetch profile and performance so the UI updates without requiring a full page reload
+    const profileRes = await fetch('/api/employee/profile').then(r=>r.json());
+    empData = { ...sessionData, ...(profileRes || {}) };
+    perfData = await fetch('/api/employee/performance').then(r=>r.json()) || {};
+  } else {
+    msg.innerHTML=`<div class="notif-item" style="border-left-color:var(--accent2)"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i><div>${json.message || 'Error submitting update'}</div></div>`;
+  }
+}
+
+function renderLearning() {
+  document.getElementById('pageTitle').textContent = 'Learning & Growth';
+  const _courses = [
+    {name:'System Design Fundamentals',provider:'Coursera',duration:'8h',status:'Recommended'},
+    {name:'AWS Cloud Practitioner',provider:'AWS',duration:'20h',status:'Recommended'},
+    {name:'Advanced Python Patterns',provider:'Udemy',duration:'12h',status:'Recommended'},
+    {name:'Docker & Kubernetes',provider:'Linux Foundation',duration:'15h',status:'Recommended'},
+  ];
+  
+  const courses = _courses.map(c => {
+      const p = empData.learning_progress && empData.learning_progress[c.name];
+      if (p !== undefined) {
+          if (p === 100) return { ...c, status: 'Completed' };
+          if (p > 0) return { ...c, status: 'In Progress' };
+      }
+      return c;
+  });
+
+  window.selectCourse = (name) => {
+      const select = document.getElementById('certSkill');
+      if(select) {
+          select.value = name;
+          // Visual feedback
+          select.style.borderColor = 'var(--accent)';
+          setTimeout(() => select.style.borderColor = 'var(--border)', 1000);
+      }
+  };
+
+  const courseOptions = _courses.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-file-upload" style="color:var(--accent)"></i>Submit New Skill / Certificate</div>
+        <p style="color:var(--muted); font-size: 0.85rem; margin-bottom: 1rem">Upload your completion certificate to permanently add a new skill to your profile.</p>
+        
+        <div class="mb-2"><label class="form-label-sm">Skill Name</label>
+        <select class="form-ctrl" id="certSkill">
+            <option value="" disabled selected>Select a recommended course</option>
+            ${courseOptions}
+        </select>
+        </div>
+        <div class="mb-2"><label class="form-label-sm">Completion Level</label>
+            <input type="range" class="form-range" id="certCompletion" min="0" max="100" value="100" oninput="document.getElementById('certCompVal').textContent=this.value+'%'">
+            <span id="certCompVal" style="color:var(--accent);font-weight:700">100%</span>
+        </div>
+        
+        <div class="mb-3"><label class="form-label-sm">Upload Certificate (Image, PDF)</label>
+            <input type="file" id="certFile" class="form-ctrl" accept=".pdf,image/*">
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Required only for 100% completion.</div>
+        </div>
+        
+        <button class="btn-primary-custom w-100" onclick="submitCertificate()"><i class="fas fa-arrow-up me-2"></i>Submit & Add Skill</button>
+        <div id="certMsg" style="margin-top:0.75rem;display:none"></div>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-book" style="color:var(--accent)"></i>Recommended Training</div>
+        ${courses.map(c=>`<div onclick="selectCourse('${c.name}')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='rgba(108,99,255,.05)'" onmouseout="this.style.background='var(--surface)'">
+          <div><div style="font-weight:600;font-size:.88rem">${c.name}</div><div style="font-size:.75rem;color:var(--muted)">${c.provider} • ${c.duration}</div></div>
+          <span class="badge-role ${c.status==='In Progress'?'badge-inprogress':c.status==='Completed'?'badge-completed':'badge-pending'}">${c.status}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent3)"></i>Skill Gap Analysis</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="skillChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-certificate" style="color:var(--accent4)"></i>Learning Progress & Certifications</div>
+        ${Object.keys(empData.learning_progress || {}).length === 0 ? '<div style="color:var(--muted);font-size:0.85rem;padding:1rem;text-align:center">No learning progress tracked yet. Submit a skill to get started!</div>' : 
+          Object.entries(empData.learning_progress || {}).map(([c,p], idx)=>`
+        <div style="margin-bottom:1.25rem; background:var(--surface); padding:.75rem; border-radius:10px; border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.5rem">
+            <span style="font-size:.85rem;font-weight:600">${c}</span>
+            <span id="prog_val_${idx}" style="font-size:.78rem;color:var(--accent4);font-weight:700">${p}%</span>
+          </div>
+          <input type="range" class="form-range" value="${p}" min="0" max="100" 
+            oninput="document.getElementById('prog_val_${idx}').textContent=this.value+'%'"
+            onchange="updateLearningProgress('${c.replace(/'/g, "\\'")}', this.value)">
+          <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">${p===100?'Course Completed!':'Slide to update your progress'}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => {
+    createChart('skillChart','doughnut',['Matched Skills','Gap Skills'],[{data:[65,35],backgroundColor:['rgba(67,233,123,.7)','rgba(255,101,132,.7)'],borderColor:['var(--accent3)','var(--accent2)']}]);
+  }, 100);
+}
+
+async function submitCertificate() {
+    const skillName = document.getElementById('certSkill').value;
+    const completion = document.getElementById('certCompletion').value;
+    const fileInput = document.getElementById('certFile');
+    
+    if(!skillName.trim()) return alert("Please enter the skill name.");
+    if(completion == 100 && fileInput.files.length === 0) return alert("Please select a certificate file to upload for 100% completion.");
+    
+    const formData = new FormData();
+    formData.append('skill_name', skillName);
+    formData.append('completion', completion);
+    if (fileInput.files.length > 0) {
+        formData.append('certificate', fileInput.files[0]);
+    }
+    
+    const msg = document.getElementById('certMsg');
+    
+    try {
+        const res = await fetch('/api/employee/upload-certificate', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        
+        msg.style.display = 'block';
+        if(data.success) {
+            msg.innerHTML = `<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>${data.message}</div></div>`;
+            document.getElementById('certSkill').value = '';
+            document.getElementById('certFile').value = '';
+            
+            // Re-fetch profile and performance to reflect the update instantly
+            const profileRes = await fetch('/api/employee/profile').then(r=>r.json());
+            empData = { ...sessionData, ...(profileRes || {}) };
+            perfData = await fetch('/api/employee/performance').then(r=>r.json()) || {};
+            
+            // Refresh the learning view
+            renderLearning();
+        } else {
+            msg.innerHTML = `<div class="notif-item" style="border-left-color:var(--accent2)"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i><div>${data.message}</div></div>`;
+        }
+    } catch(err) {
+        msg.style.display = 'block';
+        msg.innerHTML = `<div class="notif-item" style="border-left-color:var(--accent2)"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i><div>Error uploading certificate.</div></div>`;
+    }
+}
+
+async function updateLearningProgress(skill, progress) {
+    try {
+        const res = await fetch('/api/employee/upload-certificate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `skill_name=${encodeURIComponent(skill)}&completion=${progress}`
+        });
+        const data = await res.json();
+        if(data.success) {
+            showToast('Progress Updated', `Updated ${skill} to ${progress}%`);
+            // Update local state and re-render the learning section
+            empData.learning_progress[skill] = parseInt(progress);
+        } else {
+            showToast('Error', data.message, 'danger');
+        }
+    } catch(err) {
+        showToast('Error', 'Failed to update progress', 'danger');
+    }
+}
+
+// ─── My Team (Employee View) ────────────────────────────────────────────────
+async function renderMyTeam() {
+  document.getElementById('pageTitle').textContent = 'My Team Details';
+  const res = await fetch('/api/employee/my-team');
+  const data = await res.json();
+  
+  const tl = data.members.find(m => m.is_tl);
+  const members = data.members.filter(m => !m.is_tl);
+  
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3 mb-4">
+    <div class="col-md-12">
+      <div class="panel" style="background:linear-gradient(135deg, var(--card), var(--surface)); border-left: 4px solid var(--accent)">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div>
+            <div class="label" style="text-transform:uppercase; letter-spacing:1px; font-size:.7rem; margin-bottom:.25rem">Active Project</div>
+            <h4 style="font-family:'Syne',sans-serif; font-weight:700; margin:0">${data.project_name}</h4>
+            <div style="color:var(--muted); font-size:.85rem; margin-top:.25rem">Team: <span style="color:var(--text); font-weight:600">${data.team_name}</span></div>
+          </div>
+          <div style="text-align:right; min-width:240px">
+            <div style="display:flex; justify-content:space-between; margin-bottom:.5rem; font-size:.85rem">
+              <span style="color:var(--muted)">Project Completion</span>
+              <span style="color:var(--accent); font-weight:700">${data.project_completion}%</span>
+            </div>
+            <div class="progress-bar-wrap" style="height:10px">
+              <div class="progress-fill" style="width:${data.project_completion}%; background:linear-gradient(90deg, var(--accent), var(--accent2))"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-crown" style="color:var(--accent4)"></i> Team Leader</div>
+        ${tl ? `
+          <div style="text-align:center; padding:1.5rem 0">
+            <div style="width:80px; height:80px; background:linear-gradient(135deg, var(--accent4), var(--accent)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; margin:0 auto 1.25rem; box-shadow:0 10px 20px rgba(247,183,49,.2)">${tl.name[0]}</div>
+            <h5 style="font-family:'Syne',sans-serif; font-weight:700; margin:0">${tl.name}</h5>
+            <div style="color:var(--muted); font-size:.85rem; margin-top:.25rem">${tl.role}</div>
+            <div style="margin-top:1rem; display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem">
+              ${(tl.skills || '').split(',').slice(0,3).map(s => `<span class="tag skill" style="font-size:.65rem">${s.trim()}</span>`).join('')}
+            </div>
+          </div>
+          <hr style="border-color:var(--border); margin:1.5rem 0">
+          <div style="font-size:.85rem">
+            <div style="display:flex; justify-content:space-between; margin-bottom:.75rem"><span style="color:var(--muted)">Department</span><span style="font-weight:600">${tl.department}</span></div>
+            <div style="display:flex; justify-content:space-between"><span style="color:var(--muted)">Team ID</span><span style="font-weight:600">${data.team_name.split(' ')[0]}</span></div>
+          </div>
+        ` : `<div class="text-center py-5 text-muted">No Team Leader assigned</div>`}
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-users" style="color:var(--accent3)"></i> Team Members (${members.length})</div>
+        <div class="row g-2">
+          ${members.map(m => `
+            <div class="col-md-6">
+              <div style="background:var(--surface); border:1px solid ${m.is_me ? 'var(--accent3)' : 'var(--border)'}; border-radius:12px; padding:1rem; display:flex; align-items:center; gap:1rem; transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                <div style="width:44px; height:44px; background:linear-gradient(135deg, var(--accent), var(--accent2)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff">${m.name[0]}</div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-weight:700; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${m.name} ${m.is_me ? '<span style="color:var(--accent3); font-weight:400; font-size:.75rem">(You)</span>' : ''}</div>
+                  <div style="color:var(--muted); font-size:.75rem; margin-top:.1rem">${m.role}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+          ${members.length === 0 ? '<div class="col-12 text-center py-5 text-muted">No team members assigned</div>' : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── Leave Permission (Employee View) ───────────────────────────────────────
+function renderLeave() {
+  document.getElementById('pageTitle').textContent = 'Leave Permission Management';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-plus-circle" style="color:var(--accent)"></i>Apply for Leave</div>
+        <div class="mb-2"><label class="form-label-sm">Leave Type</label>
+          <select class="form-ctrl" id="lvType">
+            <option>Casual Leave</option><option>Sick Leave</option><option>Annual Leave</option><option>Work From Home</option><option>Emergency Leave</option>
+          </select>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6"><label class="form-label-sm">Start Date</label><input type="date" class="form-ctrl" id="lvStart"></div>
+          <div class="col-6"><label class="form-label-sm">End Date</label><input type="date" class="form-ctrl" id="lvEnd"></div>
+        </div>
+        <div class="mb-2"><label class="form-label-sm">Is Emergency?</label>
+          <select class="form-ctrl" id="lvEmg"><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+        <div class="mb-3"><label class="form-label-sm">Reason for Leave <strong>(Required)</strong></label>
+          <textarea class="form-ctrl" id="lvReason" rows="3" placeholder="Please provide a clear reason..."></textarea>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="submitLeaveRequest()"><i class="fas fa-paper-plane me-2"></i>Submit Application</button>
+        <div id="lvMsg" style="margin-top:0.75rem;display:none"></div>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-history" style="color:var(--accent3)"></i>My Leave History</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Type</th><th>Dates (Days)</th><th>Reason</th><th>Emergency</th><th>Status</th></tr></thead>
+            <tbody>
+            ${myLeaves.map(l=>`
+              <tr>
+                <td><strong>${l.type}</strong><br><small style="color:var(--muted)">App: ${l.applied_on}</small></td>
+                <td>${l.from_date} to ${l.to_date}<br><small style="color:var(--muted)">${l.days} day(s)</small></td>
+                <td style="max-width:200px;white-space:normal;font-size:0.85rem">${l.reason}</td>
+                <td style="text-align:center">${l.is_emergency?'<i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i>':'—'}</td>
+                <td>
+                  <span class="badge-role ${l.status.includes('Approved')?'badge-completed':l.status.includes('Rejected')?'badge-high':'badge-inprogress'}">${l.status}</span>
+                  ${l.reviewed_by?`<div style="font-size:0.75rem;color:var(--muted);margin-top:2px">by ${l.reviewed_by}</div>`:''}
+                </td>
+              </tr>
+            `).join('')}
+            ${myLeaves.length===0?'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No leave applications found.</td></tr>':''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function submitLeaveRequest() {
+  const data = {
+    leave_type: document.getElementById('lvType').value,
+    from_date: document.getElementById('lvStart').value,
+    to_date: document.getElementById('lvEnd').value,
+    is_emergency: document.getElementById('lvEmg').value === 'yes',
+    reason: document.getElementById('lvReason').value
+  };
+  
+  if(!data.from_date || !data.to_date) return alert('Select Start and End dates');
+  if(!data.reason.trim()) return alert('Reason is required');
+  
+  if(new Date(data.from_date) > new Date(data.to_date)) return alert('Start Date cannot be after End Date!');
+  
+  const res = await fetch('/api/employee/apply-leave', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const r = await res.json();
+  
+  if(r.success) {
+    document.getElementById('lvMsg').innerHTML = `<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>Leave applied successfully!</div></div>`;
+    document.getElementById('lvMsg').style.display = 'block';
+    
+    // Refresh history
+    myLeaves = await fetch('/api/employee/my-leaves').then(r=>r.json());
+    setTimeout(()=>renderLeave(), 1500);
+  }
+}
+
+init();
+</script>
+{% endblock %}

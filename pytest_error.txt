@@ -1,0 +1,1 @@
+Database lives in a different region. Please change your database URL to https://ai-employee-performance-3ab62-default-rtdb.asia-southeast1.firebasedatabase.app

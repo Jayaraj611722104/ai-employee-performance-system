@@ -1,0 +1,1551 @@
+{% extends "base.html" %}
+{% block title %}HR Dashboard — PulseHR{% endblock %}
+{% block page_title %}HR Dashboard{% endblock %}
+
+{% block sidebar_nav %}
+<span class="nav-section">HR Operations</span>
+<a class="nav-item active" data-section="overview" onclick="navigate('overview')"><i class="fas fa-th-large"></i>Overview</a>
+<a class="nav-item" data-section="employees" onclick="navigate('employees')"><i class="fas fa-users"></i>Employees</a>
+<a class="nav-item" data-section="attendance" onclick="navigate('attendance')"><i class="fas fa-calendar-check"></i>Attendance</a>
+<a class="nav-item" data-section="performance" onclick="navigate('performance')"><i class="fas fa-chart-line"></i>Performance</a>
+<a class="nav-item" data-section="leave" onclick="navigate('leave')"><i class="fas fa-calendar-times"></i>Leave Management</a>
+<span class="nav-section">Team Leadership</span>
+<a class="nav-item" data-section="teams" onclick="navigate('teams')"><i class="fas fa-layer-group"></i>Team Management</a>
+<a class="nav-item" data-section="team-analytics" onclick="navigate('team-analytics')"><i class="fas fa-chart-pie"></i>Team Analytics</a>
+<span class="nav-section">AI Modules</span>
+<a class="nav-item" data-section="ai-predict" onclick="navigate('ai-predict')"><i class="fas fa-brain"></i>AI Prediction</a>
+<a class="nav-item" data-section="ai-promotion" onclick="navigate('ai-promotion')"><i class="fas fa-arrow-up"></i>Promotion AI</a>
+<a class="nav-item" data-section="ai-attrition" onclick="navigate('ai-attrition')"><i class="fas fa-exclamation-triangle"></i>Attrition Risk</a>
+<a class="nav-item" data-section="skill-gap" onclick="navigate('skill-gap')"><i class="fas fa-puzzle-piece"></i>Skill Gap</a>
+<a class="nav-item" data-section="ai-performance" onclick="navigate('ai-performance')"><i class="fas fa-chart-line"></i>AI Performance Module</a>
+<span class="nav-section">Reports</span>
+<a class="nav-item" data-section="freshers" onclick="navigate('freshers')"><i class="fas fa-user-graduate"></i>New Talent Pipeline</a>
+<a class="nav-item" data-section="ats" onclick="navigate('ats')"><i class="fas fa-file-alt"></i>ATS Analyzer</a>
+<a class="nav-item" data-section="reports" onclick="navigate('reports')"><i class="fas fa-file-download"></i>Reports</a>
+<a class="nav-item" data-section="alerts" onclick="navigate('alerts')"><i class="fas fa-bell"></i>Alerts & Notify</a>
+{% endblock %}
+
+{% block content %}
+<div id="sectionContent"></div>
+
+<!-- Manual Alert Modal -->
+<div class="modal-custom" id="alertModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom" id="alertModalTitle"></span>
+      <button class="modal-close" onclick="hideModal('alertModal')">✕</button>
+    </div>
+    <div class="row g-2">
+      <div class="col-12">
+        <label class="form-label-sm">Select Employee</label>
+        <select class="form-ctrl" id="alertEmployee"></select>
+      </div>
+      <div class="col-12">
+        <label class="form-label-sm">Email Subject</label>
+        <input class="form-ctrl" id="alertSubject">
+      </div>
+      <div class="col-12">
+        <label class="form-label-sm">Email Body</label>
+        <textarea class="form-ctrl" id="alertBody" rows="5"></textarea>
+      </div>
+    </div>
+    <button class="btn-primary-custom w-100 mt-3" onclick="sendManualEmail()">Send Email</button>
+    <div id="alertMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+</div>
+
+<!-- Team Details Modal -->
+<div class="modal-custom" id="teamDetailsModal">
+  <div class="modal-box" style="max-width: 800px;">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom" id="teamDetailsTitle">Team Details & Reports</span>
+      <button class="modal-close" onclick="hideModal('teamDetailsModal')">✕</button>
+    </div>
+    <div id="teamDetailsBody"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SECTIONS = {overview:renderOverview,employees:renderEmployees,attendance:renderAttendance,performance:renderPerformance,leave:renderLeave,teams:renderTeams,'team-analytics':renderTeamAnalytics,'ai-predict':renderAIPredict,'ai-promotion':renderAIPromotion,'ai-attrition':renderAttrition,'skill-gap':renderSkillGap,'ai-performance':renderAIPerformance,freshers:renderFreshers,ats:renderATS,reports:renderReports,alerts:renderAlerts};
+window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
+let stats={}, employees=[], performanceAll=[], attendance=[], leaveRequests=[], teams=[], teamsDetailed=[];
+let alertedUserIds = new Set();
+
+async function init() {
+  try {
+    const results = await Promise.all([
+      fetch('/api/hr/stats').then(r => r.ok ? r.json() : {}),
+      fetch('/api/hr/employees').then(r => r.ok ? r.json() : []),
+      fetch('/api/hr/performance-all').then(r => r.ok ? r.json() : []),
+      fetch('/api/hr/attendance').then(r => r.ok ? r.json() : []),
+      fetch('/api/hr/leave-requests').then(r => r.ok ? r.json() : []),
+      fetch('/api/hr/teams').then(r => r.ok ? r.json() : []),
+      fetch('/api/hr/teams-detailed').then(r => r.ok ? r.json() : [])
+    ]);
+    [stats, employees, performanceAll, attendance, leaveRequests, teams, teamsDetailed] = results;
+    console.log("Dashboard Data Loaded:", {
+      employees: employees.length,
+      performance: performanceAll.length,
+      teams: teams.length,
+      date: new Date().toISOString()
+    });
+    
+    // Restore section from sessionStorage or default to overview
+    const lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
+    navigate(lastSec);
+  } catch (err) {
+    console.error("Initialization failed:", err);
+    document.getElementById('sectionContent').innerHTML = `
+      <div class="panel text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+        <h4>Dashboard Error</h4>
+        <p class="text-muted">Failed to load data. Please refresh the page.</p>
+        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+      </div>`;
+  }
+}
+
+function getTLCandidates() {
+  const leaderIds = new Set(teams.map(t=>t.leader_id).filter(x=>!!x));
+  return employees.filter(e=>{
+    const role = (e.role||'').toLowerCase();
+    const empId = e.employee_id||'';
+    return leaderIds.has(e.user_id) || /^TL/i.test(empId) || /(lead|manager|head|director)/i.test(role);
+  });
+}
+
+async function reloadLeave() { leaveRequests = await fetch('/api/hr/leave-requests').then(r=>r.json()); }
+async function reloadTeams() { 
+  [teams, teamsDetailed] = await Promise.all([
+    fetch('/api/hr/teams').then(r=>r.json()),
+    fetch('/api/hr/teams-detailed').then(r=>r.json())
+  ]);
+}
+
+function renderOverview() {
+  document.getElementById('pageTitle').textContent = 'HR Overview';
+  const depts = stats.departments || {};
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-users"></i></div><div class="label">Total Employees</div><div class="value" style="color:var(--accent)">${stats.total_employees||0}</div><div class="change" style="color:var(--accent3)">↑ 2 this month</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-user-check"></i></div><div class="label">Active</div><div class="value" style="color:var(--accent3)">${stats.active||0}</div><div class="change" style="color:var(--muted)">${stats.inactive||0} inactive</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-chart-bar"></i></div><div class="label">Avg Performance</div><div class="value" style="color:var(--accent4)">${stats.avg_performance||0}%</div><div class="change" style="color:var(--muted)">Company-wide</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(255,101,132,.15);color:var(--accent2)"><i class="fas fa-building"></i></div><div class="label">Departments</div><div class="value" style="color:var(--accent2)">${Object.keys(depts).length}</div><div class="change" style="color:var(--muted)">Active teams</div></div></div>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent)"></i>Department Distribution</div>
+        <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent3)"></i>Performance Distribution</div>
+        <div class="chart-wrap"><canvas id="perfDistChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3 mt-0">
+    <div class="col-md-12">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i>AI Alerts Summary</div>
+        <div class="row g-2">
+          ${performanceAll.filter(p=>p.productivity_score<60).map(p=>`<div class="col-md-4"><div class="notif-item danger"><i class="fas fa-arrow-down" style="color:var(--accent2)"></i><div><strong>${p.name}</strong><br><small>Performance below 60% (${p.productivity_score}%)</small></div></div></div>`).join('')}
+          ${performanceAll.filter(p=>p.attendance_pct<75).map(p=>`<div class="col-md-4"><div class="notif-item warning"><i class="fas fa-clock" style="color:var(--accent4)"></i><div><strong>${p.name}</strong><br><small>Attendance below 75% (${p.attendance_pct}%)</small></div></div></div>`).join('')}
+          ${performanceAll.filter(p=>p.productivity_score>85).slice(0,2).map(p=>`<div class="col-md-4"><div class="notif-item success"><i class="fas fa-trophy" style="color:var(--accent3)"></i><div><strong>${p.name}</strong><br><small>Top performer — consider for promotion</small></div></div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const deptLabels=Object.keys(depts), deptVals=Object.values(depts);
+    createChart('deptChart','pie',deptLabels,[{data:deptVals,backgroundColor:['rgba(108,99,255,.7)','rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)','rgba(86,204,242,.7)']}]);
+    const buckets={'60-70':0,'71-80':0,'81-90':0,'91-100':0};
+    performanceAll.forEach(p=>{const s=p.productivity_score;if(s<=70)buckets['60-70']++;else if(s<=80)buckets['71-80']++;else if(s<=90)buckets['81-90']++;else buckets['91-100']++;});
+    createChart('perfDistChart','bar',Object.keys(buckets),[{label:'Employees',data:Object.values(buckets),backgroundColor:['rgba(255,101,132,.7)','rgba(247,183,49,.7)','rgba(108,99,255,.7)','rgba(67,233,123,.7)']}]);
+  },100);
+}
+
+function renderEmployees() {
+  document.getElementById('pageTitle').textContent = 'Employee Management';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-users" style="color:var(--accent)"></i>All Employees (${employees.length})</div>
+    <input class="form-ctrl mb-3" placeholder="Search employees..." id="empSearch" oninput="filterEmployees(this.value)" style="max-width:300px">
+    <div style="overflow-x:auto"><table class="tbl" id="empTable">
+      <thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Dept</th><th>Experience</th><th>Joining Date</th><th>Status</th><th>Performance</th></tr></thead>
+      <tbody>${employees.map(e=>{
+        const p=performanceAll.find(p=>p.user_id===e.user_id)||{};
+        return `<tr>
+          <td><strong>${e.name}</strong></td><td style="color:var(--muted)">${e.employee_id}</td>
+          <td>${e.role}</td><td>${e.department}</td>
+          <td>${e.experience}yr</td><td>${e.joining_date}</td>
+          <td><span class="badge-role ${e.status==='Active'?'badge-completed':'badge-high'}">${e.status}</span></td>
+          <td><div style="display:flex;align-items:center;gap:.4rem"><div class="progress-bar-wrap" style="width:70px"><div class="progress-fill" style="width:${p.productivity_score||0}%;background:var(--accent)"></div></div><small>${p.productivity_score||0}%</small></div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function filterEmployees(q) {
+  const rows=document.querySelectorAll('#empTable tbody tr');
+  rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'});
+}
+
+function renderAttendance() {
+  document.getElementById('pageTitle').textContent = 'Attendance Monitoring';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Attendance Overview</div>
+        <div class="chart-wrap"><canvas id="attendChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-table" style="color:var(--accent3)"></i>Monthly Attendance Report</div>
+        <table class="tbl">
+          <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Late</th><th>Hours</th><th>%</th></tr></thead>
+          <tbody>${attendance.map(a=>{
+            const emp=employees.find(e=>e.user_id===a.user_id)||{};
+            const pct=Math.round(a.present/a.total*100);
+            return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td><td style="color:var(--accent4)">${a.late}</td><td>${a.hours}h</td>
+            <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent2)"></i>Absentee Analysis</div>
+        <div class="chart-wrap"><canvas id="absentChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-exclamation-triangle" style="color:var(--accent4)"></i>Attendance Alerts</div>
+        ${attendance.filter(a=>a.present/a.total<0.75).map(a=>{
+          const emp=employees.find(e=>e.user_id===a.user_id)||{};
+          return `<div class="notif-item danger mb-1"><i class="fas fa-clock" style="color:var(--accent2)"></i><div><strong>${emp.name}</strong><br><small>${Math.round(a.present/a.total*100)}% attendance this month</small></div></div>`;
+        }).join('')||'<p style="color:var(--accent3);font-size:.85rem">✓ No critical attendance issues</p>'}
+      </div>
+    </div>
+  </div>
+  <div class="row g-3 mt-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-user-graduate" style="color:var(--accent3)"></i>Freshers & New Talent</div>
+        <table class="tbl">
+          <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+          <tbody>${(()=>{
+            const ninetyDaysAgo = new Date();
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+            const filtered = employees.filter(emp=>{
+              const joinDate = new Date(emp.joining_date);
+              const isHR = (emp.role || '').toLowerCase().includes('hr');
+              const isNew = joinDate > ninetyDaysAgo;
+              const isFresher = (emp.experience !== undefined && emp.experience < 2);
+              return (isNew || isFresher) && !isHR;
+            });
+            return filtered.length > 0 ? filtered.map(emp=>{
+              const a=attendance.find(x=>x.user_id===emp.user_id) || {present:0, absent:0, total:0};
+              const pct=a.total > 0 ? Math.round(a.present/a.total*100) : 0;
+              return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td>
+              <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
+            }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem">No freshers or recent joins</td></tr>';
+          })()}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-crown" style="color:var(--accent4)"></i>Team Leaders Attendance</div>
+        <table class="tbl">
+          <thead><tr><th>Team Leader</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+          <tbody>${getTLCandidates().map(emp=>{
+            const a=attendance.find(x=>x.user_id===emp.user_id) || {present:0, absent:0, total:0};
+            const pct=a.total > 0 ? Math.round(a.present/a.total*100) : 0;
+            return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td>
+            <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
+          }).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem">No data available</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const empNames=attendance.map(a=>{const e=employees.find(e=>e.user_id===a.user_id);return e?e.name.split(' ')[0]:'?'});
+    createChart('attendChart','bar',empNames,[
+      {label:'Present',data:attendance.map(a=>a.present),backgroundColor:'rgba(67,233,123,.7)'},
+      {label:'Absent',data:attendance.map(a=>a.absent),backgroundColor:'rgba(255,101,132,.7)'}
+    ]);
+    const good=attendance.filter(a=>a.present/a.total>=0.9).length;
+    const ok=attendance.filter(a=>a.present/a.total>=0.75&&a.present/a.total<0.9).length;
+    const bad=attendance.filter(a=>a.present/a.total<0.75).length;
+    createChart('absentChart','doughnut',['≥90%','75-90%','<75%'],[{data:[good,ok,bad],backgroundColor:['rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)']}]);
+  },100);
+}
+
+function renderPerformance() {
+  document.getElementById('pageTitle').textContent = 'Performance Analytics';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Individual Performance Comparison</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="perfCompChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-balance-scale" style="color:var(--accent4)"></i>Workload Balance (Completion vs Quality)</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="workloadBalanceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-table" style="color:var(--accent3)"></i>Performance Details</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Employee</th><th>Dept</th><th>Productivity</th><th>Attendance</th><th>Task Comp.</th><th>Quality</th><th>TL Score</th><th>Overall</th></tr></thead>
+        <tbody>${performanceAll.map(p=>{
+          const overall=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
+          return `<tr>
+            <td><strong>${p.name||'—'}</strong></td><td>${p.department||'—'}</td>
+            <td style="color:var(--accent)">${p.productivity_score}%</td>
+            <td style="color:var(--accent3)">${p.attendance_pct}%</td>
+            <td>${p.task_completion}%</td>
+            <td>${p.quality_rating}/10</td>
+            <td>${p.tl_score}/10</td>
+            <td><strong style="color:${overall>=80?'var(--accent3)':overall>=65?'var(--accent4)':'var(--accent2)'}">${overall}%</strong></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    createChart('perfCompChart','bar',performanceAll.map(p=>p.name?.split(' ')[0]||'?'),[
+      {label:'Productivity',data:performanceAll.map(p=>p.productivity_score),backgroundColor:'rgba(108,99,255,.7)'},
+      {label:'Task Completion',data:performanceAll.map(p=>p.task_completion),backgroundColor:'rgba(67,233,123,.7)'},
+      {label:'Attendance',data:performanceAll.map(p=>p.attendance_pct),backgroundColor:'rgba(247,183,49,.7)'}
+    ]);
+    createChart('workloadBalanceChart','scatter',[],[
+      {
+        label:'Completion vs Quality',
+        data:performanceAll.map(p=>({x:p.task_completion, y:p.quality_rating*10, name:p.name})),
+        backgroundColor:'rgba(255,101,132,.7)',
+        pointRadius: 6
+      }
+    ], {
+      scales:{
+        x:{title:{display:true,text:'Completion %',color:'#7a7a9a'},min:0,max:100},
+        y:{title:{display:true,text:'Quality %',color:'#7a7a9a'},min:0,max:100}
+      },
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label: (ctx) => `${ctx.raw.name}: ${ctx.raw.x}% Comp, ${ctx.raw.y}% Qual`
+          }
+        }
+      }
+    });
+  },100);
+}
+
+function renderAIPredict() {
+  document.getElementById('pageTitle').textContent = 'AI Performance Prediction';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-brain" style="color:var(--accent)"></i>Random Forest Predictor</div>
+        <div class="mb-2"><label class="form-label-sm">Select Employee</label>
+          <select class="form-ctrl" id="predEmp" onchange="fillPredForm(this.value)">
+            <option value="">— Choose Employee —</option>
+            ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
+          </select></div>
+        ${['Productivity Score (0-100)','Attendance % (0-100)','Task Completion % (0-100)','Quality Rating (0-10)','TL Score (0-10)'].map((l,i)=>{
+          const ids=['pred_prod','pred_att','pred_task','pred_qual','pred_tl'];
+          const vals=[75,90,75,7,7];
+          return `<div class="mb-2"><label class="form-label-sm">${l}</label><input class="form-ctrl" id="${ids[i]}" type="number" value="${vals[i]}" min="0" max="100"></div>`;
+        }).join('')}
+        <button class="btn-primary-custom w-100 mt-2" onclick="runPrediction()"><i class="fas fa-magic me-2"></i>Predict Performance</button>
+        <div id="predResult" style="margin-top:1rem"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent3)"></i>How Random Forest Works</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="rfImportChart"></canvas></div>
+        <div style="margin-top:1rem;font-size:.83rem;color:var(--muted);line-height:1.7">The Random Forest algorithm builds multiple decision trees using different subsets of training data. Each tree votes on the predicted outcome, and the majority vote becomes the final prediction. This ensemble approach reduces overfitting and improves accuracy.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent2)"></i>All Employee Predictions</div>
+        <div style="max-height:250px;overflow-y:auto">
+        ${performanceAll.map(p=>{
+          const current=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
+          const pred=Math.min(100,current+Math.round(Math.random()*6-2));
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.85rem;font-weight:500">${p.name||'—'}</span>
+            <div style="display:flex;align-items:center;gap.5rem">
+              <span style="font-size:.8rem;color:var(--muted)">Now: ${current}%</span>
+              <span style="margin:0 .5rem;color:${pred>current?'var(--accent3)':'var(--accent2)'}">→</span>
+              <span style="font-weight:700;color:${pred>current?'var(--accent3)':'var(--accent2)'}">${pred}%</span>
+            </div>
+          </div>`;
+        }).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    createChart('rfImportChart','bar',['Productivity','Task Comp.','Attendance','Quality','TL Score'],[{label:'Feature Importance %',data:[30,25,20,15,10],backgroundColor:['rgba(108,99,255,.8)','rgba(67,233,123,.8)','rgba(247,183,49,.8)','rgba(255,101,132,.8)','rgba(86,204,242,.8)']}]);
+  },100);
+}
+
+function fillPredForm(uid) {
+  const p=performanceAll.find(p=>p.user_id===uid);
+  if(!p)return;
+  document.getElementById('pred_prod').value=p.productivity_score;
+  document.getElementById('pred_att').value=p.attendance_pct;
+  document.getElementById('pred_task').value=p.task_completion;
+  document.getElementById('pred_qual').value=p.quality_rating;
+  document.getElementById('pred_tl').value=p.tl_score;
+}
+
+async function runPrediction() {
+  const data={productivity_score:+document.getElementById('pred_prod').value,attendance_pct:+document.getElementById('pred_att').value,task_completion:+document.getElementById('pred_task').value,quality_rating:+document.getElementById('pred_qual').value,tl_score:+document.getElementById('pred_tl').value};
+  const res=await fetch('/api/hr/ai-predict-performance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const r=await res.json();
+  document.getElementById('predResult').innerHTML=`
+  <div class="ai-result">
+    <div class="ai-result-title">Prediction Result</div>
+    <div class="row g-2">
+      <div class="col-6"><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">Current Score</div><div class="ai-highlight">${r.current_score}%</div></div></div>
+      <div class="col-6"><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">Predicted Score</div><div class="ai-highlight">${r.predicted_score}%</div></div></div>
+    </div>
+    <div style="margin-top:.75rem"><span style="font-size:.85rem;color:var(--muted)">Trend: </span><strong>${r.trend}</strong> | <span style="font-size:.85rem;color:var(--muted)">Confidence: </span><strong style="color:var(--accent3)">${r.confidence}%</strong></div>
+    ${r.insights.map(i=>`<div class="notif-item ${i.includes('⚠️')?'warning':'success'} mt-1" style="padding:.4rem .6rem"><small>${i}</small></div>`).join('')}
+  </div>`;
+}
+
+function renderAIPromotion() {
+  document.getElementById('pageTitle').textContent = 'AI Promotion Recommendation';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-arrow-up" style="color:var(--accent3)"></i>Promotion Analyzer</div>
+        <div class="mb-2"><label class="form-label-sm">Select Employee</label>
+          <select class="form-ctrl" id="promEmp" onchange="fillPromForm(this.value)">
+            <option value="">— Choose Employee —</option>
+            ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
+          </select></div>
+        ${[['prom_prod','Productivity Score',75],['prom_att','Attendance %',90],['prom_task','Task Completion %',75],['prom_exp','Experience (Years)',3],['prom_proj','Projects Completed',8],['prom_tl','TL Score (0-10)',7]].map(([id,l,v])=>`
+        <div class="mb-2"><label class="form-label-sm">${l}</label><input class="form-ctrl" id="${id}" type="number" value="${v}"></div>`).join('')}
+        <div class="mb-2"><label class="form-label-sm">Current Role</label>
+          <select class="form-ctrl" id="prom_role"><option>Junior Developer</option><option>Software Engineer</option><option>Senior Developer</option><option>QA Engineer</option><option>Data Analyst</option><option>DevOps Engineer</option><option>Full Stack Developer</option></select></div>
+        <button class="btn-success-custom w-100 mt-2" onclick="runPromotion()"><i class="fas fa-magic me-2"></i>Analyze Promotion</button>
+        <div id="promResult" style="margin-top:1rem"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-sitemap" style="color:var(--accent4)"></i>Role Progression Map</div>
+        <div style="font-size:.82rem">
+          ${[['Entry Level (0-3 yrs)','Junior Developer → Software Engineer → QA Tester → Data Analyst'],['Mid Level (3-6 yrs)','Senior Software Engineer → DevOps → Tech Lead → Security Engineer'],['Senior (6-10 yrs)','Engineering Manager → Solution Architect → Product Manager → Cloud Architect'],['Executive (15+ yrs)','Director of Engineering → Chief Architect → VP Product → CTO']].map(([lvl,roles])=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
+            <div style="font-weight:700;color:var(--accent);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">${lvl}</div>
+            <div style="color:var(--muted)">${roles}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="panel" id="promBulkPanel">
+        <div class="panel-title"><i class="fas fa-list-check" style="color:var(--accent)"></i>Bulk Eligibility Scan</div>
+        <button class="btn-primary-custom mb-2" onclick="bulkPromoScan()"><i class="fas fa-search me-1"></i>Scan All Employees</button>
+        <div id="bulkResults"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function runAttrition() {
+  const uid = document.getElementById('attrEmp').value;
+  if(!uid) return;
+  const p = performanceAll.find(x => x.user_id === uid);
+  const e = employees.find(x => x.user_id === uid);
+  if(!p || !e) return;
+
+  const data = {
+    satisfaction: p.satisfaction || 75,
+    salary: e.salary || 60000,
+    attendance_pct: p.attendance_pct || 90,
+    productivity_score: p.productivity_score || 75,
+    tl_score: p.tl_score || 7,
+    experience: e.experience || 3
+  };
+
+  const res = await fetch('/api/hr/ai-attrition', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const r = await res.json();
+  
+  document.getElementById('attrResult').innerHTML = `
+  <div class="ai-result">
+    <div class="ai-result-title">Attrition Risk Analysis</div>
+    <div class="ai-highlight" style="color:${r.risk_percentage > 50 ? 'var(--accent2)' : 'var(--accent3)'}">${r.risk_percentage}% Risk (${r.risk_level})</div>
+    <div style="margin-top:.5rem"><strong>Key Reasons:</strong></div>
+    <ul style="font-size:.85rem;padding-left:1.2rem;margin-top:.2rem">
+      ${r.reasons.map(reason => `<li>${reason}</li>`).join('')}
+    </ul>
+    <div style="margin-top:.5rem"><strong>Recommendations:</strong></div>
+    <ul style="font-size:.85rem;padding-left:1.2rem;margin-top:.2rem">
+      ${r.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+function renderAttrition() {
+  document.getElementById('pageTitle').textContent = 'AI Attrition Risk Analysis';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i>Attrition Risk Predictor</div>
+        <div class="mb-3">
+          <label class="form-label-sm">Select Employee to Analyze</label>
+          <select class="form-ctrl" id="attrEmp">
+            <option value="">— Choose Employee —</option>
+            ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="runAttrition()"><i class="fas fa-search me-2"></i>Analyze Risk</button>
+        <div id="attrResult" style="margin-top:1.5rem"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent)"></i>Risk Factors Overview</div>
+        <p class="text-muted" style="font-size:.85rem">Our AI analyzes multiple factors including job satisfaction, salary benchmarks, attendance patterns, and performance trends to identify employees who may be at risk of leaving.</p>
+        <div class="chart-wrap" style="height:200px"><canvas id="attrFactorChart"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+  
+  setTimeout(() => {
+    createChart('attrFactorChart', 'bar', ['Satisfaction', 'Salary', 'Attendance', 'Relationship', 'Performance'], [{
+      label: 'Impact Weight',
+      data: [35, 25, 20, 15, 10],
+      backgroundColor: ['rgba(255, 101, 132, 0.7)', 'rgba(247, 183, 49, 0.7)', 'rgba(108, 99, 255, 0.7)', 'rgba(67, 233, 123, 0.7)', 'rgba(86, 204, 242, 0.7)']
+    }]);
+  }, 100);
+}
+
+async function runSkillGap() {
+  const uid = document.getElementById('gapEmp').value;
+  const role = document.getElementById('gapRole').value;
+  if(!uid || !role) return;
+  
+  const e = employees.find(x => x.user_id === uid);
+  if(!e) return;
+
+  document.getElementById('gapResult').innerHTML = '<div class="text-center py-4"><span class="spinner-border text-primary"></span><br><small class="text-muted mt-2 d-block">AI is analyzing skills...</small></div>';
+
+  const data = {
+    current_skills: e.skills || "",
+    target_role: role
+  };
+
+  const res = await fetch('/api/hr/skill-gap', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const r = await res.json();
+  
+  document.getElementById('gapResult').innerHTML = `
+  <div class="ai-result">
+    <div class="ai-result-title">Skill Gap Analysis: ${r.target_role}</div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="ai-highlight">${r.match_percentage}% Match</div>
+      <div class="progress-bar-wrap" style="height:12px;background:rgba(255,255,255,0.05)">
+        <div class="progress-fill" style="width:${r.match_percentage}%;background:linear-gradient(90deg, var(--accent3), var(--accent))"></div>
+      </div>
+    </div>
+    
+    <div class="row mt-3">
+      <div class="col-6">
+        <div style="font-weight:700;font-size:.8rem;color:var(--accent3)">MATCHED SKILLS</div>
+        <div style="font-size:.85rem;color:var(--muted)">${r.matched_skills.join(', ') || 'None'}</div>
+      </div>
+      <div class="col-6">
+        <div style="font-weight:700;font-size:.8rem;color:var(--accent2)">MISSING SKILLS</div>
+        <div style="font-size:.85rem;color:var(--muted)">${r.skill_gaps.join(', ') || 'None'}</div>
+      </div>
+    </div>
+    
+    <div class="mt-3">
+      <div style="font-weight:700;font-size:.8rem;color:var(--accent)">TRAINING RECOMMENDATIONS</div>
+      <div style="max-height:150px;overflow-y:auto;margin-top:.3rem">
+        ${r.training_recommendations.map(t => `
+          <div style="font-size:.8rem;padding:.3rem;border-bottom:1px solid var(--border)">
+            <strong>${t.skill}:</strong> ${t.course}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSkillGap() {
+  document.getElementById('pageTitle').textContent = 'Skill Gap Analysis';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-puzzle-piece" style="color:var(--accent)"></i>Gap Analyzer</div>
+        <div class="mb-2">
+          <label class="form-label-sm">Select Employee</label>
+          <select class="form-ctrl" id="gapEmp">
+            <option value="">— Choose Employee —</option>
+            ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Target Role</label>
+          <select class="form-ctrl" id="gapRole">
+            <option>Senior Developer</option>
+            <option>Tech Lead</option>
+            <option>Engineering Manager</option>
+            <option>Data Scientist</option>
+            <option>DevOps Engineer</option>
+          </select>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="runSkillGap()"><i class="fas fa-magic me-2"></i>Analyze Gap</button>
+        <div id="gapResult" style="margin-top:1.5rem"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Company-wide Skill Coverage</div>
+        <div class="chart-wrap" style="height:300px"><canvas id="skillCoverageChart"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+  
+  setTimeout(() => {
+    const allSkills = {};
+    employees.forEach(e => {
+      (e.skills || "").split(',').forEach(s => {
+        const skill = s.trim();
+        if(skill) allSkills[skill] = (allSkills[skill] || 0) + 1;
+      });
+    });
+    const sorted = Object.entries(allSkills).sort((a,b) => b[1]-a[1]).slice(0, 8);
+    createChart('skillCoverageChart', 'bar', sorted.map(x=>x[0]), [{
+      label: 'Employees with Skill',
+      data: sorted.map(x=>x[1]),
+      backgroundColor: 'rgba(108, 99, 255, 0.7)'
+    }], { indexAxis: 'y' });
+  }, 100);
+}
+
+function renderLeave() {
+  document.getElementById('pageTitle').textContent = 'Leave Management';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-calendar-times" style="color:var(--accent2)"></i>Pending Leave Requests</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>${leaveRequests.filter(r => r.status === 'Pending' || r.status.includes('TL')).map(r => {
+          const emp = employees.find(e => e.user_id === r.user_id) || {};
+          return `<tr>
+            <td><strong>${emp.name || 'Unknown'}</strong></td>
+            <td>${r.type}</td>
+            <td>${r.start_date}</td>
+            <td>${r.end_date}</td>
+            <td>${r.days}</td>
+            <td><small>${r.reason}</small></td>
+            <td><span class="badge-role ${r.status.includes('Approved') ? 'badge-completed' : 'badge-high'}">${r.status}</span></td>
+            <td>
+              <div style="display:flex;gap:.3rem">
+                <button class="btn-success-custom btn-sm" onclick="handleLeave('${r.id}', 'approve')">Approve</button>
+                <button class="btn-danger-custom btn-sm" onclick="handleLeave('${r.id}', 'reject')">Reject</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="8" class="text-center py-4">No pending requests</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+async function handleLeave(id, action) {
+  showConfirm(`${action.charAt(0).toUpperCase() + action.slice(1)} Leave`, `Are you sure you want to ${action} this leave request?`, async () => {
+    const url = action === 'approve' ? '/api/hr/leave-approve' : '/api/hr/leave-reject';
+    const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({request_id: id})});
+    if((await res.json()).success) {
+      showToast('Status Updated', `Leave request has been ${action}d.`, 'success');
+      await reloadLeave();
+      renderLeave();
+    }
+  }, action === 'reject' ? 'danger' : 'success', action === 'approve' ? 'check-circle' : 'times-circle');
+}
+
+function renderTeams() {
+  document.getElementById('pageTitle').textContent = 'Team Management';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <!-- Left Column: Forms -->
+    <div class="col-md-4">
+      <div class="panel mb-3">
+        <div class="panel-title"><i class="fas fa-plus-circle" style="color:var(--accent)"></i> Create New Team</div>
+        <div class="mb-2">
+          <label class="form-label-sm">TEAM NAME</label>
+          <input class="form-ctrl" id="newTeamName" placeholder="e.g. Frontend Ninjas">
+        </div>
+        <div class="mb-2">
+          <label class="form-label-sm">DESCRIPTION</label>
+          <textarea class="form-ctrl" id="newTeamDesc" rows="2" placeholder="Brief focus area"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label-sm">LEADER</label>
+          <select class="form-ctrl" id="newTeamLeader">
+            <option value="">— Select Leader —</option>
+            ${getTLCandidates().map(u => `<option value="${u.user_id}">${u.name} (TL) — ${u.role}</option>`).join('')}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">MEMBERS</label>
+          <div id="unallocatedMembersList" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:.5rem;background:rgba(0,0,0,0.1)">
+            <small class="text-muted">Loading...</small>
+          </div>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="handleCreateTeam()"><i class="fas fa-plus me-2"></i>Create Team</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-project-diagram" style="color:var(--accent3)"></i> Bulk Assign Project</div>
+        <div class="mb-2">
+          <label class="form-label-sm">PROJECT NAME</label>
+          <input class="form-ctrl" id="bulkProjName" placeholder="Global Project 2026">
+        </div>
+        <button class="btn-primary-custom w-100" style="background:var(--accent3)" onclick="showToast('Coming Soon', 'Bulk assignment feature will be available in v3.0.', 'info')"><i class="fas fa-tasks me-2"></i>Assign to ALL Teams</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Team Cards -->
+    <div class="col-md-8">
+      <div class="panel-title mb-3"><i class="fas fa-layer-group" style="color:var(--accent)"></i> Total Teams (${teamsDetailed.length})</div>
+      <div class="row g-3">
+        ${teamsDetailed.map(t => {
+          const membersCount = t.members ? t.members.length : 0;
+          const leaderName = t.leader_name || 'Not Assigned';
+          const projName = t.project_name || 'No Active Project';
+          const completion = t.project_completion || 0;
+          const avgProd = t.members && t.members.length ? Math.round(t.members.reduce((acc, m) => acc + (m.productivity_score || 0), 0) / t.members.length) : 0;
+          const avgQual = t.members && t.members.length ? (t.members.reduce((acc, m) => acc + (m.quality_rating || 0), 0) / t.members.length).toFixed(1) : 0;
+
+          return `
+          <div class="col-md-6">
+            <div class="panel h-100" style="position:relative">
+              <button class="btn-sm" onclick="handleDeleteTeam('${t.id}')" title="Delete Team" style="position:absolute;top:1rem;right:1rem;background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.2);color:var(--accent2);cursor:pointer;border-radius:4px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:0.3s" onmouseover="this.style.background='rgba(255,0,0,0.2)'" onmouseout="this.style.background='rgba(255,0,0,0.1)'"><i class="fas fa-trash"></i></button>
+              
+              <div class="text-center mb-1">
+                <div style="font-weight:700;font-size:1.1rem;color:var(--text)">${t.name}</div>
+              </div>
+              <div class="text-center mb-2">
+                <span class="badge-role info" style="font-size:0.7rem">${membersCount} Members</span>
+              </div>
+              <div class="text-muted mb-3 text-center" style="font-size:0.85rem">Leader: <span style="color:var(--text)">${leaderName} (TL)</span></div>
+              
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <div class="stat-card" style="padding:.5rem;text-align:center;background:rgba(255,255,255,0.03)">
+                    <div style="font-size:.7rem;color:var(--muted)">Productivity</div>
+                    <div style="font-weight:700;color:var(--text)">${avgProd}%</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="stat-card" style="padding:.5rem;text-align:center;background:rgba(255,255,255,0.03)">
+                    <div style="font-size:.7rem;color:var(--muted)">Quality</div>
+                    <div style="font-weight:700;color:var(--text)">${avgQual}/10</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:rgba(108,99,255,0.05);padding:.75rem;border-radius:8px;border:1px solid rgba(108,99,255,0.1)">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div style="font-size:0.75rem;font-weight:600">Active Projects: 1</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:var(--accent)">${completion}%</div>
+                </div>
+                <div style="font-size:0.8rem;margin-bottom:0.5rem;color:var(--text)">${projName}</div>
+                <div class="progress-bar-wrap" style="height:6px"><div class="progress-fill" style="width:${completion}%;background:var(--accent)"></div></div>
+              </div>
+
+              <button class="btn-primary-custom w-100 mt-3" onclick="showTeamDetails('${t.id}')" style="padding:.4rem;font-size:.85rem">Reports & Details</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+  loadUnallocatedForSidebar();
+}
+
+async function loadUnallocatedForSidebar() {
+  const res = await fetch('/api/hr/unallocated-members');
+  const unallocated = await res.json();
+  const list = document.getElementById('unallocatedMembersList');
+  if(!unallocated || unallocated.length === 0) {
+    list.innerHTML = '<p class="text-center text-muted" style="font-size:.75rem;margin-top:.5rem">All allocated</p>';
+    return;
+  }
+  list.innerHTML = unallocated.map(u => `
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <input type="checkbox" name="sidebar_member" value="${u.user_id}" id="chk_${u.user_id}">
+      <label for="chk_${u.user_id}" style="font-size:.8rem;margin:0;cursor:pointer">${u.name} <small class="text-muted">(${u.role})</small></label>
+    </div>
+  `).join('');
+}
+
+async function handleCreateTeam() {
+  const name = document.getElementById('newTeamName').value;
+  const desc = document.getElementById('newTeamDesc').value;
+  const leader = document.getElementById('newTeamLeader').value;
+  const members = Array.from(document.querySelectorAll('input[name="sidebar_member"]:checked')).map(cb => cb.value);
+  
+  if(!name || !leader) {
+    showToast('Missing Info', "Please enter a team name and select a leader.", 'warning');
+    return;
+  }
+  
+  showConfirm('Create Team', `Confirm creation of team "${name}"?`, async () => {
+    const res = await fetch('/api/hr/teams/create', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, description:desc, leader_id:leader, member_ids:members})
+    });
+    
+    if((await res.json()).success) {
+      showToast('Team Created', `Team "${name}" has been established.`, 'success');
+      await reloadTeams();
+      renderTeams();
+    }
+  });
+}
+
+async function handleDeleteTeam(tid) {
+  showConfirm('Delete Team', "Are you sure you want to delete this team? This action will unallocate all members.", async () => {
+    const res = await fetch('/api/hr/teams/delete', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({team_id: tid})
+    });
+    if((await res.json()).success) {
+      showToast('Team Deleted', 'The team has been removed from the system.', 'success');
+      await reloadTeams();
+      renderTeams();
+    }
+  }, 'danger', 'trash-alt');
+}
+
+function showTeamDetails(tid) {
+  const t = teamsDetailed.find(x => x.id === tid);
+  if(!t) return;
+  
+  const membersCount = t.members ? t.members.length : (t.member_ids ? t.member_ids.length : 0);
+  const avgProd = t.members && t.members.length ? Math.round(t.members.reduce((acc, m) => acc + (m.productivity_score || 0), 0) / t.members.length) : 0;
+  
+  document.getElementById('teamDetailsBody').innerHTML = `
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="panel">
+          <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Team Information</div>
+          <h4 style="margin: .5rem 0">${t.name}</h4>
+          <p class="text-muted" style="font-size:.85rem">${t.description || 'No description provided'}</p>
+          <div class="mt-3">
+            <div style="font-size:.75rem;color:var(--muted)">Leader</div>
+            <div style="font-weight:700">${t.leader_name}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="panel">
+          <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Active Project</div>
+          <h5 style="margin: .5rem 0">${t.project_name || 'No active project'}</h5>
+          <div class="d-flex justify-content-between align-items-center mb-1 mt-2">
+            <span style="font-size:.75rem;color:var(--muted)">Completion</span>
+            <span style="font-weight:700;color:var(--accent)">${t.project_completion || 0}%</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-fill" style="width:${t.project_completion || 0}%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="panel">
+          <div class="panel-title">Team Members (${membersCount})</div>
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Role</th><th>Productivity</th><th>Quality</th></tr></thead>
+            <tbody>
+              ${t.members && t.members.length ? t.members.map(m => `
+                <tr>
+                  <td><strong>${m.name}</strong></td>
+                  <td>${m.role}</td>
+                  <td><div style="display:flex;align-items:center;gap:.4rem"><div class="progress-bar-wrap" style="width:50px"><div class="progress-fill" style="width:${m.productivity_score || 0}%;background:var(--accent)"></div></div><small>${m.productivity_score || 0}%</small></div></td>
+                  <td>${m.quality_rating}/10</td>
+                </tr>
+              `).join('') : '<tr><td colspan="4" class="text-center text-muted">No members in this team</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+    
+  showModal('teamDetailsModal');
+}
+
+function renderTeamAnalytics() {
+  document.getElementById('pageTitle').textContent = 'Team Analytics';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-12">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Team Productivity Comparison</div>
+        <div class="chart-wrap" style="height:350px"><canvas id="teamProdChart"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+  
+  setTimeout(() => {
+    const labels = teamsDetailed.map(t => t.name);
+    const data = teamsDetailed.map(t => {
+      if(!t.members.length) return 0;
+      return Math.round(t.members.reduce((acc, m) => acc + m.productivity_score, 0) / t.members.length);
+    });
+    createChart('teamProdChart', 'bar', labels, [{
+      label: 'Avg Productivity %',
+      data: data,
+      backgroundColor: 'rgba(67, 233, 123, 0.7)'
+    }]);
+  }, 100);
+}
+
+function renderFreshers() {
+  document.getElementById('pageTitle').textContent = 'Freshers & New Talent Pipeline';
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  
+  const freshers = employees.filter(e => {
+    const joinDate = new Date(e.joining_date);
+    const isHR = (e.role || '').toLowerCase().includes('hr');
+    const isNewJoin = joinDate > ninetyDaysAgo;
+    const isFresher = (e.experience !== undefined && e.experience < 2);
+    return (isNewJoin || isFresher) && !isHR;
+  });
+
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-user-graduate" style="color:var(--accent)"></i>Freshers & New Joins Tracking (${freshers.length})</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>Joining Date</th><th>Exp</th><th>Skills</th><th>Performance</th><th>Status</th></tr></thead>
+        <tbody>${freshers.length > 0 ? freshers.map(f => {
+          const p = performanceAll.find(x => x.user_id === f.user_id) || {};
+          const isNew = new Date(f.joining_date) > ninetyDaysAgo;
+          return `<tr>
+            <td><strong>${f.name}</strong> ${isNew ? '<span class="badge-role badge-inprogress" style="font-size:0.6rem;padding:0.1rem 0.4rem">NEW</span>' : ''}</td>
+            <td>${f.joining_date}</td>
+            <td>${f.experience}y</td>
+            <td><small>${f.skills || '—'}</small></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress-bar-wrap" style="width:100px"><div class="progress-fill" style="width:${p.productivity_score || 0}%;background:var(--accent)"></div></div>
+                <small>${p.productivity_score || 0}%</small>
+              </div>
+            </td>
+            <td><span class="badge-role ${isNew ? 'badge-pending' : 'badge-completed'}">${isNew ? 'Onboarding' : 'Active'}</span></td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="6" class="text-center py-4 text-muted">No freshers or recent joins found in the system.</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderATS() {
+  document.getElementById('pageTitle').textContent = 'ATS Analyzer';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-file-alt" style="color:var(--accent)"></i>Upload Resume</div>
+        <div class="mb-3">
+          <label class="form-label-sm">Select PDF/DOCX</label>
+          <div class="ats-upload-area" onclick="document.getElementById('atsFile').click()" style="border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;background:rgba(255,255,255,0.02);transition:0.3s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(108,99,255,0.05)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='rgba(255,255,255,0.02)'">
+            <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color:var(--accent)"></i>
+            <p style="margin:0;font-size:0.9rem">Click to upload resume</p>
+            <p class="text-muted" style="font-size:0.75rem;margin-top:0.5rem">Supports PDF and DOCX formats</p>
+            <input type="file" id="atsFile" accept=".pdf,.docx" style="display:none" onchange="updateATSFileName(this)">
+            <div id="atsFileName" class="mt-2 text-accent" style="font-size:0.85rem;font-weight:600"></div>
+          </div>
+        </div>
+        <button class="btn-primary-custom w-100" id="btnATS" onclick="uploadATS()">Analyze Resume</button>
+        <div id="atsStatus" class="mt-2 text-center"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div id="atsResultPanel" class="panel" style="display:none">
+        <div class="panel-title"><i class="fas fa-check-circle" style="color:var(--accent3)"></i>Analysis Result</div>
+        <div id="atsContent"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-history" style="color:var(--muted)"></i>Recent Scans</div>
+        <div id="atsHistory"><small class="text-muted">Loading history...</small></div>
+      </div>
+    </div>
+  </div>`;
+  loadATSHistory();
+}
+
+function updateATSFileName(input) {
+  const fileName = input.files[0] ? input.files[0].name : '';
+  document.getElementById('atsFileName').textContent = fileName;
+}
+
+async function loadATSHistory() {
+  try {
+    const res = await fetch('/api/hr/ats-history');
+    const history = await res.json();
+    const container = document.getElementById('atsHistory');
+    if(!history || history.length === 0) {
+      container.innerHTML = '<small class="text-muted">No recent scans</small>';
+      return;
+    }
+    container.innerHTML = history.reverse().slice(0, 10).map(h => `
+      <div class="notif-item info mb-2" style="padding:.5rem .75rem">
+        <i class="fas fa-file-pdf"></i>
+        <div style="flex:1">
+          <div class="d-flex justify-content-between">
+            <strong>${h.filename.split('_').slice(2).join('_')}</strong>
+            <span class="badge-role badge-completed">${h.score}% Score</span>
+          </div>
+          <small class="text-muted">${new Date(h.uploaded_at).toLocaleString()}</small>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('atsHistory').innerHTML = '<small class="text-danger">Failed to load history</small>';
+  }
+}
+
+async function uploadATS() {
+  const file = document.getElementById('atsFile').files[0];
+  if(!file) return;
+  
+  const btn = document.getElementById('btnATS');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+  
+  const formData = new FormData();
+  formData.append('resume', file);
+  
+  try {
+    const res = await fetch('/api/hr/ats-upload', {method:'POST', body:formData});
+    const r = await res.json();
+    
+    document.getElementById('atsResultPanel').style.display = 'block';
+    document.getElementById('atsContent').innerHTML = `
+      <div class="ai-result">
+        <div class="ai-highlight">${r.ats_score}% ATS Score</div>
+        <div class="mt-3"><strong>Suggested Roles:</strong> ${r.role_suggestions.join(', ')}</div>
+        <div class="mt-2"><strong>Found Keywords:</strong> <small class="text-muted">${r.found_keywords.join(', ')}</small></div>
+        <div class="mt-3"><strong>Improvements:</strong></div>
+        <ul style="font-size:.85rem;padding-left:1.2rem">
+          ${r.improvements.map(i => `<li>${i}</li>`).join('')}
+        </ul>
+      </div>`;
+    showToast('Analysis Complete', `Resume analyzed with ${r.ats_score}% match score.`);
+    loadATSHistory();
+  } catch (err) {
+    showToast('Upload Failed', 'ATS analysis error.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Analyze Resume';
+  }
+}
+
+function renderReports() {
+  document.getElementById('pageTitle').textContent = 'Reports';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-file-download" style="color:var(--accent)"></i>Download Center</div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='/api/hr/reports/employees/csv'">
+          <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-file-csv"></i></div>
+          <div class="label">Employee List</div>
+          <div class="value" style="font-size:1rem">Download CSV</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='/api/hr/reports/performance/pdf'">
+          <div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-file-pdf"></i></div>
+          <div class="label">Performance Report</div>
+          <div class="value" style="font-size:1rem">Download PDF</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='/api/hr/reports/attendance/xlsx'">
+          <div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-file-excel"></i></div>
+          <div class="label">Attendance Data</div>
+          <div class="value" style="font-size:1rem">Download XLSX</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='/api/hr/reports/teams/csv'">
+          <div class="icon" style="background:rgba(86,204,242,.15);color:var(--accent)"><i class="fas fa-users-cog"></i></div>
+          <div class="label">Team Performance</div>
+          <div class="value" style="font-size:1rem">Download CSV</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='/api/hr/reports/projects/csv'">
+          <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent2)"><i class="fas fa-tasks"></i></div>
+          <div class="label">Project List</div>
+          <div class="value" style="font-size:1rem">Download CSV</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAlerts() {
+  document.getElementById('pageTitle').textContent = 'Alerts & Notify';
+  const lowPerf = performanceAll.filter(p => (p.productivity_score < 65 || p.task_completion < 60) && !alertedUserIds.has(p.user_id));
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel mb-3">
+        <div class="panel-title"><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Broadcast Notification</div>
+        <div class="mb-2">
+          <label class="form-label-sm">Target Audience</label>
+          <select class="form-ctrl" id="notifTarget" onchange="handleTargetChange(this.value)">
+            <option value="all">Everyone</option>
+            <option value="employee">All Employees</option>
+            <option value="teamleader">All Team Leaders</option>
+            <option value="specific_employee">Specific Employee</option>
+            <option value="specific_tl">Specific Team Leader</option>
+          </select>
+        </div>
+        <div class="mb-2" id="specificUserContainer" style="display:none">
+          <label class="form-label-sm" id="specificUserLabel">Select User</label>
+          <select class="form-ctrl" id="notifSpecificUser"></select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label-sm">Type</label>
+          <select class="form-ctrl" id="notifType">
+            <option value="info">Information (Blue)</option>
+            <option value="warning">Warning (Yellow)</option>
+            <option value="danger">Critical (Red)</option>
+            <option value="success">Success (Green)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Message</label>
+          <textarea class="form-ctrl" id="notifMsg" rows="3" placeholder="Enter message..."></textarea>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="sendNotif()"><i class="fas fa-bullhorn me-2"></i>Send Broadcast</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-envelope-open-text" style="color:var(--accent2)"></i>Manual HR Alert</div>
+        <div class="mb-2">
+          <label class="form-label-sm">Employee</label>
+          <select class="form-ctrl" id="manualAlertEmp">
+            <option value="">— Select Employee —</option>
+            ${employees.map(e => `<option value="${e.user_id}">${e.name} (${e.role})</option>`).join('')}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Alert Reason / Message</label>
+          <textarea class="form-ctrl" id="manualAlertMsg" rows="3" placeholder="Performance warning, meeting request, etc."></textarea>
+        </div>
+        <button class="btn-danger-custom w-100" onclick="sendManualAlert()"><i class="fas fa-exclamation-circle me-2"></i>Send Direct Alert</button>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="panel mb-3">
+        <div class="panel-title"><i class="fas fa-user-clock" style="color:var(--accent4)"></i>Performance Alerts (Auto-suggested)</div>
+        <div style="max-height:200px;overflow-y:auto">
+          <table class="tbl">
+            <thead><tr><th>Employee</th><th>Score</th><th>Action</th></tr></thead>
+            <tbody>${lowPerf.map(p => `
+              <tr>
+                <td><strong>${p.name}</strong><br><small class="text-muted">Productivity: ${p.productivity_score}%</small></td>
+                <td><span class="badge-role badge-high">${p.productivity_score}%</span></td>
+                <td><button class="btn-sm btn-primary-custom" onclick="prepManualAlert('${p.user_id}', '${p.name}')">Send Alert</button></td>
+              </tr>`).join('') || '<tr><td colspan="3" class="text-center py-4">No low performance detected</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-history" style="color:var(--muted)"></i>Recent Communications</div>
+        <div id="recentNotifs" style="max-height:300px;overflow-y:auto">
+          <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  loadRecentNotifs();
+}
+
+function prepManualAlert(uid, name) {
+  document.getElementById('manualAlertEmp').value = uid;
+  document.getElementById('manualAlertMsg').value = `Performance Review: Your recent productivity score is ${performanceAll.find(p=>p.user_id===uid).productivity_score}%. Please schedule a meeting with HR.`;
+  document.getElementById('manualAlertEmp').scrollIntoView({behavior:'smooth'});
+}
+
+async function sendManualAlert() {
+  const uid = document.getElementById('manualAlertEmp').value;
+  const msg = document.getElementById('manualAlertMsg').value;
+  if(!uid || !msg) return showToast('Missing Info', 'Select employee and enter message.', 'warning');
+  
+  const emp = employees.find(e=>e.user_id===uid);
+  showConfirm('Send Real Email', `This will send a real email to ${emp.name} (${emp.user_id}) using the system SMTP settings. Continue?`, async () => {
+    const data = {
+      user_id: uid,
+      subject: 'HR Direct Alert - PulseHR',
+      body: msg
+    };
+    
+    const res = await fetch('/api/hr/send-manual-email', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify(data)
+    });
+    const r = await res.json();
+    
+    if(r.success) {
+      showToast('Email Sent', `Direct alert sent to ${emp.name}.`);
+      document.getElementById('manualAlertMsg').value = '';
+      alertedUserIds.add(uid);
+      renderAlerts();
+    } else {
+      showToast('Failed to Send', r.message || 'Check SMTP settings in Admin dashboard.', 'danger');
+    }
+  }, 'primary', 'paper-plane');
+}
+
+function handleTargetChange(val) {
+  const container = document.getElementById('specificUserContainer');
+  const label = document.getElementById('specificUserLabel');
+  const select = document.getElementById('notifSpecificUser');
+  
+  if (val === 'specific_employee' || val === 'specific_tl') {
+    container.style.display = 'block';
+    label.textContent = val === 'specific_employee' ? 'Select Employee' : 'Select Team Leader';
+    
+    let filtered = [];
+    if (val === 'specific_employee') {
+      filtered = employees.filter(e => e.role.toLowerCase().includes('engineer') || e.role.toLowerCase().includes('developer') || e.role.toLowerCase().includes('analyst') || e.role.toLowerCase().includes('qa'));
+    } else {
+      filtered = getTLCandidates();
+    }
+    
+    select.innerHTML = filtered.map(u => `<option value="${u.user_id}">${u.name} (${u.role})</option>`).join('');
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+async function loadRecentNotifs() {
+  const res = await fetch('/api/notifications');
+  const data = await res.json();
+  const notifs = data.notifications || [];
+  document.getElementById('recentNotifs').innerHTML = notifs.reverse().map(n => `
+    <div class="notif-item ${n.type} mb-2">
+      <i class="fas fa-${n.type==='danger'?'exclamation-circle':n.type==='warning'?'exclamation-triangle':n.type==='success'?'check-circle':'info-circle'}"></i>
+      <div>
+        <div class="d-flex justify-content-between">
+          <strong>${n.from}</strong>
+          <small class="text-muted">${new Date(n.time).toLocaleTimeString()}</small>
+        </div>
+        <div style="font-size:.85rem">${n.message}</div>
+      </div>
+    </div>
+  `).join('') || '<p class="text-center text-muted py-4">No recent notifications</p>';
+}
+
+async function sendNotif() {
+  const msg = document.getElementById('notifMsg').value;
+  if(!msg) return;
+  
+  const targetType = document.getElementById('notifTarget').value;
+  let finalTarget = targetType;
+  
+  if (targetType === 'specific_employee' || targetType === 'specific_tl') {
+    finalTarget = document.getElementById('notifSpecificUser').value;
+  }
+  
+  const data = {
+    message: msg,
+    type: document.getElementById('notifType').value,
+    target: finalTarget
+  };
+  
+  const res = await fetch('/api/hr/send-notification', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  if((await res.json()).success) {
+    document.getElementById('notifMsg').value = '';
+    loadRecentNotifs();
+  }
+}
+
+async function runPromotion() {
+  const data = {
+    user_id: document.getElementById('promEmp').value,
+    productivity_score: +document.getElementById('prom_prod').value,
+    attendance_pct: +document.getElementById('prom_att').value,
+    task_completion: +document.getElementById('prom_task').value,
+    experience: +document.getElementById('prom_exp').value,
+    projects_completed: +document.getElementById('prom_proj').value,
+    tl_score: +document.getElementById('prom_tl').value,
+    role: document.getElementById('prom_role').value
+  };
+  const res = await fetch('/api/hr/ai-promotion', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const r = await res.json();
+  document.getElementById('promResult').innerHTML = `
+  <div class="ai-result">
+    <div class="ai-result-title">Promotion Analysis</div>
+    <div class="ai-highlight">${r.eligibility_pct}% Eligible</div>
+    <div style="margin-top:.5rem"><strong>Verdict:</strong> ${r.recommendation}</div>
+    <div style="margin-top:.5rem;font-size:.85rem;color:var(--muted)">
+      <strong>Next Role:</strong> ${r.recommended_role}<br>
+      <strong>Readiness:</strong> ${r.readiness_level}<br>
+      <strong>Required Skills:</strong> ${r.required_skills.join(', ')}
+    </div>
+  </div>`;
+}
+
+function fillPromForm(uid) {
+  const p = performanceAll.find(x => x.user_id === uid);
+  const e = employees.find(x => x.user_id === uid);
+  if(!p || !e) return;
+  document.getElementById('prom_prod').value = p.productivity_score;
+  document.getElementById('prom_att').value = p.attendance_pct;
+  document.getElementById('prom_task').value = p.task_completion;
+  document.getElementById('prom_exp').value = e.experience || 0;
+  document.getElementById('prom_proj').value = e.projects_completed || 0;
+  document.getElementById('prom_tl').value = p.tl_score || 0;
+  document.getElementById('prom_role').value = e.role || '';
+}
+
+async function bulkPromoScan() {
+  document.getElementById('bulkResults').innerHTML = '<div class="spinner-border text-primary" role="status"></div> Scanning...';
+  // Mocking bulk scan for now
+  setTimeout(() => {
+    const eligible = employees.filter(e => e.experience > 2).slice(0, 5);
+    document.getElementById('bulkResults').innerHTML = eligible.map(e => `
+      <div class="notif-item success mb-2">
+        <i class="fas fa-check-circle"></i>
+        <div><strong>${e.name}</strong> (${e.role})<br><small>High eligibility based on experience and performance</small></div>
+      </div>`).join('');
+  }, 1000);
+}
+
+function renderAIPerformance() {
+  document.getElementById('pageTitle').textContent = 'AI Performance & Promotion Module';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-robot" style="color:var(--accent)"></i> AI Performance Analysis</div>
+        <div class="mb-3">
+          <label class="form-label-sm">Select Employee for Analysis</label>
+          <select class="form-ctrl" id="aiEmpSelect" onchange="loadAIEmployeeData(this.value)">
+            <option value="">-- Select Employee --</option>
+            ${employees.map(e => `<option value="${e.user_id}">${e.name} (${e.role})</option>`).join('')}
+          </select>
+        </div>
+        
+        <div id="aiInputForm" style="display:none">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label-sm">Present Days</label>
+              <input type="number" class="form-ctrl" id="aiPresent" value="20" min="0" max="22">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Total Days</label>
+              <input type="number" class="form-ctrl" id="aiTotal" value="22" readonly>
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Completed Tasks</label>
+              <input type="number" class="form-ctrl" id="aiTasksComp" value="8">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Assigned Tasks</label>
+              <input type="number" class="form-ctrl" id="aiTasksTotal" value="10">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Bug Rate (%)</label>
+              <input type="number" class="form-ctrl" id="aiBugRate" value="5">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Rework Rate (%)</label>
+              <input type="number" class="form-ctrl" id="aiReworkRate" value="2">
+            </div>
+            <div class="col-12">
+              <label class="form-label-sm">Peer Review Score (0-100)</label>
+              <input type="number" class="form-ctrl" id="aiPeerScore" value="85">
+            </div>
+          </div>
+          <button class="btn-primary-custom w-100 mt-3" onclick="runFullAIAnalysis()"><i class="fas fa-magic me-2"></i>Run AI Analysis</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div id="aiResultPlaceholder" class="panel text-center py-5" style="border: 2px dashed var(--border);">
+        <i class="fas fa-microchip fa-3x mb-3 text-muted"></i>
+        <h5 class="text-muted">Select an employee and click "Run AI Analysis" to see predictions</h5>
+      </div>
+      
+      <div id="aiResultsArea" style="display:none">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="panel h-100">
+              <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent3)"></i> Productivity Metrics</div>
+              <div id="aiMetricsDisplay"></div>
+              <div class="chart-wrap mt-3" style="height:200px"><canvas id="aiMetricsChart"></canvas></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="panel h-100">
+              <div class="panel-title"><i class="fas fa-brain" style="color:var(--accent)"></i> Performance Prediction</div>
+              <div class="ai-result">
+                <div class="ai-result-title">Predicted Performance Level</div>
+                <div class="ai-highlight" id="aiPredLevel">Excellent</div>
+                <div class="mt-2">
+                  <span class="text-muted" style="font-size:0.8rem">Confidence Score:</span>
+                  <span style="font-weight:700;color:var(--accent)" id="aiPredProb">92%</span>
+                </div>
+              </div>
+              
+              <div class="ai-result mt-3" style="border-left: 4px solid var(--accent3)">
+                <div class="ai-result-title">Promotion Recommendation</div>
+                <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;" id="aiPromoStatus">Recommended</div>
+                <p class="text-muted mt-1" style="font-size:0.75rem" id="aiPromoReason">Meets all criteria for promotion including productivity, attendance, and experience.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function loadAIEmployeeData(uid) {
+  if(!uid) {
+    document.getElementById('aiInputForm').style.display = 'none';
+    return;
+  }
+  
+  const res = await fetch(`/api/ai/employee-data?user_id=${uid}`);
+  const r = await res.json();
+  
+  if(r.success) {
+    document.getElementById('aiInputForm').style.display = 'block';
+    if(r.performance) {
+      document.getElementById('aiPresent').value = Math.round(r.performance.attendance_pct * 0.22 / 100);
+      document.getElementById('aiTasksComp').value = Math.round(r.performance.task_completion / 10);
+      document.getElementById('aiPeerScore').value = r.performance.satisfaction || 85;
+    }
+  }
+}
+
+async function runFullAIAnalysis() {
+  const uid = document.getElementById('aiEmpSelect').value;
+  const rawData = {
+    present_days: parseFloat(document.getElementById('aiPresent').value),
+    total_working_days: parseFloat(document.getElementById('aiTotal').value),
+    completed_tasks: parseFloat(document.getElementById('aiTasksComp').value),
+    assigned_tasks: parseFloat(document.getElementById('aiTasksTotal').value),
+    bug_rate: parseFloat(document.getElementById('aiBugRate').value),
+    rework_rate: parseFloat(document.getElementById('aiReworkRate').value),
+    peer_review_score: parseFloat(document.getElementById('aiPeerScore').value)
+  };
+  
+  const res1 = await fetch('/api/ai/productivity-score', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(rawData)
+  });
+  const r1 = await res1.json();
+  const metrics = r1.metrics;
+  
+  const emp = employees.find(e => e.user_id === uid);
+  const perf = performanceAll.find(p => p.user_id === uid) || {};
+  
+  const res2 = await fetch('/api/ai/performance-prediction', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      metrics: metrics,
+      manager_rating: perf.tl_score || 3,
+      experience_years: emp.experience || 1
+    })
+  });
+  const r2 = await res2.json();
+  
+  const res3 = await fetch('/api/ai/promotion-recommendation', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      productivity_score: metrics.productivity_score,
+      attendance_score: metrics.attendance_score,
+      experience_years: emp.experience || 1,
+      manager_rating: perf.tl_score || 3
+    })
+  });
+  const r3 = await res3.json();
+  
+  document.getElementById('aiResultPlaceholder').style.display = 'none';
+  document.getElementById('aiResultsArea').style.display = 'block';
+  
+  document.getElementById('aiPredLevel').textContent = r2.predicted_performance;
+  document.getElementById('aiPredProb').textContent = r2.probability + '%';
+  document.getElementById('aiPromoStatus').textContent = r3.promotion_status;
+  
+  if(r3.promotion_status === 'Recommended') {
+    document.getElementById('aiPromoStatus').style.color = 'var(--accent3)';
+    document.getElementById('aiPromoReason').textContent = 'Candidate meets all weighted criteria for career advancement.';
+  } else {
+    document.getElementById('aiPromoStatus').style.color = 'var(--accent2)';
+    document.getElementById('aiPromoReason').textContent = 'Candidate does not yet meet all threshold requirements for promotion.';
+  }
+  
+  document.getElementById('aiMetricsDisplay').innerHTML = `
+    <div class="row g-2 mt-2">
+      <div class="col-6">
+        <div class="text-muted" style="font-size:0.7rem">Productivity Score</div>
+        <div style="font-weight:700;font-size:1.2rem;color:var(--accent)">${metrics.productivity_score}%</div>
+      </div>
+      <div class="col-6">
+        <div class="text-muted" style="font-size:0.7rem">Attendance Score</div>
+        <div style="font-weight:700;font-size:1.2rem;color:var(--accent3)">${metrics.attendance_score}%</div>
+      </div>
+    </div>`;
+    
+  setTimeout(() => {
+    createChart('aiMetricsChart', 'radar', ['Task Completion', 'Attendance', 'Quality', 'Peer Review'], [{
+      label: emp.name,
+      data: [metrics.task_completion_rate, metrics.attendance_score, metrics.quality_score, metrics.peer_review_score],
+      backgroundColor: 'rgba(108, 99, 255, 0.2)',
+      borderColor: 'var(--accent)',
+      pointBackgroundColor: 'var(--accent)'
+    }], {
+      scales: {
+        r: { min: 0, max: 100, ticks: { display: false } }
+      }
+    });
+  }, 100);
+}
+
+init();
+</script>
+{% endblock %}

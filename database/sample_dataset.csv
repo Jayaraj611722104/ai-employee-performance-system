@@ -1,0 +1,18 @@
+employee_id,name,department,role,experience_years,productivity_score,attendance_pct,task_completion,quality_rating,tl_score,projects_completed,satisfaction,salary,status
+EMP001,Alice Johnson,Engineering,Senior Developer,5,88,96,90,9,9,18,85,82000,Active
+EMP002,Bob Williams,Engineering,Software Engineer,4,75,89,78,7,7,12,72,75000,Active
+EMP003,Carol Davis,Quality,QA Engineer,3,82,94,85,8,8,9,80,68000,Active
+EMP004,Eric Thompson,Analytics,Data Analyst,3,71,87,72,7,6,8,65,72000,Active
+EMP005,Fiona Garcia,Engineering,Junior Developer,1,65,91,68,6,6,3,70,55000,Active
+EMP006,George Lee,Infrastructure,DevOps Engineer,6,92,98,95,9,10,20,90,88000,Active
+EMP007,Hannah Brown,Engineering,Full Stack Developer,4,84,93,86,8,8,15,82,78000,Active
+EMP008,Ivan Martinez,Engineering,Junior Developer,0,58,85,60,6,5,1,60,50000,Active
+EMP009,Julia Wilson,Analytics,Data Scientist,5,90,97,92,9,9,16,88,90000,Active
+EMP010,Kevin Anderson,Engineering,Web Developer,2,55,72,50,5,4,5,40,60000,Inactive
+TL001,David Chen,Engineering,Tech Lead,7,88,95,90,9,10,24,88,95000,Active
+EMP0014,RAJ,BE,software engineering,0,70,90,75,7,7,0,75,0.0,Active
+EMP0015,RAJJAYA,BE,software engineering,2,70,90,75,7,7,0,75,0.0,Active
+HR001,BHUVANESH,BE,software engineering,4,70,90,75,7,7,0,75,0.0,Active
+EMP0017,KAVEEN,BE,software engineering,0,70,90,75,7,7,0,75,0.0,Active
+TL002,JAYARAJ,BE,software engineering,0,70,90,75,7,7,0,75,0.0,Active
+EMP0019,BHARATHI,BE,software engineering,6,70,90,75,7,7,0,75,0.0,Active

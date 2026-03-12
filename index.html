@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PulseHR is an AI-powered HR and performance platform with dashboards for Admin, HR, Team Leaders, and Employees. Analytics, reports, and smart alerts.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="/">
+  <meta property="og:title" content="PulseHR • AI Performance Platform">
+  <meta property="og:description" content="AI-powered performance insights, HR analytics, and smart alerts in a modern UI.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PulseHR",
+    "url": "/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "/search?q={query}",
+      "query-input": "required name=query"
+    }
+  }
+  </script>
+  <title>PulseHR • AI Performance Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#0f0f14;--surface:#17171f;--card:#1e1e2a;--border:#2a2a38;
+      --accent:#6c63ff;--accent2:#ff6584;--text:#e8e8f0;--muted:#7a7a9a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+    .brand{display:flex;align-items:center;gap:.75rem}
+    .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff}
+    .brand h1{margin:0;font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero{padding:4rem 1.5rem;display:flex;align-items:center;justify-content:center}
+    .hero-inner{max-width:900px;text-align:center}
+    .title{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;margin-bottom:.75rem}
+    .subtitle{color:var(--muted);font-size:1rem;margin-bottom:1.5rem}
+    .cta-wrap{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+    .btn-primary-custom{background:linear-gradient(135deg,var(--accent),#5a52d5);border:none;color:#fff;padding:.65rem 1.2rem;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.65rem 1.2rem;border-radius:10px;font-weight:600;cursor:pointer}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.25rem}
+    .feat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:left}
+    .feat h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin:0 0 .4rem}
+    .feat p{color:var(--muted);font-size:.92rem;margin:0}
+    .footer{padding:1.5rem;color:var(--muted);text-align:center;border-top:1px solid var(--border);background:var(--surface);margin-top:3rem}
+    a{text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"><i class="fas fa-brain"></i></div>
+      <h1>PulseHR</h1>
+    </div>
+    <div>
+      <a class="btn-secondary" href="/docs"><i class="fa fa-book"></i> Docs</a>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="title">AI-Powered Performance & HR Insights</div>
+      <p class="subtitle">Unified dashboards for HR, Team Leaders, and Employees. Analytics, reports, and smart alerts in a modern UI.</p>
+      <div class="cta-wrap">
+        <a class="btn-primary-custom" href="/login"><i class="fa fa-right-to-bracket"></i> Go to Login</a>
+        <a class="btn-secondary" href="/api-status"><i class="fa fa-wave-square"></i> Check API Status</a>
+      </div>
+
+      <div class="features">
+        <div class="feat">
+          <h3><i class="fa fa-chart-line"></i> Real-time Analytics</h3>
+          <p>KPIs and trends with beautiful charts and rich filters.</p>
+        </div>
+        <div class="feat">
+          <h3><i class="fa fa-shield-halved"></i> Role-based Access</h3>
+          <p>HR, TL, Employee views secured and tailored.</p>
+        </div>
+        <div class="feat">
+          <h3><i class="fa fa-robot"></i> Smart Reports</h3>
+          <p>AI-assisted summaries and export-ready insights.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    © <span id="y"></span> PulseHR • All rights reserved
+  </div>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — PulseHR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f0f14;--surface:#17171f;--card:#1e1e2a;--border:#2a2a38;--accent:#6c63ff;--accent2:#ff6584;--text:#e8e8f0;--muted:#7a7a9a}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.25rem}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;width:100%;max-width:420px;text-align:center}
+    .title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin:.5rem 0}
+    .sub{color:var(--muted);font-size:.95rem;margin-top:.5rem}
+    .icon{font-size:3rem;color:var(--accent2);margin-bottom:.5rem}
+    .btn{margin-top:1rem;display:inline-block;background:linear-gradient(135deg,var(--accent),#5a52d5);color:#fff;text-decoration:none;padding:.6rem 1.1rem;border-radius:10px;font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📶✕</div>
+    <div class="title">No Internet Connection</div>
+    <div class="sub">Please check your network. PulseHR requires an active connection.</div>
+    <button class="btn" style="border:none;cursor:pointer" onclick="history.back() || location.reload()">Try Again</button>
+  </div>
+</body>
+</html>

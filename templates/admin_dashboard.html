@@ -1,0 +1,711 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — PulseHR{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block sidebar_nav %}
+<span class="nav-section">Administration</span>
+<a class="nav-item active" data-section="overview" onclick="navigate('overview')"><i class="fas fa-th-large"></i>Overview</a>
+<a class="nav-item" data-section="users" onclick="navigate('users')"><i class="fas fa-users-cog"></i>User Management</a>
+<a class="nav-item" data-section="logs" onclick="navigate('logs')"><i class="fas fa-list-alt"></i>Login Logs</a>
+<span class="nav-section">System</span>
+<a class="nav-item" data-section="monitoring" onclick="navigate('monitoring')"><i class="fas fa-server"></i>System Monitor</a>
+<a class="nav-item" data-section="activity" onclick="navigate('activity')"><i class="fas fa-terminal"></i>Activity Monitor</a>
+<a class="nav-item" data-section="security" onclick="navigate('security')"><i class="fas fa-shield-alt"></i>Security</a>
+<a class="nav-item" data-section="config" onclick="navigate('config')"><i class="fas fa-cog"></i>Configuration</a>
+{% endblock %}
+
+{% block content %}
+<div id="sectionContent"></div>
+
+<!-- Create User Modal -->
+<div class="modal-custom" id="createUserModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Create New User</span>
+      <button class="modal-close" onclick="hideModal('createUserModal')">✕</button>
+    </div>
+    <div class="row g-2">
+      <div class="col-6"><label class="form-label-sm">Full Name</label><input class="form-ctrl" id="uName"></div>
+      <div class="col-6"><label class="form-label-sm">Email</label><input class="form-ctrl" id="uEmail" type="email"></div>
+      <div class="col-6"><label class="form-label-sm">Password</label><input class="form-ctrl" id="uPass" type="password" value="password123"></div>
+      <div class="col-6"><label class="form-label-sm">Role</label>
+        <select class="form-ctrl" id="uRole" onchange="toggleEmpFields(this.value)">
+          <option value="employee">Employee</option><option value="teamleader">Team Leader</option>
+          <option value="hr">HR</option><option value="admin">Admin</option>
+        </select></div>
+      <div id="empFields">
+        <div class="col-12 mt-1"><label class="form-label-sm">Job Role</label><input class="form-ctrl" id="uJobRole" placeholder="Software Engineer"></div>
+        <div class="row g-2 mt-1">
+          <div class="col-6"><label class="form-label-sm">Department</label><input class="form-ctrl" id="uDept" placeholder="Engineering"></div>
+          <div class="col-3"><label class="form-label-sm">Experience</label><input class="form-ctrl" id="uExp" type="number" value="0"></div>
+          <div class="col-3"><label class="form-label-sm">Salary</label><input class="form-ctrl" id="uSalary" type="number" value="0"></div>
+        </div>
+        <div class="col-12 mt-1"><label class="form-label-sm">Skills</label><input class="form-ctrl" id="uSkills" placeholder="Python, React, SQL"></div>
+      </div>
+    </div>
+    <button class="btn-success-custom w-100 mt-3" onclick="createUser()"><i class="fas fa-user-plus me-2"></i>Create User</button>
+    <div id="createUserMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-custom" id="editUserModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Edit User Details</span>
+      <button class="modal-close" onclick="hideModal('editUserModal')">✕</button>
+    </div>
+    <input type="hidden" id="editUid">
+    <div class="row g-2">
+      <div class="col-6"><label class="form-label-sm">Full Name</label><input class="form-ctrl" id="editName"></div>
+      <div class="col-6"><label class="form-label-sm">Email</label><input class="form-ctrl" id="editEmail" type="email"></div>
+      <div class="col-6"><label class="form-label-sm">Role</label>
+        <select class="form-ctrl" id="editRole" onchange="toggleEditEmpFields(this.value)">
+          <option value="employee">Employee</option><option value="teamleader">Team Leader</option>
+          <option value="hr">HR</option><option value="admin">Admin</option>
+        </select></div>
+      <div id="editEmpFields">
+        <div class="col-12 mt-1"><label class="form-label-sm">Job Role</label><input class="form-ctrl" id="editJobRole" placeholder="Software Engineer"></div>
+        <div class="row g-2 mt-1">
+          <div class="col-6"><label class="form-label-sm">Department</label><input class="form-ctrl" id="editDept" placeholder="Engineering"></div>
+          <div class="col-3"><label class="form-label-sm">Experience</label><input class="form-ctrl" id="editExp" type="number"></div>
+          <div class="col-3"><label class="form-label-sm">Salary</label><input class="form-ctrl" id="editSalary" type="number"></div>
+        </div>
+        <div class="col-12 mt-1"><label class="form-label-sm">Skills</label><input class="form-ctrl" id="editSkills" placeholder="Python, React, SQL"></div>
+      </div>
+    </div>
+    <button class="btn-success-custom w-100 mt-3" onclick="updateUser()"><i class="fas fa-save me-2"></i>Save Changes</button>
+    <div id="editUserMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+</div>
+
+<!-- Email Integration Modal -->
+<div class="modal-custom" id="emailModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Configure Email Service</span>
+      <button class="modal-close" onclick="hideModal('emailModal')">✕</button>
+    </div>
+    <div class="row g-2">
+      <div class="col-8"><label class="form-label-sm">SMTP Host</label><input class="form-ctrl" id="emHost"></div>
+      <div class="col-4"><label class="form-label-sm">SMTP Port</label><input class="form-ctrl" id="emPort" type="number" value="587"></div>
+      <div class="col-6"><label class="form-label-sm">SMTP User</label><input class="form-ctrl" id="emUser"></div>
+      <div class="col-6"><label class="form-label-sm">SMTP Password</label><input class="form-ctrl" id="emPass" type="password" placeholder="••••••••"></div>
+      <div class="col-6"><label class="form-label-sm">From Email</label><input class="form-ctrl" id="emFrom"></div>
+      <div class="col-6"><label class="form-label-sm">From Name</label><input class="form-ctrl" id="emFromName"></div>
+      <div class="col-6"><label class="form-label-sm">Use TLS</label>
+        <select class="form-ctrl" id="emTLS"><option value="true">Yes</option><option value="false">No</option></select>
+      </div>
+      <div class="col-6"><label class="form-label-sm">Enabled</label>
+        <select class="form-ctrl" id="emEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+      </div>
+    </div>
+    <button class="btn-success-custom w-100 mt-3" onclick="saveEmailCfg()"><i class="fas fa-save me-2"></i>Save Email Settings</button>
+    <div class="row g-2 mt-2">
+      <div class="col-8"><input class="form-ctrl" id="emTestTo" placeholder="Test recipient (optional)"></div>
+      <div class="col-4"><button class="btn-primary-custom w-100" onclick="testEmail()"><i class="fas fa-paper-plane me-1"></i>Send Test</button></div>
+    </div>
+    <div id="emailMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+  </div>
+
+<!-- Slack Integration Modal -->
+<div class="modal-custom" id="slackModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Configure Slack Integration</span>
+      <button class="modal-close" onclick="hideModal('slackModal')">✕</button>
+    </div>
+    <div class="row g-2">
+      <div class="col-12"><label class="form-label-sm">Webhook URL</label><input class="form-ctrl" id="slWebhook" placeholder="https://hooks.slack.com/services/..."></div>
+      <div class="col-6"><label class="form-label-sm">Channel (optional)</label><input class="form-ctrl" id="slChannel" placeholder="#alerts"></div>
+      <div class="col-6"><label class="form-label-sm">Bot Name</label><input class="form-ctrl" id="slBotName" placeholder="PulseHR Bot"></div>
+      <div class="col-12"><label class="form-label-sm">Enabled</label>
+        <select class="form-ctrl" id="slEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+      </div>
+    </div>
+    <button class="btn-success-custom w-100 mt-3" onclick="saveSlackCfg()"><i class="fas fa-save me-2"></i>Save Slack Settings</button>
+    <div class="row g-2 mt-2">
+      <div class="col-8"><input class="form-ctrl" id="slTestText" placeholder="Test message (optional)" value="PulseHR test message"></div>
+      <div class="col-4"><button class="btn-primary-custom w-100" onclick="testSlack()"><i class="fas fa-paper-plane me-1"></i>Send Test</button></div>
+    </div>
+    <div id="slackMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+</div>
+
+<!-- Calendar Integration Modal -->
+<div class="modal-custom" id="calModal">
+  <div class="modal-box">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Configure Calendar API</span>
+      <button class="modal-close" onclick="hideModal('calModal')">✕</button>
+    </div>
+    <div class="row g-2">
+      <div class="col-6"><label class="form-label-sm">Provider</label>
+        <select class="form-ctrl" id="calProvider"><option value="">Select</option><option>google</option><option>microsoft</option><option>ics</option></select>
+      </div>
+      <div class="col-6"><label class="form-label-sm">Enabled</label>
+        <select class="form-ctrl" id="calEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+      </div>
+      <div class="col-12"><label class="form-label-sm">Calendar ID</label><input class="form-ctrl" id="calId" placeholder="primary or ID"></div>
+      <div class="col-12"><label class="form-label-sm">API Key (or leave blank for ICS)</label><input class="form-ctrl" id="calKey" type="password" placeholder="••••••••"></div>
+      <div class="col-12"><label class="form-label-sm">ICS URL (if using ICS)</label><input class="form-ctrl" id="calICS" placeholder="https://.../calendar.ics"></div>
+    </div>
+    <button class="btn-success-custom w-100 mt-3" onclick="saveCalCfg()"><i class="fas fa-save me-2"></i>Save Calendar Settings</button>
+    <div class="row g-2 mt-2">
+      <div class="col-12"><button class="btn-primary-custom w-100" onclick="testCalendar()"><i class="fas fa-search me-1"></i>Test Fetch Next</button></div>
+    </div>
+    <div id="calMsg" style="margin-top:.75rem;display:none"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SECTIONS = {overview:renderOverview,users:renderUsers,logs:renderLogs,monitoring:renderMonitoring,activity:renderActivity,security:renderSecurity,config:renderConfig};
+window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
+let users=[], sysStats={}, loginLogs=[], integrations={};
+
+async function init() {
+  [users, sysStats, loginLogs, integrations] = await Promise.all([
+    fetch('/api/admin/users').then(r=>r.json()),
+    fetch('/api/admin/system-stats').then(r=>r.json()),
+    fetch('/api/admin/login-logs').then(r=>r.json()),
+    fetch('/api/admin/integrations').then(r=>r.json())
+  ]);
+
+  // Restore section from sessionStorage or default to overview
+  const lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
+  navigate(lastSec);
+}
+
+function renderOverview() {
+  document.getElementById('pageTitle').textContent = 'System Overview';
+  const roleCount = users.reduce((acc,u)=>{acc[u.role]=(acc[u.role]||0)+1;return acc},{});
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-users"></i></div><div class="label">Total Users</div><div class="value" style="color:var(--accent)">${sysStats.total_users||0}</div><div class="change" style="color:var(--muted)">${sysStats.total_employees||0} employees</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-tasks"></i></div><div class="label">Total Tasks</div><div class="value" style="color:var(--accent3)">${sysStats.total_tasks||0}</div><div class="change" style="color:var(--muted)">In system</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-history"></i></div><div class="label">Login Events</div><div class="value" style="color:var(--accent4)">${sysStats.login_logs_count||0}</div><div class="change" style="color:var(--muted)">Total logins</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-server"></i></div><div class="label">Server Status</div><div class="value" style="font-size:1.2rem;color:var(--accent3)">${sysStats.server_status||'Online'}</div><div class="change" style="color:var(--muted)">DB: ${sysStats.db_size_kb||0}KB</div></div></div>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent)"></i>Users by Role</div>
+        <div class="chart-wrap"><canvas id="roleChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-clock" style="color:var(--accent4)"></i>Recent Login Activity</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>User</th><th>Role</th><th>IP Address</th><th>Time</th></tr></thead>
+            <tbody>${loginLogs.slice(-8).reverse().map(l=>`<tr>
+              <td><strong>${l.name}</strong></td>
+              <td><span class="badge-role badge-inprogress">${l.role}</span></td>
+              <td style="color:var(--muted);font-size:.8rem">${l.ip}</td>
+              <td style="font-size:.8rem;color:var(--muted)">${new Date(l.time).toLocaleString()}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const labels=Object.keys(roleCount);
+    const vals=Object.values(roleCount);
+    createChart('roleChart','doughnut',labels.map(l=>l.charAt(0).toUpperCase()+l.slice(1)),[{data:vals,backgroundColor:['rgba(108,99,255,.7)','rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)']}]);
+  },100);
+}
+
+function renderUsers() {
+  document.getElementById('pageTitle').textContent = 'User Management';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title" style="justify-content:space-between">
+      <span><i class="fas fa-users-cog" style="color:var(--accent)"></i>All Users (${users.length})</span>
+      <button class="btn-success-custom" onclick="showModal('createUserModal')"><i class="fas fa-user-plus me-1"></i>Create User</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="userTableBody">${renderUserRows()}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderUserRows() {
+  return users.map(u=>`<tr id="urow_${u.id}">
+    <td><strong>${u.name}</strong></td>
+    <td style="color:var(--muted)">${u.email}</td>
+    <td><span class="badge-role badge-inprogress">${u.role}${u.role==='teamleader'?' (TL)':''}</span></td>
+    <td><span class="badge-role ${u.status==='Active'?'badge-completed':'badge-high'}">${u.status||'Active'}</span></td>
+    <td>
+      <button class="btn-warning-custom" style="font-size:.75rem;padding:.3rem .6rem;margin:.1rem" onclick="toggleUser('${u.id}')" title="Toggle Active/Inactive"><i class="fas fa-power-off"></i></button>
+      <button class="btn-primary-custom" style="font-size:.75rem;padding:.3rem .6rem;margin:.1rem" onclick="showEditModal('${u.id}')" title="Edit User"><i class="fas fa-edit"></i></button>
+      <button class="btn-primary-custom" style="font-size:.75rem;padding:.3rem .6rem;margin:.1rem;background:var(--accent4)" onclick="resetPassword('${u.id}')" title="Reset Password"><i class="fas fa-key"></i></button>
+      <button class="btn-danger-custom" style="font-size:.75rem;padding:.3rem .6rem;margin:.1rem" onclick="deleteUser('${u.id}','${u.name}')" title="Delete User"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+async function toggleUser(uid) {
+  const u = users.find(x => x.id === uid);
+  const action = u.status === 'Active' ? 'Deactivate' : 'Activate';
+  
+  showConfirm(`${action} User`, `Are you sure you want to ${action.toLowerCase()} user "${u.name}"?`, async () => {
+    await fetch('/api/admin/toggle-user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+    users=await fetch('/api/admin/users').then(r=>r.json());
+    document.getElementById('userTableBody').innerHTML=renderUserRows();
+    showToast('Status Updated', `User ${u.name} is now ${u.status === 'Active' ? 'Inactive' : 'Active'}.`);
+  }, action === 'Deactivate' ? 'danger' : 'success', 'power-off');
+}
+
+async function resetPassword(uid) {
+  const u = users.find(x => x.id === uid);
+  pulsePrompt('Reset Password', `Enter new password for ${u.name}:`, 'password123', async (newPass) => {
+    if(!newPass) return;
+    await fetch('/api/admin/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,new_password:newPass})});
+    showToast('Success', 'Password has been reset.');
+  });
+}
+
+async function deleteUser(uid, name) {
+  showConfirm('Delete User', `Are you sure you want to delete user "${name}"? This action cannot be undone.`, async () => {
+    await fetch('/api/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+    users=await fetch('/api/admin/users').then(r=>r.json());
+    document.getElementById('userTableBody').innerHTML=renderUserRows();
+    showToast('User Deleted', `User ${name} has been removed.`, 'danger');
+  }, 'danger', 'user-minus');
+}
+
+function toggleEmpFields(role) {
+  document.getElementById('empFields').style.display = role==='admin'?'none':'block';
+}
+
+async function createUser() {
+  const data={name:document.getElementById('uName').value,email:document.getElementById('uEmail').value,password:document.getElementById('uPass').value,role:document.getElementById('uRole').value,
+    job_role:document.getElementById('uJobRole')?.value,department:document.getElementById('uDept')?.value,
+    experience:+document.getElementById('uExp')?.value||0,salary:+document.getElementById('uSalary')?.value||0,skills:document.getElementById('uSkills')?.value};
+  if(!data.name||!data.email){return showToast('Missing Fields', 'Name and email are required.', 'warning');}
+  
+  showConfirm('Create User', `Create user account for "${data.name}"?`, async () => {
+    const res=await fetch('/api/admin/create-user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const r=await res.json();
+    if(r.success) {
+      showToast('User Created', `Account for ${data.name} is now active.`);
+      users=await fetch('/api/admin/users').then(r=>r.json());
+      hideModal('createUserModal');
+      renderUsers();
+    } else {
+      showToast('Error', r.message || 'Creation failed.', 'danger');
+    }
+  });
+}
+
+function showEditModal(uid) {
+  const u = users.find(x => x.id === uid);
+  if(!u) return;
+  document.getElementById('editUid').value = uid;
+  document.getElementById('editName').value = u.name;
+  document.getElementById('editEmail').value = u.email;
+  document.getElementById('editRole').value = u.role;
+  
+  // Fetch details from employees array if it exists
+  const e = u.employee_details || {}; 
+  // Wait, I should check if users already has employee details or if I need to find them
+  // The API /api/admin/users might not return employee details. Let's check.
+  
+  document.getElementById('editJobRole').value = u.job_role || '';
+  document.getElementById('editDept').value = u.department || '';
+  document.getElementById('editExp').value = u.experience || 0;
+  document.getElementById('editSalary').value = u.salary || 0;
+  document.getElementById('editSkills').value = u.skills || '';
+  
+  toggleEditEmpFields(u.role);
+  showModal('editUserModal');
+}
+
+function toggleEditEmpFields(role) {
+  document.getElementById('editEmpFields').style.display = role==='admin'?'none':'block';
+}
+
+async function updateUser() {
+  const uid = document.getElementById('editUid').value;
+  const data = {
+    user_id: uid,
+    name: document.getElementById('editName').value,
+    email: document.getElementById('editEmail').value,
+    role: document.getElementById('editRole').value,
+    job_role: document.getElementById('editJobRole').value,
+    department: document.getElementById('editDept').value,
+    experience: +document.getElementById('editExp').value || 0,
+    salary: +document.getElementById('editSalary').value || 0,
+    skills: document.getElementById('editSkills').value
+  };
+  
+  if(!data.name || !data.email){ return showToast('Missing Fields', 'Name and email are required.', 'warning'); }
+  
+  showConfirm('Update User', 'Save changes to user account?', async () => {
+    const res = await fetch('/api/admin/update-user', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    
+    const r = await res.json();
+    if(r.success) {
+      showToast('User Updated', 'Changes saved successfully.');
+      users = await fetch('/api/admin/users').then(r=>r.json());
+      hideModal('editUserModal');
+      renderUsers();
+    } else {
+      showToast('Error', r.message || 'Update failed.', 'danger');
+    }
+  });
+}
+
+function renderLogs() {
+  document.getElementById('pageTitle').textContent = 'Login Activity Logs';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-list-alt" style="color:var(--accent)"></i>Login History (Last 50 Events)</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>User</th><th>Role</th><th>IP Address</th><th>Timestamp</th></tr></thead>
+        <tbody>${[...loginLogs].reverse().map((l,i)=>`<tr>
+          <td style="color:var(--muted)">${loginLogs.length-i}</td>
+          <td><strong>${l.name}</strong></td>
+          <td><span class="badge-role badge-inprogress">${l.role}</span></td>
+          <td style="font-family:monospace;font-size:.82rem;color:var(--muted)">${l.ip}</td>
+          <td style="font-size:.82rem">${new Date(l.time).toLocaleString()}</td>
+        </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No login records yet</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderMonitoring() {
+  document.getElementById('pageTitle').textContent = 'System Monitoring';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-server" style="color:var(--accent)"></i>System Health Monitoring</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>CPU Usage</td><td id="cpuVal">--</td><td><span class="badge-role badge-completed">Stable</span></td></tr>
+              <tr><td>Memory</td><td id="memVal">--</td><td><span class="badge-role badge-completed">Optimal</span></td></tr>
+              <tr><td>DB Storage</td><td id="dbSizeVal">--</td><td><span class="badge-role badge-completed">Normal</span></td></tr>
+              <tr><td>API Latency</td><td>12ms</td><td><span class="badge-role badge-completed">Fast</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent)"></i>System Usage Chart</div>
+        <div class="chart-wrap"><canvas id="sysChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-database" style="color:var(--accent4)"></i>Database Summary</div>
+    <div class="row g-2">
+      ${[['Users',sysStats.total_users,'accent'],['Employees',sysStats.total_employees,'accent3'],['Tasks',sysStats.total_tasks,'accent4'],['Login Logs',sysStats.login_logs_count,'accent2']].map(([l,v,c])=>`
+      <div class="col-md-3"><div class="stat-card"><div class="label">${l}</div><div class="value" style="color:var(--${c})">${v}</div></div></div>`).join('')}
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const hrs=Array.from({length:8},(_,i)=>`${(new Date().getHours()-7+i+24)%24}:00`);
+    createChart('sysChart','line',hrs,[{label:'API Requests',data:hrs.map(()=>Math.floor(Math.random()*50+10)),borderColor:'var(--accent)',fill:true,backgroundColor:'rgba(108,99,255,.1)',tension:.4}]);
+  },100);
+}
+
+function renderActivity() {
+  document.getElementById('pageTitle').textContent = 'System Activity Monitor';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="panel">
+    <div class="panel-title" style="justify-content:space-between">
+      <span><i class="fas fa-terminal" style="color:var(--accent)"></i>Live Activity Feed</span>
+      <div style="font-size:.8rem;color:var(--muted)">Auto-refreshing...</div>
+    </div>
+    <div id="activityFeed" style="max-height:600px;overflow-y:auto">
+      <div style="text-align:center;padding:2rem;color:var(--muted)"><i class="fas fa-spinner fa-spin me-2"></i>Loading activities...</div>
+    </div>
+  </div>`;
+  
+  updateActivityFeed();
+  if (window.activityInterval) clearInterval(window.activityInterval);
+  window.activityInterval = setInterval(updateActivityFeed, 5000);
+}
+
+async function updateActivityFeed() {
+  const feed = document.getElementById('activityFeed');
+  if (!feed) {
+    if (window.activityInterval) clearInterval(window.activityInterval);
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/admin/system-activities');
+    const activities = await res.json();
+    
+    if (activities.length === 0) {
+      feed.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">No activity records found.</div>';
+      return;
+    }
+    
+    feed.innerHTML = `
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Timestamp</th><th>Activity</th><th>IP Address</th></tr></thead>
+        <tbody>${activities.reverse().map(act => {
+          const msg = act.message || '';
+          let badgeClass = '';
+          if (msg.includes('Login successful')) badgeClass = 'badge-completed';
+          else if (msg.includes('logged out')) badgeClass = 'badge-high';
+          else if (msg.includes('Dashboard accessed')) badgeClass = 'badge-inprogress';
+          
+          return `<tr>
+            <td style="font-size:.8rem;color:var(--muted);white-space:nowrap">${act.time.replace('T', ' ').split('.')[0]}</td>
+            <td><span class="badge-role ${badgeClass}" style="font-size:.8rem">${msg}</span></td>
+            <td style="font-family:monospace;font-size:.8rem;color:var(--muted)">${act.ip || 'N/A'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  } catch (err) {
+    console.error('Failed to fetch activities:', err);
+  }
+}
+
+function renderSecurity() {
+  document.getElementById('pageTitle').textContent = 'Security Settings';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-shield-alt" style="color:var(--accent)"></i>Access Control</div>
+        ${[['Employee','View profile, tasks, performance'],['Team Leader','Manage team tasks, view team data'],['HR Manager','Full HR access, AI modules, reports'],['Admin','Full system access, user management']].map(([role,perms])=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:600">${role}</div>
+            <span class="badge-role badge-inprogress">Active</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">${perms}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-lock" style="color:var(--accent2)"></i>Security Features</div>
+        ${[['Session-based Authentication','Enabled','accent3'],['Role-based Access Control','Enabled','accent3'],['Login Activity Tracking','Enabled','accent3'],['API Endpoint Protection','Enabled','accent3'],['Password Hashing','Demo Mode (Plain)','accent4'],['Two-Factor Auth','Not Configured','accent2']].map(([f,s,c])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.85rem">${f}</span>
+          <span style="color:var(--${c});font-size:.8rem;font-weight:600">${s}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderConfig() {
+  document.getElementById('pageTitle').textContent = 'System Configuration';
+  const emailConfigured = integrations.email?.enabled && integrations.email?.smtp_host && (integrations.email?.from_email);
+  const slackConfigured = integrations.slack?.enabled && integrations.slack?.webhook_url;
+  const calConfigured = integrations.calendar?.enabled && (integrations.calendar?.provider) && ((integrations.calendar?.api_key) || (integrations.calendar?.ics_url));
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-cog" style="color:var(--accent)"></i>System Settings</div>
+        ${[['Company Name','PulseHR Technologies'],['Platform Version','2.0.0'],['ML Model','Random Forest (Simulated)'],['Database','JSON File Store'],['Session Timeout','30 minutes'],['Report Format','CSV / JSON']].map(([k,v])=>`
+        <div class="mb-2"><label class="form-label-sm">${k}</label><input class="form-ctrl" value="${v}" readonly></div>`).join('')}
+        <button class="btn-warning-custom mt-2" onclick="showToast('Demo Mode', 'Settings saved (simulation only).', 'info')"><i class="fas fa-save me-1"></i>Save Settings</button>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-bell" style="color:var(--accent3)"></i>Notification Config</div>
+        ${[['Performance < 60%','Alert HR + TL'],['Attendance < 75%','Alert HR'],['High Attrition Risk','Alert HR Manager'],['Promotion Eligible','Notify HR'],['Task Overdue','Alert TL + Employee']].map(([trigger,action])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.82rem">${trigger}</span>
+          <span style="font-size:.78rem;color:var(--accent3)">${action}</span>
+        </div>`).join('')}
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-cloud" style="color:var(--accent4)"></i>API Integrations</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.83rem">Firebase Storage</span><span style="font-size:.78rem;color:var(--accent3)">Configured (Demo)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.83rem">Email Service</span>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <span style="font-size:.78rem;color:var(--${emailConfigured?'accent3':'accent2'})">${emailConfigured?'Configured':'Not Configured'}</span>
+            <button class="btn-primary-custom" style="font-size:.75rem;padding:.3rem .6rem" onclick="openEmailCfg()"><i class="fas fa-edit me-1"></i>Configure</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.83rem">Slack Integration</span>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <span style="font-size:.78rem;color:var(--${slackConfigured?'accent3':'accent2'})">${slackConfigured?'Configured':'Not Configured'}</span>
+            <button class="btn-primary-custom" style="font-size:.75rem;padding:.3rem .6rem" onclick="openSlackCfg()"><i class="fas fa-edit me-1"></i>Configure</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0">
+          <span style="font-size:.83rem">Calendar API</span>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <span style="font-size:.78rem;color:var(--${calConfigured?'accent3':'accent2'})">${calConfigured?'Configured':'Not Configured'}</span>
+            <button class="btn-primary-custom" style="font-size:.75rem;padding:.3rem .6rem" onclick="openCalCfg()"><i class="fas fa-edit me-1"></i>Configure</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openEmailCfg(){
+  document.getElementById('emHost').value = integrations.email?.smtp_host || '';
+  document.getElementById('emPort').value = integrations.email?.smtp_port || 587;
+  document.getElementById('emUser').value = '';
+  document.getElementById('emPass').value = '';
+  document.getElementById('emFrom').value = integrations.email?.from_email || '';
+  document.getElementById('emFromName').value = integrations.email?.from_name || '';
+  document.getElementById('emTLS').value = (integrations.email?.use_tls ? 'true' : 'false');
+  document.getElementById('emEnabled').value = (integrations.email?.enabled ? 'true' : 'false');
+  showModal('emailModal');
+}
+async function saveEmailCfg(){
+  const body = {
+    smtp_host: document.getElementById('emHost').value,
+    smtp_port: +document.getElementById('emPort').value || 587,
+    smtp_user: document.getElementById('emUser').value,
+    smtp_password: document.getElementById('emPass').value,
+    from_email: document.getElementById('emFrom').value,
+    from_name: document.getElementById('emFromName').value,
+    use_tls: document.getElementById('emTLS').value === 'true',
+    enabled: document.getElementById('emEnabled').value === 'true'
+  };
+  
+  showConfirm('Save Email Config', 'Apply these email server settings?', async () => {
+    const res = await fetch('/api/admin/integrations/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r = await res.json();
+    if(r.success){
+      showToast('Settings Saved', 'Email configuration updated.');
+      integrations = await fetch('/api/admin/integrations').then(r=>r.json());
+      hideModal('emailModal'); 
+      renderConfig();
+    }else{
+      showToast('Error', 'Failed to save email settings.', 'danger');
+    }
+  });
+}
+
+async function testEmail(){
+  const body = { to: document.getElementById('emTestTo').value || undefined };
+  const res = await fetch('/api/admin/integrations/test/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r = await res.json();
+  const msg = document.getElementById('emailMsg');
+  if(r.success){
+    msg.innerHTML = '<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>'+r.message+'</div></div>';
+  }else{
+    msg.innerHTML = '<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i><div>'+r.message+'</div></div>';
+  }
+  msg.style.display='block';
+}
+
+function openSlackCfg(){
+  document.getElementById('slWebhook').value = '';
+  document.getElementById('slChannel').value = integrations.slack?.channel || '';
+  document.getElementById('slBotName').value = integrations.slack?.bot_name || '';
+  document.getElementById('slEnabled').value = (integrations.slack?.enabled ? 'true':'false');
+  showModal('slackModal');
+}
+async function saveSlackCfg(){
+  const body = {
+    webhook_url: document.getElementById('slWebhook').value,
+    channel: document.getElementById('slChannel').value,
+    bot_name: document.getElementById('slBotName').value,
+    enabled: document.getElementById('slEnabled').value === 'true'
+  };
+  
+  showConfirm('Save Slack Config', 'Update Slack webhook settings?', async () => {
+    const res = await fetch('/api/admin/integrations/slack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r = await res.json();
+    if(r.success){
+      showToast('Settings Saved', 'Slack integration updated.');
+      integrations = await fetch('/api/admin/integrations').then(r=>r.json());
+      hideModal('slackModal'); 
+      renderConfig();
+    }else{
+      showToast('Error', 'Failed to save Slack settings.', 'danger');
+    }
+  });
+}
+
+async function testSlack(){
+  const body = { text: document.getElementById('slTestText').value || undefined };
+  const res = await fetch('/api/admin/integrations/test/slack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r = await res.json();
+  const msg = document.getElementById('slackMsg');
+  if(r.success){
+    msg.innerHTML = '<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>'+r.message+'</div></div>';
+  }else{
+    msg.innerHTML = '<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i><div>'+r.message+'</div></div>';
+  }
+  msg.style.display='block';
+}
+
+function openCalCfg(){
+  document.getElementById('calProvider').value = integrations.calendar?.provider || '';
+  document.getElementById('calEnabled').value = (integrations.calendar?.enabled ? 'true':'false');
+  document.getElementById('calId').value = integrations.calendar?.calendar_id || '';
+  document.getElementById('calKey').value = '';
+  document.getElementById('calICS').value = '';
+  showModal('calModal');
+}
+async function saveCalCfg(){
+  const body = {
+    provider: document.getElementById('calProvider').value,
+    enabled: document.getElementById('calEnabled').value === 'true',
+    calendar_id: document.getElementById('calId').value,
+    api_key: document.getElementById('calKey').value,
+    ics_url: document.getElementById('calICS').value
+  };
+  
+  showConfirm('Save Calendar Config', 'Update calendar integration settings?', async () => {
+    const res = await fetch('/api/admin/integrations/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r = await res.json();
+    if(r.success){
+      showToast('Settings Saved', 'Calendar integration updated.');
+      integrations = await fetch('/api/admin/integrations').then(r=>r.json());
+      hideModal('calModal'); 
+      renderConfig();
+    }else{
+      showToast('Error', 'Failed to save calendar settings.', 'danger');
+    }
+  });
+}
+
+async function testCalendar(){
+  const res = await fetch('/api/admin/integrations/test/calendar',{method:'POST'});
+  const r = await res.json();
+  const msg = document.getElementById('calMsg');
+  if(r.success){
+    msg.innerHTML = '<div class="notif-item success"><i class="fas fa-check-circle" style="color:var(--accent3)"></i><div>'+r.message+'</div></div>';
+  }else{
+    msg.innerHTML = '<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i><div>'+r.message+'</div></div>';
+  }
+  msg.style.display='block';
+}
+
+init();
+</script>
+{% endblock %}

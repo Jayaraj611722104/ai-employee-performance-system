@@ -1,0 +1,9 @@
+# PulseHR — MySQL / production mode
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+PyMySQL==1.1.0
+cryptography==41.0.7
+Flask-Bcrypt==1.0.1
+numpy==1.26.2
+gunicorn==21.2.0
+firebase-admin==6.3.0
