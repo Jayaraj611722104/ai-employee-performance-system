@@ -53,11 +53,11 @@ async function init() {
   const loader = document.getElementById('loadingIndicator');
   try {
     const results = await Promise.allSettled([
-      fetch('/api/tl/team').then(r => r.ok ? r.json() : Promise.reject('Team load failed')),
-      fetch('/api/tl/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks load failed')),
-      fetch('/api/tl/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
-      fetch('/api/tl/team-task-stats').then(r => r.ok ? r.json() : Promise.reject('Stats load failed')),
-      fetch('/api/tl/team-info').then(r => r.ok ? r.json() : Promise.reject('Detailed teams load failed'))
+      fetch('/api/tl/team').then(r => r.ok ? r.json() : Promise.reject('Team failed')),
+      fetch('/api/tl/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks failed')),
+      fetch('/api/tl/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves failed')),
+      fetch('/api/tl/team-task-stats').then(r => r.ok ? r.json() : Promise.reject('Stats failed')),
+      fetch('/api/tl/team-info').then(r => r.ok ? r.json() : Promise.reject('Detailed teams failed'))
     ]);
     
     // Check for redirects
@@ -81,19 +81,22 @@ async function init() {
     let lastSec = 'overview';
     try {
       lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
-    } catch(e) { console.warn('SessionStorage blocked', e); }
+    } catch(e) {}
     
     navigate(lastSec);
   } catch (err) {
-    console.error("Initialization failed:", err);
-    document.getElementById('sectionContent').innerHTML = `
-      <div class="panel text-center py-5">
-        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-        <h4>Dashboard Error</h4>
-        <p class="text-muted">Failed to load data. Please check your connection.</p>
-        <div class="text-muted small mb-3">${err.message}</div>
-        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
-      </div>`;
+    console.error("Dashboard Init Error:", err);
+    if (loader) loader.style.display = 'none';
+    const sectionContent = document.getElementById('sectionContent');
+    if (sectionContent) {
+      sectionContent.innerHTML = `
+        <div class="panel text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+          <h4>Mobile Load Error</h4>
+          <p class="text-muted">Data failed to load. Please check your connection.</p>
+          <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+        </div>`;
+    }
   }
 }
 

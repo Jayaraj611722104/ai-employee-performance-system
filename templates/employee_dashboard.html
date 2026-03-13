@@ -140,12 +140,12 @@ async function init() {
   const loader = document.getElementById('loadingIndicator');
   try {
     const results = await Promise.allSettled([
-      fetch('/api/employee/profile').then(r => r.ok ? r.json() : Promise.reject('Profile load failed')),
-      fetch('/api/employee/performance').then(r => r.ok ? r.json() : Promise.reject('Performance load failed')),
-      fetch('/api/employee/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks load failed')),
-      fetch('/api/employee/my-team').then(r => r.ok ? r.json() : Promise.reject('Team load failed')),
-      fetch('/api/employee/my-leaves').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
-      fetch('/api/employee/attendance-history').then(r => r.ok ? r.json() : Promise.reject('Attendance load failed'))
+      fetch('/api/employee/profile').then(r => r.ok ? r.json() : Promise.reject('Profile failed')),
+      fetch('/api/employee/performance').then(r => r.ok ? r.json() : Promise.reject('Performance failed')),
+      fetch('/api/employee/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks failed')),
+      fetch('/api/employee/my-team').then(r => r.ok ? r.json() : Promise.reject('Team failed')),
+      fetch('/api/employee/my-leaves').then(r => r.ok ? r.json() : Promise.reject('Leaves failed')),
+      fetch('/api/employee/attendance-history').then(r => r.ok ? r.json() : Promise.reject('Attendance failed'))
     ]);
     
     // Handle unauthorized redirects
@@ -174,24 +174,23 @@ async function init() {
     // Restore last section
     let lastSection = 'overview';
     try {
-      lastSection = sessionStorage.getItem('lastSection_' + window.location.pathname);
-    } catch(e) { console.warn('SessionStorage blocked', e); }
+      lastSection = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
+    } catch(e) {}
     
-    if (lastSection && SECTIONS[lastSection]) {
-      navigate(lastSection);
-    } else {
-      renderOverview();
+    navigate(lastSection);
+  } catch (err) { 
+    console.error("Dashboard Init Error:", err);
+    if (loader) loader.style.display = 'none';
+    const sectionContent = document.getElementById('sectionContent');
+    if (sectionContent) {
+      sectionContent.innerHTML = `
+        <div class="panel text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+          <h4>Mobile Load Error</h4>
+          <p class="text-muted">Data failed to load. Please check your connection.</p>
+          <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+        </div>`;
     }
-  } catch (e) { 
-    console.error("Init failed", e);
-    document.getElementById('sectionContent').innerHTML = `
-      <div class="panel text-center py-5">
-        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-        <h4>Dashboard Error</h4>
-        <p class="text-muted">Failed to load data. Please check your connection.</p>
-        <div class="text-muted small mb-3">${e.message}</div>
-        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
-      </div>`;
   }
 }
 

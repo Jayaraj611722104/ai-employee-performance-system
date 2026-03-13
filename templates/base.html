@@ -29,84 +29,55 @@ body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;di
     left: 0; 
     top: 0; 
     bottom: 0;
+    z-index: 5000; /* Extremely high z-index */
+    box-shadow: none;
+    transition: transform 0.3s ease, visibility 0.3s;
   }
-  .sidebar.show { transform: translateX(0); visibility: visible; box-shadow: 20px 0 50px rgba(0,0,0,.5); }
-  .main { margin-left: 0 !important; width: 100% !important; flex: 1; }
-  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; }
-  .sidebar-overlay.show { display: block; }
-  .menu-toggle { display: flex !important; }
-}
-
-/* MOBILE RESPONSIVE FIXES */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 280px !important;
-    transform: translateX(-100%);
-    visibility: hidden;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 1000;
+  .sidebar.show { 
+    transform: translateX(0); 
+    visibility: visible; 
+    box-shadow: 20px 0 50px rgba(0,0,0,.8); 
   }
-  .sidebar.show {
-    transform: translateX(0);
-    visibility: visible;
-    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  .main { 
+    margin-left: 0 !important; 
+    width: 100% !important; 
+    flex: 1; 
   }
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 900;
-    backdrop-filter: blur(2px);
+  .sidebar-overlay { 
+    display: none; 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,.8); 
+    z-index: 4000; 
+    backdrop-filter: none;
   }
-  .sidebar-overlay.show {
-    display: block;
+  .sidebar-overlay.show { 
+    display: block; 
   }
-  .menu-toggle {
-    display: flex !important;
-  }
-  .sidebar-brand h2 {
-    font-size: 1.2rem;
-  }
-  .nav-item {
-    padding: 0.85rem 1.2rem;
-    font-size: 0.95rem;
+  .menu-toggle { 
+    display: flex !important; 
   }
   .topbar {
     padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    width: 100%;
   }
   .topbar h1 {
     font-size: 1.1rem;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 180px;
   }
-  .stat-card {
+  .page-content {
     padding: 1rem;
-  }
-  .stat-card .value {
-    font-size: 1.5rem;
+    width: 100%;
+    overflow-x: hidden;
   }
   .panel {
     padding: 1rem;
+    margin-bottom: 1rem;
   }
-  .page-content {
-    padding: 0.75rem;
-  }
-  /* Grid layouts */
-  .row > * {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  .g-4, .gy-4 {
-    --bs-gutter-y: 0.75rem;
-  }
-  .g-4, .gx-4 {
-    --bs-gutter-x: 0.75rem;
+  .stat-card .value {
+    font-size: 1.5rem;
   }
 }
 
@@ -541,90 +512,65 @@ function toggleOfflineOverlay(show) {
   // Removed redirect to /offline.html to stay on current dashboard
 }
 
-async function checkOnlineStatus() {
-  if (!navigator.onLine) return false;
-  try {
-    // Try to fetch a tiny resource that is likely to exist, or just use navigator.onLine
-    // A more reliable way is to fetch a known endpoint that returns 200.
-    const response = await __origFetch('/api/notifications', { method: 'HEAD', cache: 'no-store' });
-    return true; // If we got ANY response (even 401/403), we are online
-  } catch {
-    return false;
-  }
-}
-
-window.addEventListener('error', function(e) {
-  console.error("Global JS Error:", e.error);
-  // Optional: show a small toast or log to server
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Initial check
-  (async () => {
-    const isOnline = await checkOnlineStatus();
-    if (!isOnline) toggleOfflineOverlay(true);
-  })();
-
-  // Safety timeout for blank screens
-  setTimeout(() => {
-    const loader = document.getElementById('loadingIndicator');
-    const sectionContent = document.getElementById('sectionContent');
-    if (loader && loader.style.display !== 'none' && (!sectionContent || !sectionContent.innerHTML.trim())) {
-      console.warn("Dashboard taking too long to load, forcing loader hide.");
-      loader.style.display = 'none';
-      if (sectionContent && !sectionContent.innerHTML.trim()) {
-        sectionContent.innerHTML = `
-          <div class="panel text-center py-5">
-            <i class="fas fa-history fa-3x mb-3 text-accent"></i>
-            <h4>Loading is taking longer than expected</h4>
-            <p class="text-muted">This might be due to a slow connection or a temporary server issue.</p>
-            <button class="btn-primary-custom" onclick="location.reload(true)">Force Reload</button>
-          </div>`;
-      }
-    }
-  }, 20000); // 20 seconds
-
-  window.addEventListener('online', async () => {
-    const isOnline = await checkOnlineStatus();
-    if (isOnline) toggleOfflineOverlay(false);
-  });
-
-  window.addEventListener('offline', () => {
-    // When browser reports offline, we can be reasonably sure.
-    // The fetch wrapper will handle any attempted requests anyway.
-    toggleOfflineOverlay(true);
-  });
-});
-
 const __origFetch = window.fetch.bind(window);
 window.fetch = async (...args) => {
-  // Use a timeout for fetch to prevent indefinite hanging
-  const timeout = 15000; // 15 seconds
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 seconds
   
   const options = args[1] || {};
   options.signal = controller.signal;
   args[1] = options;
 
-  if (!navigator.onLine) {
-    console.warn("Navigator reports offline, but attempting fetch anyway...");
-    // We don't throw error here because navigator.onLine is flappy on mobile
-  }
-  
   try {
     const response = await __origFetch(...args);
-    clearTimeout(id);
+    clearTimeout(timeoutId);
     return response;
   } catch (e) {
-    clearTimeout(id);
+    clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
       console.error("Fetch timed out:", args[0]);
-      throw new Error("Connection timed out. Please check your internet.");
+      // If a critical fetch times out, we might want to reload or show error
     }
     throw e;
   }
 };
+
+async function checkOnlineStatus() {
+  // Mobile networks are flappy, navigator.onLine is often wrong.
+  // We only consider "offline" if a request actually fails with a network error.
+  return navigator.onLine;
+}
+
+window.addEventListener('error', function(e) {
+  console.error("Critical JS Error:", e.message, "at", e.filename, ":", e.lineno);
+  // Auto-recovery: hide loader if a script crashes
+  const loader = document.getElementById('loadingIndicator');
+  if (loader) loader.style.display = 'none';
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Hide loader after 8 seconds no matter what to prevent "stuck" blank screens
+  setTimeout(() => {
+    const loader = document.getElementById('loadingIndicator');
+    if (loader && loader.style.display !== 'none') {
+      console.warn("Forcing loader hide due to timeout.");
+      loader.style.display = 'none';
+      const sectionContent = document.getElementById('sectionContent');
+      if (sectionContent && !sectionContent.innerHTML.trim()) {
+         sectionContent.innerHTML = `
+          <div class="panel text-center py-5">
+            <i class="fas fa-exclamation-circle fa-3x mb-3 text-warning"></i>
+            <h4>Dashboard Load Timeout</h4>
+            <p class="text-muted">Loading is taking too long. Please try refreshing.</p>
+            <button class="btn-primary-custom" onclick="location.reload(true)">Refresh Now</button>
+          </div>`;
+      }
+    }
+  }, 8000); 
+
+  window.addEventListener('online', () => toggleOfflineOverlay(false));
+  window.addEventListener('offline', () => toggleOfflineOverlay(true));
+});
 
 loadNotifications();
 </script>

@@ -77,13 +77,13 @@ async function init() {
   const loader = document.getElementById('loadingIndicator');
   try {
     const results = await Promise.allSettled([
-      fetch('/api/hr/stats').then(r => r.ok ? r.json() : Promise.reject('Stats load failed')),
-      fetch('/api/hr/employees').then(r => r.ok ? r.json() : Promise.reject('Employees load failed')),
-      fetch('/api/hr/performance-all').then(r => r.ok ? r.json() : Promise.reject('Performance load failed')),
-      fetch('/api/hr/attendance').then(r => r.ok ? r.json() : Promise.reject('Attendance load failed')),
-      fetch('/api/hr/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
-      fetch('/api/hr/teams').then(r => r.ok ? r.json() : Promise.reject('Teams load failed')),
-      fetch('/api/hr/teams-detailed').then(r => r.ok ? r.json() : Promise.reject('Detailed teams load failed'))
+      fetch('/api/hr/stats').then(r => r.ok ? r.json() : Promise.reject('Stats failed')),
+      fetch('/api/hr/employees').then(r => r.ok ? r.json() : Promise.reject('Employees failed')),
+      fetch('/api/hr/performance-all').then(r => r.ok ? r.json() : Promise.reject('Performance failed')),
+      fetch('/api/hr/attendance').then(r => r.ok ? r.json() : Promise.reject('Attendance failed')),
+      fetch('/api/hr/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves failed')),
+      fetch('/api/hr/teams').then(r => r.ok ? r.json() : Promise.reject('Teams failed')),
+      fetch('/api/hr/teams-detailed').then(r => r.ok ? r.json() : Promise.reject('Detailed teams failed'))
     ]);
     
     // Check for redirects
@@ -104,30 +104,26 @@ async function init() {
     leaveRequests = (results[4].status === 'fulfilled' && Array.isArray(results[4].value)) ? results[4].value : [];
     teams = (results[5].status === 'fulfilled' && Array.isArray(results[5].value)) ? results[5].value : [];
     teamsDetailed = (results[6].status === 'fulfilled' && Array.isArray(results[6].value)) ? results[6].value : [];
-    console.log("Dashboard Data Loaded:", {
-      employees: employees.length,
-      performance: performanceAll.length,
-      teams: teams.length,
-      date: new Date().toISOString()
-    });
-    
-    // Restore section from sessionStorage or default to overview
+
     let lastSec = 'overview';
     try {
       lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
-    } catch(e) { console.warn('SessionStorage blocked', e); }
+    } catch(e) {}
     
     navigate(lastSec);
   } catch (err) {
-    console.error("Initialization failed:", err);
-    document.getElementById('sectionContent').innerHTML = `
-      <div class="panel text-center py-5">
-        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-        <h4>Dashboard Error</h4>
-        <p class="text-muted">Failed to load data. Please check your connection.</p>
-        <div class="text-muted small mb-3">${err.message}</div>
-        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
-      </div>`;
+    console.error("Dashboard Init Error:", err);
+    if (loader) loader.style.display = 'none';
+    const sectionContent = document.getElementById('sectionContent');
+    if (sectionContent) {
+      sectionContent.innerHTML = `
+        <div class="panel text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+          <h4>Mobile Load Error</h4>
+          <p class="text-muted">Data failed to load. Please check your connection.</p>
+          <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+        </div>`;
+    }
   }
 }
 
