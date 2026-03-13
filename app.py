@@ -5,6 +5,11 @@ Run: python app.py
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from functools import wraps
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+import pyotp
+import qrcode
+import base64
+from io import BytesIO
 import json
 import os
 import io
@@ -234,7 +239,7 @@ def login():
 
     data = request.get_json(silent=True) or {}
     email    = data.get('email', '').lower().strip()
-    password = data.get('password', '').strip().strip()
+    password = data.get('password', '').strip()
     log_system_activity(f"Login attempt for email: {email}")
 
     if not email or not password:
@@ -243,28 +248,84 @@ def login():
     db   = get_db_data()
     user = next(
         (u for u in db['users']
-         if u['email'].lower() == email and u['password'] == password and u.get('status') == 'Active'),
+         if u['email'].lower() == email and u.get('status') == 'Active'),
         None
     )
 
     if user:
-        log_system_activity(f"Login successful for user: {user['name']} (Role: {user['role']})", db)
-        session.permanent = True
-        session['user_id'] = user['id']
-        session['role']    = user['role']
-        session['name']    = user['name']
-        session['email']   = user['email']
-        db['login_logs'].append({
-            'user_id': user['id'], 'name': user['name'],
-            'role':    user['role'], 'time': datetime.now().isoformat(),
-            'ip':      request.remote_addr or '127.0.0.1'
-        })
-        save_db_data(db)
-        return jsonify({'success': True, 'role': user['role'],
-                        'redirect': f'/{user["role"]}-dashboard'})
+        # Check password hash (handle plain text for migration)
+        is_valid = False
+        if user['password'].startswith('pbkdf2:sha256:'):
+            is_valid = check_password_hash(user['password'], password)
+        else:
+            # Migration: if plain text password matches, hash it now
+            if user['password'] == password:
+                user['password'] = generate_password_hash(password)
+                save_db_data(db)
+                is_valid = True
+
+        if is_valid:
+            # Check for 2FA
+            if user.get('two_factor_enabled'):
+                session['temp_user_id'] = user['id']
+                log_system_activity(f"User {user['name']} passed first step, 2FA required", db)
+                return jsonify({'success': True, 'requires_2fa': True})
+
+            # Normal Login
+            log_system_activity(f"Login successful for user: {user['name']} (Role: {user['role']})", db)
+            session.permanent = True
+            session['user_id'] = user['id']
+            session['role']    = user['role']
+            session['name']    = user['name']
+            session['email']   = user['email']
+            db['login_logs'].append({
+                'user_id': user['id'], 'name': user['name'],
+                'role':    user['role'], 'time': datetime.now().isoformat(),
+                'ip':      request.remote_addr or '127.0.0.1'
+            })
+            save_db_data(db)
+            return jsonify({'success': True, 'requires_2fa': False, 'role': user['role'],
+                            'redirect': f'/{user["role"]}-dashboard'})
 
     log_system_activity(f"Login failed for email: {email}")
     return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
+
+
+@app.route('/api/auth/verify-2fa', methods=['POST'])
+def verify_2fa():
+    data = request.get_json(silent=True) or {}
+    otp_code = data.get('code', '').strip()
+    uid = session.get('temp_user_id')
+
+    if not uid or not otp_code:
+        return jsonify({'success': False, 'message': 'Invalid session or missing code'}), 400
+
+    db = get_db_data()
+    user = next((u for u in db['users'] if u['id'] == uid), None)
+
+    if user and user.get('two_factor_enabled') and user.get('two_factor_secret'):
+        totp = pyotp.TOTP(user['two_factor_secret'])
+        if totp.verify(otp_code):
+            # Login successful
+            session.pop('temp_user_id', None)
+            session.permanent = True
+            session['user_id'] = user['id']
+            session['role']    = user['role']
+            session['name']    = user['name']
+            session['email']   = user['email']
+            
+            log_system_activity(f"2FA verified for user: {user['name']}", db)
+            db['login_logs'].append({
+                'user_id': user['id'], 'name': user['name'],
+                'role':    user['role'], 'time': datetime.now().isoformat(),
+                'ip':      request.remote_addr or '127.0.0.1'
+            })
+            save_db_data(db)
+            return jsonify({'success': True, 'role': user['role'],
+                            'redirect': f'/{user["role"]}-dashboard'})
+
+    log_system_activity(f"2FA verification failed for user ID: {uid}")
+    return jsonify({'success': False, 'message': 'Invalid verification code'}), 401
 
 
 @app.route('/logout')
@@ -465,7 +526,77 @@ def mark_attendance():
     save_db_data(db)
     return jsonify({'success': True, 'message': 'Attendance marked successfully!', 'time': now_time})
 
-@app.route('/api/employee/attendance-history')
+@app.route('/api/auth/setup-2fa', methods=['GET'])
+@login_required()
+def setup_2fa():
+    db = get_db_data()
+    uid = session['user_id']
+    user = next((u for u in db['users'] if u['id'] == uid), None)
+    
+    if not user:
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+    # Generate secret if not exists or if requested
+    if not user.get('two_factor_secret') or request.args.get('refresh'):
+        user['two_factor_secret'] = pyotp.random_base32()
+        save_db_data(db)
+        
+    # Generate provisioning URI
+    otp_uri = pyotp.totp.TOTP(user['two_factor_secret']).provisioning_uri(
+        name=user['email'],
+        issuer_name="PulseHR"
+    )
+    
+    # Generate QR Code image
+    img = qrcode.make(otp_uri)
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    
+    return jsonify({
+        'success': True,
+        'secret': user['two_factor_secret'],
+        'qr_code': f"data:image/png;base64,{img_str}"
+    })
+
+@app.route('/api/auth/enable-2fa', methods=['POST'])
+@login_required()
+def enable_2fa():
+    data = request.get_json(silent=True) or {}
+    code = data.get('code', '').strip()
+    
+    if not code:
+        return jsonify({'success': False, 'message': 'Verification code required'}), 400
+        
+    db = get_db_data()
+    uid = session['user_id']
+    user = next((u for u in db['users'] if u['id'] == uid), None)
+    
+    if user and user.get('two_factor_secret'):
+        totp = pyotp.TOTP(user['two_factor_secret'])
+        if totp.verify(code):
+            user['two_factor_enabled'] = True
+            save_db_data(db)
+            log_system_activity(f"2FA enabled for user: {user['name']}", db)
+            return jsonify({'success': True, 'message': '2FA has been successfully enabled'})
+            
+    return jsonify({'success': False, 'message': 'Invalid verification code'}), 401
+
+@app.route('/api/auth/disable-2fa', methods=['POST'])
+@login_required()
+def disable_2fa():
+    db = get_db_data()
+    uid = session['user_id']
+    user = next((u for u in db['users'] if u['id'] == uid), None)
+    
+    if user:
+        user['two_factor_enabled'] = False
+        user['two_factor_secret'] = None
+        save_db_data(db)
+        log_system_activity(f"2FA disabled for user: {user['name']}", db)
+        return jsonify({'success': True, 'message': '2FA has been disabled'})
+        
+    return jsonify({'success': False, 'message': 'User not found'}), 404
 @login_required(roles=['employee', 'teamleader', 'hr', 'admin'])
 def get_attendance_history():
     db = get_db_data()
@@ -1827,11 +1958,12 @@ def create_user():
 
     uid = _next_user_id(db)
     u_role = data.get('role', 'employee')
+    raw_password = data.get('password', 'password123')
     db['users'].append({
         'id':         uid,
         'name':       data['name'],
         'email':      data['email'].lower().strip(),
-        'password':   data.get('password', 'password123'),
+        'password':   generate_password_hash(raw_password),
         'role':       u_role,
         'status':     'Active',
         'created_at': datetime.now().isoformat()
@@ -1979,7 +2111,7 @@ def reset_password():
     db = get_db_data()
     for u in db['users']:
         if u['id'] == uid:
-            u['password'] = new_pass
+            u['password'] = generate_password_hash(new_pass)
             break
     save_db_data(db)
     return jsonify({'success': True})

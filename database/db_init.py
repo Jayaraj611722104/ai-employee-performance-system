@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import random
 import time
 import tempfile
+from werkzeug.security import generate_password_hash
 
 DB_FILE = os.path.join(os.path.dirname(__file__), 'data.json')
 LOCK_FILE = os.path.join(os.path.dirname(__file__), 'data.lock')
@@ -153,10 +154,23 @@ def _ensure_integrations(db):
         db['integrations'] = DEMO_DATA['integrations']
     return db['integrations']
 
-def init_db():
-    if not os.path.exists(DB_FILE):
-        _atomic_write_json(DB_FILE, DEMO_DATA)
-        print("✅ Database initialized with demo data")
+def init_db(force=False):
+    if os.path.exists(DB_FILE) and not force:
+        print(f"ℹ️ Database already exists at {DB_FILE}. Skipping initialization.")
+        return
+        
+    print(f"🚀 Initializing new database at {DB_FILE}...")
+    
+    # Hash passwords for DEMO_DATA users
+    for user in DEMO_DATA['users']:
+        if not user['password'].startswith('pbkdf2:sha256:'):
+            user['password'] = generate_password_hash(user['password'])
+        # Add 2FA fields
+        user['two_factor_enabled'] = False
+        user['two_factor_secret'] = None
+        
+    _atomic_write_json(DB_FILE, DEMO_DATA)
+    print("✅ Database initialized with demo data")
 
 def _atomic_write_json(path, data):
     backup = path + '.bak'

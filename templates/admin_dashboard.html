@@ -164,6 +164,13 @@
 <script>
 const SECTIONS = {overview:renderOverview,users:renderUsers,logs:renderLogs,monitoring:renderMonitoring,activity:renderActivity,security:renderSecurity,config:renderConfig};
 window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
+window.navigate = s => {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const el = document.querySelector(`.nav-item[data-section="${s}"]`);
+  if(el) el.classList.add('active');
+  sessionStorage.setItem('lastSection_' + window.location.pathname, s);
+  window.loadSection(s);
+};
 let users=[], sysStats={}, loginLogs=[], integrations={};
 
 async function init() {
@@ -488,32 +495,93 @@ async function updateActivityFeed() {
 
 function renderSecurity() {
   document.getElementById('pageTitle').textContent = 'Security Settings';
-  document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-shield-alt" style="color:var(--accent)"></i>Access Control</div>
-        ${[['Employee','View profile, tasks, performance'],['Team Leader','Manage team tasks, view team data'],['HR Manager','Full HR access, AI modules, reports'],['Admin','Full system access, user management']].map(([role,perms])=>`
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:600">${role}</div>
-            <span class="badge-role badge-inprogress">Active</span>
+  
+  // Fetch latest profile to get 2FA status
+  fetch('/api/employee/profile').then(r=>r.json()).then(user => {
+    const tfaEnabled = user.two_factor_enabled;
+    
+    document.getElementById('sectionContent').innerHTML = `
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="panel">
+          <div class="panel-title"><i class="fas fa-shield-alt" style="color:var(--accent)"></i>Access Control</div>
+          ${[['Employee','View profile, tasks, performance'],['Team Leader','Manage team tasks, view team data'],['HR Manager','Full HR access, AI modules, reports'],['Admin','Full system access, user management']].map(([role,perms])=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-weight:600">${role}</div>
+              <span class="badge-role badge-completed">Active</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">${perms}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="panel">
+          <div class="panel-title"><i class="fas fa-lock" style="color:var(--accent2)"></i>Security Features</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.85rem">Password Hashing</span>
+            <span style="color:var(--accent3);font-size:.8rem;font-weight:600">Enabled (Argon2)</span>
           </div>
-          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">${perms}</div>
-        </div>`).join('')}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:.85rem">Two-Factor Authentication</div>
+              <div style="font-size:.7rem;color:var(--muted)">Protect your account with TOTP</div>
+            </div>
+            <div style="text-align:right">
+              <span style="color:var(--${tfaEnabled?'accent3':'accent2'});font-size:.8rem;font-weight:600;display:block;margin-bottom:.3rem">${tfaEnabled?'Enabled':'Not Configured'}</span>
+              <button class="btn-${tfaEnabled?'warning':'primary'}-custom" style="font-size:.7rem;padding:.2rem .5rem" onclick="${tfaEnabled?'disable2FA()':'open2FASetup()'}">
+                <i class="fas fa-${tfaEnabled?'unlock':'shield-alt'} me-1"></i>${tfaEnabled?'Disable':'Configure'}
+              </button>
+            </div>
+          </div>
+          ${[['Session-based Authentication','Enabled','accent3'],['Role-based Access Control','Enabled','accent3'],['Login Activity Tracking','Enabled','accent3'],['API Endpoint Protection','Enabled','accent3']].map(([f,s,c])=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.85rem">${f}</span>
+            <span style="color:var(--${c});font-size:.8rem;font-weight:600">${s}</span>
+          </div>`).join('')}
+        </div>
       </div>
-    </div>
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-lock" style="color:var(--accent2)"></i>Security Features</div>
-        ${[['Session-based Authentication','Enabled','accent3'],['Role-based Access Control','Enabled','accent3'],['Login Activity Tracking','Enabled','accent3'],['API Endpoint Protection','Enabled','accent3'],['Password Hashing','Demo Mode (Plain)','accent4'],['Two-Factor Auth','Not Configured','accent2']].map(([f,s,c])=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:.85rem">${f}</span>
-          <span style="color:var(--${c});font-size:.8rem;font-weight:600">${s}</span>
-        </div>`).join('')}
-      </div>
-    </div>
-  </div>`;
+    </div>`;
+  });
+}
+
+function open2FASetup() {
+  fetch('/api/auth/setup-2fa').then(r=>r.json()).then(data => {
+    if(data.success) {
+      document.getElementById('qrCodeImg').src = data.qr_code;
+      document.getElementById('tfaSecret').textContent = data.secret;
+      showModal('tfaSetupModal');
+    }
+  });
+}
+
+async function verifyAndEnable2FA() {
+  const code = document.getElementById('tfaCode').value.trim();
+  if(!code) return showToast('Error', 'Please enter verification code', 'danger');
+  
+  const res = await fetch('/api/auth/enable-2fa', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code})
+  });
+  const data = await res.json();
+  if(data.success) {
+    showToast('Success', 'Two-Factor Authentication enabled!');
+    hideModal('tfaSetupModal');
+    renderSecurity();
+  } else {
+    showToast('Error', data.message || 'Invalid code', 'danger');
+  }
+}
+
+async function disable2FA() {
+  showConfirm('Disable 2FA', 'Are you sure you want to disable two-factor authentication?', async () => {
+    const res = await fetch('/api/auth/disable-2fa', {method: 'POST'});
+    const data = await res.json();
+    if(data.success) {
+      showToast('2FA Disabled', 'Two-factor authentication has been turned off.');
+      renderSecurity();
+    }
+  });
 }
 
 function renderConfig() {
@@ -705,6 +773,33 @@ async function testCalendar(){
   }
   msg.style.display='block';
 }
+
+<!-- 2FA Setup Modal -->
+<div class="modal-custom" id="tfaSetupModal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Two-Factor Auth Setup</span>
+      <button class="modal-close" onclick="hideModal('tfaSetupModal')">✕</button>
+    </div>
+    <div class="text-center">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+      <div style="background:#fff;padding:10px;border-radius:12px;display:inline-block;margin-bottom:1rem">
+        <img id="qrCodeImg" style="width:180px;height:180px;display:block">
+      </div>
+      <div style="background:var(--surface);padding:.75rem;border-radius:8px;border:1px solid var(--border);margin-bottom:1.5rem">
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase">Manual Entry Key</div>
+        <div id="tfaSecret" style="font-weight:700;letter-spacing:2px;color:var(--accent);margin-top:.25rem"></div>
+      </div>
+      <div class="mb-3 text-start">
+        <label class="form-label-sm">Enter 6-digit Verification Code</label>
+        <input class="form-ctrl text-center" id="tfaCode" placeholder="000000" maxlength="6" style="font-size:1.5rem;letter-spacing:5px">
+      </div>
+      <button class="btn-success-custom w-100" onclick="verifyAndEnable2FA()">
+        <i class="fas fa-check-circle me-2"></i>Verify and Enable 2FA
+      </button>
+    </div>
+  </div>
+</div>
 
 init();
 </script>
