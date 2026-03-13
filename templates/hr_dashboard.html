@@ -74,17 +74,36 @@ let stats={}, employees=[], performanceAll=[], attendance=[], leaveRequests=[], 
 let alertedUserIds = new Set();
 
 async function init() {
+  const loader = document.getElementById('loadingIndicator');
   try {
-    const results = await Promise.all([
-      fetch('/api/hr/stats').then(r => r.ok ? r.json() : {}),
-      fetch('/api/hr/employees').then(r => r.ok ? r.json() : []),
-      fetch('/api/hr/performance-all').then(r => r.ok ? r.json() : []),
-      fetch('/api/hr/attendance').then(r => r.ok ? r.json() : []),
-      fetch('/api/hr/leave-requests').then(r => r.ok ? r.json() : []),
-      fetch('/api/hr/teams').then(r => r.ok ? r.json() : []),
-      fetch('/api/hr/teams-detailed').then(r => r.ok ? r.json() : [])
+    const results = await Promise.allSettled([
+      fetch('/api/hr/stats').then(r => r.ok ? r.json() : Promise.reject('Stats load failed')),
+      fetch('/api/hr/employees').then(r => r.ok ? r.json() : Promise.reject('Employees load failed')),
+      fetch('/api/hr/performance-all').then(r => r.ok ? r.json() : Promise.reject('Performance load failed')),
+      fetch('/api/hr/attendance').then(r => r.ok ? r.json() : Promise.reject('Attendance load failed')),
+      fetch('/api/hr/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
+      fetch('/api/hr/teams').then(r => r.ok ? r.json() : Promise.reject('Teams load failed')),
+      fetch('/api/hr/teams-detailed').then(r => r.ok ? r.json() : Promise.reject('Detailed teams load failed'))
     ]);
-    [stats, employees, performanceAll, attendance, leaveRequests, teams, teamsDetailed] = results;
+    
+    // Check for redirects
+    for (const res of results) {
+      if (res.status === 'fulfilled' && res.value && res.value.redirect) {
+        window.location.href = res.value.redirect;
+        return;
+      }
+    }
+
+    if (loader) loader.style.display = 'none';
+    
+    // Safe data assignment
+    stats = (results[0].status === 'fulfilled' && results[0].value && !results[0].value.error) ? results[0].value : {};
+    employees = (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) ? results[1].value : [];
+    performanceAll = (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) ? results[2].value : [];
+    attendance = (results[3].status === 'fulfilled' && Array.isArray(results[3].value)) ? results[3].value : [];
+    leaveRequests = (results[4].status === 'fulfilled' && Array.isArray(results[4].value)) ? results[4].value : [];
+    teams = (results[5].status === 'fulfilled' && Array.isArray(results[5].value)) ? results[5].value : [];
+    teamsDetailed = (results[6].status === 'fulfilled' && Array.isArray(results[6].value)) ? results[6].value : [];
     console.log("Dashboard Data Loaded:", {
       employees: employees.length,
       performance: performanceAll.length,

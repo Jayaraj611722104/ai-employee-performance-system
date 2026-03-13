@@ -15,14 +15,23 @@
   --accent4:#f7b731;--text:#e8e8f0;--muted:#7a7a9a;--sidebar-w:260px
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html, body { height: 100%; margin: 0; }
 body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;min-height:100vh;overflow-x:hidden}
 
 /* RESPONSIVE HELPERS */
 @media (max-width: 992px) {
   :root { --sidebar-w: 0px !important; }
-  .sidebar { transform: translateX(-100%); width: 280px !important; visibility: hidden; }
+  .sidebar { 
+    transform: translateX(-100%); 
+    width: 280px !important; 
+    visibility: hidden; 
+    position: fixed !important; 
+    left: 0; 
+    top: 0; 
+    bottom: 0;
+  }
   .sidebar.show { transform: translateX(0); visibility: visible; box-shadow: 20px 0 50px rgba(0,0,0,.5); }
-  .main { margin-left: 0 !important; width: 100% !important; }
+  .main { margin-left: 0 !important; width: 100% !important; flex: 1; }
   .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; }
   .sidebar-overlay.show { display: block; }
   .menu-toggle { display: flex !important; }
@@ -283,6 +292,10 @@ body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;di
     </div>
   </div>
   <div class="page-content" id="pageContent">
+    <div id="loadingIndicator" class="text-center py-5">
+      <div class="spinner-border text-primary mb-3" role="status"></div>
+      <div class="text-muted">Loading your dashboard...</div>
+    </div>
     {% block content %}{% endblock %}
   </div>
 </div>
@@ -529,16 +542,21 @@ function toggleOfflineOverlay(show) {
 }
 
 async function checkOnlineStatus() {
+  if (!navigator.onLine) return false;
   try {
-    const response = await __origFetch('/favicon.ico', {
-      method: 'HEAD',
-      cache: 'no-store'
-    });
-    return response.ok;
-  } catch (error) {
+    // Try to fetch a tiny resource that is likely to exist, or just use navigator.onLine
+    // A more reliable way is to fetch a known endpoint that returns 200.
+    const response = await __origFetch('/api/notifications', { method: 'HEAD', cache: 'no-store' });
+    return true; // If we got ANY response (even 401/403), we are online
+  } catch {
     return false;
   }
 }
+
+window.addEventListener('error', function(e) {
+  console.error("Global JS Error:", e.error);
+  // Optional: show a small toast or log to server
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initial check
@@ -546,6 +564,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const isOnline = await checkOnlineStatus();
     if (!isOnline) toggleOfflineOverlay(true);
   })();
+
+  // Safety timeout for blank screens
+  setTimeout(() => {
+    const loader = document.getElementById('loadingIndicator');
+    const sectionContent = document.getElementById('sectionContent');
+    if (loader && loader.style.display !== 'none' && (!sectionContent || !sectionContent.innerHTML.trim())) {
+      console.warn("Dashboard taking too long to load, forcing loader hide.");
+      loader.style.display = 'none';
+      if (sectionContent && !sectionContent.innerHTML.trim()) {
+        sectionContent.innerHTML = `
+          <div class="panel text-center py-5">
+            <i class="fas fa-history fa-3x mb-3 text-accent"></i>
+            <h4>Loading is taking longer than expected</h4>
+            <p class="text-muted">This might be due to a slow connection or a temporary server issue.</p>
+            <button class="btn-primary-custom" onclick="location.reload(true)">Force Reload</button>
+          </div>`;
+      }
+    }
+  }, 20000); // 20 seconds
 
   window.addEventListener('online', async () => {
     const isOnline = await checkOnlineStatus();
@@ -561,14 +598,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const __origFetch = window.fetch.bind(window);
 window.fetch = async (...args) => {
+  // Use a timeout for fetch to prevent indefinite hanging
+  const timeout = 15000; // 15 seconds
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  const options = args[1] || {};
+  options.signal = controller.signal;
+  args[1] = options;
+
   if (!navigator.onLine) {
-    toggleOfflineOverlay(true);
-    throw new Error('offline');
+    console.warn("Navigator reports offline, but attempting fetch anyway...");
+    // We don't throw error here because navigator.onLine is flappy on mobile
   }
+  
   try {
-    return await __origFetch(...args);
+    const response = await __origFetch(...args);
+    clearTimeout(id);
+    return response;
   } catch (e) {
-    if (!navigator.onLine) toggleOfflineOverlay(true);
+    clearTimeout(id);
+    if (e.name === 'AbortError') {
+      console.error("Fetch timed out:", args[0]);
+      throw new Error("Connection timed out. Please check your internet.");
+    }
     throw e;
   }
 };

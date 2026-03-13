@@ -137,22 +137,34 @@ async function disable2FA() {
 }
 
 async function init() {
+  const loader = document.getElementById('loadingIndicator');
   try {
     const results = await Promise.allSettled([
-      fetch('/api/employee/profile').then(r=>r.json()),
-      fetch('/api/employee/performance').then(r=>r.json()),
-      fetch('/api/employee/tasks').then(r=>r.json()),
-      fetch('/api/employee/my-team').then(r=>r.json()),
-      fetch('/api/employee/my-leaves').then(r=>r.json()),
-      fetch('/api/employee/attendance-history').then(r=>r.json())
+      fetch('/api/employee/profile').then(r => r.ok ? r.json() : Promise.reject('Profile load failed')),
+      fetch('/api/employee/performance').then(r => r.ok ? r.json() : Promise.reject('Performance load failed')),
+      fetch('/api/employee/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks load failed')),
+      fetch('/api/employee/my-team').then(r => r.ok ? r.json() : Promise.reject('Team load failed')),
+      fetch('/api/employee/my-leaves').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
+      fetch('/api/employee/attendance-history').then(r => r.ok ? r.json() : Promise.reject('Attendance load failed'))
     ]);
     
-    empData = results[0].status === 'fulfilled' ? results[0].value || {} : {};
-    perfData = results[1].status === 'fulfilled' ? results[1].value || {} : {};
-    tasksData = results[2].status === 'fulfilled' ? results[2].value || [] : [];
-    myTeamObj = results[3].status === 'fulfilled' ? results[3].value || {} : {};
-    myLeaves = results[4].status === 'fulfilled' ? results[4].value || [] : [];
-    attendanceData = results[5].status === 'fulfilled' ? results[5].value || {} : {};
+    // Handle unauthorized redirects
+    for (const res of results) {
+        if (res.status === 'fulfilled' && res.value && res.value.redirect) {
+            window.location.href = res.value.redirect;
+            return;
+        }
+    }
+
+    if (loader) loader.style.display = 'none';
+
+    // Safe data assignment
+    empData = (results[0].status === 'fulfilled' && !results[0].value?.error) ? results[0].value || {} : {};
+    perfData = (results[1].status === 'fulfilled' && !results[1].value?.error) ? results[1].value || {} : {};
+    tasksData = (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) ? results[2].value : [];
+    myTeamObj = (results[3].status === 'fulfilled' && !results[3].value?.error) ? results[3].value || {} : {};
+    myLeaves = (results[4].status === 'fulfilled' && Array.isArray(results[4].value)) ? results[4].value : [];
+    attendanceData = (results[5].status === 'fulfilled' && !results[5].value?.error) ? results[5].value || {} : {};
 
     // Fallback if profile API returns null but we have sessionData
     if (!empData.name && sessionData.name) {

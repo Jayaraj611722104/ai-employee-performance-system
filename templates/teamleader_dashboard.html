@@ -50,14 +50,32 @@ window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 let teamData=[], taskData=[], leaveData=[], taskStats=[], teamInfo={};
 
 async function init() {
+  const loader = document.getElementById('loadingIndicator');
   try {
-    [teamData, taskData, leaveData, taskStats, teamInfo] = await Promise.all([
-      fetch('/api/tl/team').then(r=>r.json()),
-      fetch('/api/tl/tasks').then(r=>r.json()),
-      fetch('/api/tl/leave-requests').then(r=>r.json()),
-      fetch('/api/tl/team-task-stats').then(r=>r.json()),
-      fetch('/api/tl/team-info').then(r=>r.json())
+    const results = await Promise.allSettled([
+      fetch('/api/tl/team').then(r => r.ok ? r.json() : Promise.reject('Team load failed')),
+      fetch('/api/tl/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks load failed')),
+      fetch('/api/tl/leave-requests').then(r => r.ok ? r.json() : Promise.reject('Leaves load failed')),
+      fetch('/api/tl/team-task-stats').then(r => r.ok ? r.json() : Promise.reject('Stats load failed')),
+      fetch('/api/tl/team-info').then(r => r.ok ? r.json() : Promise.reject('Detailed teams load failed'))
     ]);
+    
+    // Check for redirects
+    for (const res of results) {
+      if (res.status === 'fulfilled' && res.value && res.value.redirect) {
+        window.location.href = res.value.redirect;
+        return;
+      }
+    }
+
+    if (loader) loader.style.display = 'none';
+    
+    // Safe data assignment
+    teamData = (results[0].status === 'fulfilled' && Array.isArray(results[0].value)) ? results[0].value : [];
+    taskData = (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) ? results[1].value : [];
+    leaveData = (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) ? results[2].value : [];
+    taskStats = (results[3].status === 'fulfilled' && Array.isArray(results[3].value)) ? results[3].value : [];
+    teamInfo = (results[4].status === 'fulfilled' && results[4].value && !results[4].value.error) ? results[4].value : {};
     
     // Restore section from sessionStorage or default to overview
     let lastSec = 'overview';
