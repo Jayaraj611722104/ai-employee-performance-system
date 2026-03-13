@@ -195,148 +195,181 @@ async function init() {
 }
 
 function renderOverview() {
-  document.getElementById('pageTitle').textContent = 'My Dashboard';
+  document.getElementById('pageTitle').textContent = 'Personal Command Center';
   const pending = tasksData.filter(t=>t.status==='Pending').length;
   const inprog = tasksData.filter(t=>t.status==='In Progress').length;
   const done = tasksData.filter(t=>t.status==='Completed').length;
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-tachometer-alt"></i></div>
-        <div class="label">Productivity Score</div>
-        <div class="value" style="color:var(--accent)">${perfData.productivity_score || 0}%</div>
-        <div class="change" style="color:var(--accent3)">↑ +3% this month</div>
+        <div class="icon" style="background:rgba(108,99,255,.1);color:var(--accent)"><i class="fas fa-tachometer-alt"></i></div>
+        <div>
+          <div class="label">Efficiency Vector</div>
+          <div class="value">${perfData.productivity_score || 0}%</div>
+          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-arrow-up me-1"></i>3.2% vs last epoch</div>
+        </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-xl-3 col-md-6">
       <div class="stat-card" onclick="navigate('attendance')" style="cursor:pointer">
-        <div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-calendar-check"></i></div>
-        <div class="label">Attendance</div>
-        <div class="value" style="color:var(--accent3)">${perfData.attendance_pct || 0}%</div>
-        <div class="change" style="color:var(--muted)">This month</div>
+        <div class="icon" style="background:rgba(67,233,123,.1);color:var(--accent3)"><i class="fas fa-calendar-check"></i></div>
+        <div>
+          <div class="label">Consistency</div>
+          <div class="value">${perfData.attendance_pct || 0}%</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Monthly attendance</div>
+        </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-tasks"></i></div>
-        <div class="label">Active Tasks</div>
-        <div class="value" style="color:var(--accent4)">${inprog + pending}</div>
-        <div class="change" style="color:var(--muted)">${done} completed</div>
+        <div class="icon" style="background:rgba(247,183,49,.1);color:var(--accent4)"><i class="fas fa-tasks"></i></div>
+        <div>
+          <div class="label">Active Missions</div>
+          <div class="value">${inprog + pending}</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${done} successful missions</div>
+        </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(255,101,132,.15);color:var(--accent2)"><i class="fas fa-star"></i></div>
-        <div class="label">TL Score</div>
-        <div class="value" style="color:var(--accent2)">${perfData.tl_score || 0}/10</div>
-        <div class="change" style="color:var(--muted)">Team Leader Rating</div>
+        <div class="icon" style="background:rgba(255,101,132,.1);color:var(--accent2)"><i class="fas fa-star"></i></div>
+        <div>
+          <div class="label">Unit Leader Eval</div>
+          <div class="value">${perfData.tl_score || 0}/10</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Strategic impact score</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="row g-3">
-    <div class="col-md-8">
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-          <div class="panel-title" style="margin-bottom:0"><i class="fas fa-fingerprint" style="color:var(--accent3)"></i>Quick Attendance</div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="panel mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="panel-title m-0"><i class="fas fa-fingerprint glow-accent" style="color:var(--accent3)"></i>Presence Verification</div>
           <div id="quickAttendAction">
             ${attendanceData.today_marked ? 
-              `<span class="badge-role badge-completed"><i class="fas fa-check-circle me-1"></i>Marked Today ${attendanceData.history && attendanceData.history.length > 0 ? 'at ' + attendanceData.history[0].check_in_time : ''}</span>` :
-              `<button class="btn-primary-custom" style="padding:.4rem 1rem;font-size:.8rem" onclick="markPresent()">Mark Present Today</button>`
+              `<span class="badge-role badge-completed"><i class="fas fa-check-circle me-2"></i>SYNCED AT ${attendanceData.history && attendanceData.history.length > 0 ? attendanceData.history[0].check_in_time : '—'}</span>` :
+              `<button class="btn-primary-custom" style="padding:0.6rem 1.2rem; font-size:0.8rem;" onclick="markPresent()">MARK PRESENCE</button>`
             }
           </div>
         </div>
       </div>
-      <div class="panel" onclick="navigate('team')" style="cursor:pointer">
-        <div class="panel-title"><i class="fas fa-users" style="color:var(--accent)"></i>My Team & Project</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
+
+      <div class="panel mb-4" onclick="navigate('team')" style="cursor:pointer; border-left: 4px solid var(--accent);">
+        <div class="panel-title"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Strategic Unit & Deployment</div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
-            <div style="font-weight:700;font-size:1.1rem">${myTeamObj.team_name || 'No Team'}</div>
-            <div style="color:var(--muted);font-size:.85rem">${myTeamObj.project_name || 'No Project'}</div>
+            <div style="font-weight:800; font-size:1.25rem; color:var(--text); letter-spacing:-0.02em;">${myTeamObj.team_name || 'UNASSIGNED'}</div>
+            <div style="color:var(--muted); font-size:0.85rem; font-weight:600;">ACTIVE MISSION: <span style="color:var(--accent)">${myTeamObj.project_name || 'IDLE'}</span></div>
           </div>
-          <div style="text-align:right;min-width:180px">
-            <div style="font-size:.85rem;margin-bottom:.3rem">Project Progress: <strong>${myTeamObj.project_completion || 0}%</strong></div>
-            <div class="progress-bar-wrap" style="height:8px"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%;background:linear-gradient(90deg,var(--accent),var(--accent3))"></div></div>
+          <div style="text-align:right; min-width:220px">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted);">Deployment Progress</span>
+              <strong style="color:var(--accent)">${myTeamObj.project_completion || 0}%</strong>
+            </div>
+            <div class="progress-bar-wrap" style="height:8px;"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%; background:linear-gradient(90deg,var(--accent),var(--accent3))"></div></div>
           </div>
         </div>
       </div>
+
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent)"></i>Performance Trend</div>
-        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Recent Tasks</div>
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead><tr><th>Task</th><th>Priority</th><th>Status</th><th>Progress</th></tr></thead>
-            <tbody>
-              ${tasksData.slice(0,4).map(t=>`<tr>
-                <td style="font-weight:500">${t.title}</td>
-                <td><span class="badge-role badge-${t.priority.toLowerCase()}">${t.priority}</span></td>
-                <td><span class="badge-role badge-${t.status.replace(' ','').toLowerCase()}">${t.status}</span></td>
-                <td style="min-width:120px">
-                  <div style="display:flex;align-items:center;gap:.5rem">
-                    <div class="progress-bar-wrap"><div class="progress-fill" style="width:${t.progress}%;background:var(--accent)"></div></div>
-                    <span style="font-size:.78rem;color:var(--muted);min-width:30px">${t.progress}%</span>
-                  </div>
-                </td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Performance Velocity</div>
+        <div class="chart-wrap" style="height:300px"><canvas id="trendChart"></canvas></div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-radar" style="color:var(--accent2)"></i>Performance Radar</div>
-        <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+
+    <div class="col-lg-4">
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-chart-radar glow-accent" style="color:var(--accent2)"></i>Capability Matrix</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="radarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-user" style="color:var(--accent3)"></i>Quick Info</div>
-        <div style="font-size:.85rem">
-          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Name</span><strong>${empData.name||'—'}</strong></div>
-          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Role</span><strong>${empData.role||'—'}</strong></div>
-          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Dept</span><strong>${empData.department||'—'}</strong></div>
-          <div style="display:flex;justify-content:space-between;padding:.4rem 0"><span style="color:var(--muted)">Projects</span><strong>${empData.projects_completed||0}</strong></div>
+        <div class="panel-title"><i class="fas fa-id-card-clip glow-accent" style="color:var(--accent3)"></i>Identity Metadata</div>
+        <div class="d-flex flex-column gap-3">
+          ${[['Subject Name',empData.name||'—'],['Role Designation',empData.role||'—'],['Assigned Unit',empData.department||'—'],['Completed Missions',empData.projects_completed||0]].map(([l,v])=>`
+          <div class="d-flex justify-content-between align-items-center p-2" style="border-bottom:1px solid var(--border)">
+            <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${l}</span>
+            <strong style="font-size:0.9rem; color:var(--text);">${v}</strong>
+          </div>`).join('')}
         </div>
       </div>
     </div>
   </div>`;
+  
   setTimeout(() => {
     createChart('trendChart','line',['Aug','Sep','Oct','Nov','Dec','Jan'],
-      [{label:'Performance Score',data:perfData.monthly_trend||[70,72,74,76,75,77],borderColor:'var(--accent)',backgroundColor:'rgba(108,99,255,.1)',fill:true,tension:.4}]);
-    new Chart(document.getElementById('radarChart'),{type:'radar',data:{
-      labels:['Productivity','Attendance','Task Comp.','Quality','TL Score'],
-      datasets:[{label:'You',data:[perfData.productivity_score||0,perfData.attendance_pct||0,perfData.task_completion||0,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],backgroundColor:'rgba(108,99,255,.15)',borderColor:'var(--accent)',pointBackgroundColor:'var(--accent)'}]
-    },options:{responsive:true,maintainAspectRatio:false,scales:{r:{ticks:{color:'#7a7a9a',backdropColor:'transparent',font:{size:9}},grid:{color:'#2a2a38'},pointLabels:{color:'#7a7a9a',font:{size:10}},min:0,max:100}},plugins:{legend:{labels:{color:'#7a7a9a'}}}}});
+      [{label:'Efficiency Score',data:perfData.monthly_trend||[70,72,74,76,75,77],borderColor:'var(--accent)',backgroundColor:'rgba(108,99,255,.1)',fill:true,tension:.4}]);
+    
+    new Chart(document.getElementById('radarChart'),{
+      type:'radar',
+      data:{
+        labels:['Productivity','Attendance','Missions','Quality','Team Eval'],
+        datasets:[{
+          label:'Current State',
+          data:[perfData.productivity_score||0,perfData.attendance_pct||0,perfData.task_completion||0,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],
+          backgroundColor:'rgba(108,99,255,.15)',
+          borderColor:'var(--accent)',
+          pointBackgroundColor:'var(--accent)',
+          borderWidth: 2
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          r:{
+            ticks:{display:false, max:100, min:0},
+            grid:{color:'rgba(255,255,255,0.05)'},
+            angleLines:{color:'rgba(255,255,255,0.05)'},
+            pointLabels:{color:'#94a3b8', font:{size:10, weight:'600'}}
+          }
+        },
+        plugins:{legend:{display:false}}
+      }
+    });
   }, 100);
 }
 
 function renderProfile() {
-  document.getElementById('pageTitle').textContent = 'My Profile';
-  const skills = (empData.skills||'').split(',').map(s=>`<span class="tag skill">${s.trim()}</span>`).join('');
+  document.getElementById('pageTitle').textContent = 'Identity Configuration';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="panel" style="text-align:center">
-        <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;margin:0 auto 1rem">${(empData.name||'?')[0]}</div>
-        <h3 style="font-family:'Syne',sans-serif;font-weight:700">${empData.name||'—'}</h3>
-        <p style="color:var(--muted);font-size:.85rem;margin:.25rem 0">${empData.role||'—'}</p>
-        <span class="badge-role badge-inprogress">${empData.department||'—'}</span>
-        <div style="margin-top:1rem">${skills}</div>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="panel h-100 text-center">
+        <div class="mb-4" style="position:relative; display:inline-block;">
+          <div style="width:120px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#fff;box-shadow:0 15px 35px var(--glow);margin:0 auto;">${(empData.name||'?')[0]}</div>
+          <div style="position:absolute;bottom:-5px;right:-5px;width:36px;height:36px;border-radius:12px;background:var(--accent3);border:4px solid var(--surface);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8rem;"><i class="fas fa-check"></i></div>
+        </div>
+        <h3 style="font-family:'Syne';font-weight:800;margin-bottom:0.5rem;letter-spacing:-0.02em;">${empData.name}</h3>
+        <div class="badge-role badge-inprogress mb-4">${empData.role}</div>
+        
+        <div class="d-flex flex-column gap-2 mt-2">
+          <button class="btn-primary-custom w-100" onclick="showToast('Read-Only', 'Identity modification restricted to HR.', 'info')"><i class="fas fa-camera me-2"></i>UPDATE AVATAR</button>
+          <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important;" onclick="navigate('security')"><i class="fas fa-shield-alt me-2"></i>SECURITY OPS</button>
+        </div>
       </div>
     </div>
-    <div class="col-md-8">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-id-card" style="color:var(--accent)"></i>Employee Details</div>
-        <div class="row g-2" style="font-size:.87rem">
-          ${[['Employee ID',empData.employee_id],['Department',empData.department],['Role',empData.role],['Experience',empData.experience+' Years'],['Joining Date',empData.joining_date],['Projects Completed',empData.projects_completed],['Status',empData.status]].map(([l,v])=>`
+    <div class="col-lg-8">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-database glow-accent" style="color:var(--accent)"></i>Personnel Metadata</div>
+        <div class="row g-4">
+          ${[['Employee ID',empData.employee_id],['Primary Email',empData.email],['Department',empData.department],['Experience',empData.experience+' Years'],['Join Date',empData.joining_date],['Status','ACTIVE']].map(([l,v])=>`
           <div class="col-md-6">
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem">
-              <div style="color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">${l}</div>
-              <div style="font-weight:600;margin-top:.2rem">${v||'—'}</div>
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:18px; padding:1.25rem;">
+              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem; letter-spacing:0.05em;">${l}</div>
+              <div style="font-weight:700; color:var(--text); font-size:1rem;">${v}</div>
             </div>
           </div>`).join('')}
+          <div class="col-12">
+            <div style="background:rgba(108,99,255,0.05); border:1px solid rgba(108,99,255,0.1); border-radius:18px; padding:1.5rem;">
+              <div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:800; margin-bottom:1rem; letter-spacing:0.05em;">Core Skill Matrix</div>
+              <div class="d-flex flex-wrap gap-2">
+                ${(empData.skills||"").split(',').map(s=>`<span class="badge-role badge-inprogress" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2);">${s.trim()}</span>`).join('')||'<span class="text-muted">No skills indexed</span>'}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -344,39 +377,39 @@ function renderProfile() {
 }
 
 function renderTasks() {
-  document.getElementById('pageTitle').textContent = 'My Tasks';
+  document.getElementById('pageTitle').textContent = 'Mission Objectives';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Assigned Tasks</div>
+    <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Deployment Roadmap</div>
     ${tasksData.length === 0 ? '<p style="color:var(--muted);text-align:center;padding:2rem">No tasks assigned yet</p>' : ''}
     ${tasksData.map(t => {
       const ddl = new Date(t.deadline);
       const days = Math.ceil((ddl - new Date()) / 86400000);
       const timerColor = days < 2 ? 'var(--accent2)' : days < 5 ? 'var(--accent4)' : 'var(--accent3)';
-      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.75rem">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+      return `<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:24px;padding:1.5rem;margin-bottom:1rem;transition:0.3s">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">
           <div>
-            <div style="font-weight:600;font-family:'Syne',sans-serif">${t.title}</div>
-            <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">${t.description}</div>
-            <div style="margin-top:.5rem">${(t.required_skills||[]).map(s=>`<span class="tag skill">${s}</span>`).join('')}</div>
+            <div style="font-weight:800;font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--text);">${t.title}</div>
+            <div style="font-size:0.85rem;color:var(--muted);margin-top:0.4rem;line-height:1.4;">${t.description}</div>
+            <div style="margin-top:0.75rem" class="d-flex flex-wrap gap-2">${(t.required_skills||[]).map(s=>`<span class="badge-role badge-inprogress" style="font-size:0.65rem;">${s}</span>`).join('')}</div>
           </div>
           <div style="text-align:right">
             <span class="badge-role badge-${t.priority.toLowerCase()}">${t.priority}</span>
-            <div style="font-size:.78rem;color:${timerColor};margin-top:.3rem"><i class="fas fa-clock"></i> ${days > 0 ? days+' days left' : 'OVERDUE'}</div>
+            <div style="font-size:.78rem;color:${timerColor};margin-top:.5rem;font-weight:700;"><i class="fas fa-clock me-1"></i> ${days > 0 ? days+' DAYS REMAINING' : 'OVERDUE'}</div>
           </div>
         </div>
         
-        <div style="margin-top:1.25rem; border-top:1px solid var(--border); padding-top:1rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-            <label class="form-label-sm mb-0">Update Completion & Status</label>
-            <span id="task_prog_val_${t.id}" style="color:var(--accent);font-weight:700">${t.progress}%</span>
+        <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+            <label class="form-label-sm mb-0">UPDATE DEPLOYMENT STATUS</label>
+            <span id="task_prog_val_${t.id}" style="color:var(--accent);font-weight:800;font-size:1.1rem;">${t.progress}%</span>
           </div>
-          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-            <input type="range" class="form-range" style="flex:1; min-width:150px" value="${t.progress}" min="0" max="100" 
+          <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+            <input type="range" class="form-range" style="flex:1; min-width:200px" value="${t.progress}" min="0" max="100" 
               oninput="document.getElementById('task_prog_val_${t.id}').textContent=this.value+'%'"
               onchange="updateTask('${t.id}', null, this.value)">
             
-            <select class="form-ctrl" style="width:140px;padding:.3rem .5rem" onchange="updateTask('${t.id}',this.value, null)">
+            <select class="form-ctrl" style="width:180px;" onchange="updateTask('${t.id}',this.value, null)">
               <option value="Pending" ${t.status==='Pending'?'selected':''}>Pending</option>
               <option value="In Progress" ${t.status==='In Progress'?'selected':''}>In Progress</option>
               <option value="Completed" ${t.status==='Completed'?'selected':''}>Completed</option>
@@ -407,70 +440,54 @@ async function updateTask(taskId, status, progress) {
 }
 
 async function renderAttendance() {
-  document.getElementById('pageTitle').textContent = 'My Attendance';
+  document.getElementById('pageTitle').textContent = 'Attendance Telemetry';
   const res = await fetch('/api/employee/attendance-history');
   const data = await res.json();
   
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-3">
-      <div class="panel text-center">
-        <div class="panel-title"><i class="fas fa-calendar-check" style="color:var(--accent3)"></i> Today's Attendance</div>
-        <div id="attendanceAction">
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="panel h-100 text-center">
+        <div class="panel-title"><i class="fas fa-calendar-check glow-accent" style="color:var(--accent3)"></i>Status Authorization</div>
+        <div id="attendanceAction" class="py-4">
           ${data.today_marked ? 
-            `<div class="badge-role badge-completed p-3" style="font-size:1rem"><i class="fas fa-check-circle me-2"></i>Attendance Marked</div>
-             <div class="text-muted mt-2" style="font-size:.8rem">Marked at ${data.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || 'N/A'}</div>` :
-            `<button class="btn-primary-custom w-100 p-3" onclick="markPresent()"><i class="fas fa-fingerprint me-2"></i>Mark Present</button>`
+            `<div class="animate-float">
+              <div style="width:80px;height:80px;border-radius:24px;background:rgba(67,233,123,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:var(--accent3);font-size:2rem;border:1px solid rgba(67,233,123,0.2);"><i class="fas fa-check-double"></i></div>
+              <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">IDENTITY SYNCED</h4>
+              <p class="text-muted" style="font-size:0.85rem;">Check-in recorded at ${data.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—'}</p>
+            </div>` :
+            `<div class="animate-float">
+              <div style="width:80px;height:80px;border-radius:24px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:var(--muted);font-size:2rem;border:1px solid var(--border);"><i class="fas fa-power-off"></i></div>
+              <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">AWAITING SYNC</h4>
+              <p class="text-muted mb-4" style="font-size:0.85rem;">Authorize your presence for today's epoch.</p>
+              <button class="btn-primary-custom w-100" onclick="markPresent()"><i class="fas fa-fingerprint me-2"></i>AUTHORIZE NOW</button>
+            </div>`
           }
         </div>
-        <hr style="border-color:var(--border)">
-        <div class="label">Monthly Attendance</div>
-        <div class="value" style="color:var(--accent3);font-size:2rem;margin-top:.5rem">${data.monthly_score}%</div>
-        <div class="progress-bar-wrap mt-2"><div class="progress-fill" style="width:${data.monthly_score}%;background:var(--accent3)"></div></div>
+        <div class="mt-4 p-3" style="background:rgba(255,255,255,0.02); border-radius:18px; border:1px solid var(--border);">
+          <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem;">MONTHLY CONSISTENCY</div>
+          <div style="font-weight:800; font-size:2rem; color:var(--accent3);">${data.monthly_score}%</div>
+          <div class="progress-bar-wrap mt-3" style="height:6px;"><div class="progress-fill" style="width:${data.monthly_score}%; background:var(--accent3)"></div></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-9">
-      <div class="panel">
-        <div class="panel-title" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center">
-          <span><i class="fas fa-history" style="color:var(--accent)"></i> Attendance History (Last 30 Days)</span>
-          <span style="font-size:.7rem; color:var(--muted); font-weight:400">Showing recent activity</span>
-        </div>
-        <div id="attendanceHistoryList" style="padding:0 .5rem">
-          <div class="d-none d-sm-grid" style="grid-template-columns:1.2fr 1fr 1fr; padding:0 1.5rem .75rem; color:var(--muted); font-size:.7rem; text-transform:uppercase; font-weight:700; letter-spacing:.1em">
-            <span>Date</span><span>Status</span><span>Check-in Time</span>
-          </div>
-          ${data.history.length === 0 ? '<div class="text-center py-5 text-muted">No attendance history found. Mark present to get started!</div>' : 
-            data.history.map(h => {
-              const isAbsent = h.status === 'Absent';
-              const statusColor = isAbsent ? 'var(--accent2)' : 'var(--accent3)';
-              const statusBg = isAbsent ? 'rgba(255,101,132,.1)' : 'rgba(67,233,123,.1)';
-              const statusBorder = isAbsent ? 'rgba(255,101,132,.2)' : 'rgba(67,233,123,.2)';
-              const icon = isAbsent ? 'fa-times-circle' : 'fa-check-circle';
-              
-              return `
-              <div class="attend-history-item" style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1rem 1.5rem; margin-bottom:0.75rem; transition:all .3s ease; box-shadow:0 4px 12px rgba(0,0,0,.1)">
-                <div class="row align-items-center">
-                  <div class="col-sm-4 col-6 mb-2 mb-sm-0">
-                    <div style="font-weight:700; font-size:1rem; color:var(--text); display:flex; align-items:center; gap:.75rem">
-                      <div style="width:8px; height:8px; background:${statusColor}; border-radius:50%"></div>
-                      ${h.date}
-                    </div>
-                  </div>
-                  <div class="col-sm-4 col-6 text-end text-sm-start mb-2 mb-sm-0">
-                    <span class="badge-role" style="padding:.5rem 1.2rem; font-size:.75rem; border-radius:12px; background:${statusBg}; color:${statusColor}; border:1px solid ${statusBorder}; display:inline-flex; align-items:center; gap:.5rem; box-shadow:0 2px 8px ${statusBorder}">
-                      <i class="fas ${icon}"></i>
-                      <span>${h.status}</span>
-                    </span>
-                  </div>
-                  <div class="col-sm-4 col-12 text-sm-end">
-                    <div style="font-weight:700; color:${statusColor}; font-family:'Syne',sans-serif; font-size:1rem; letter-spacing:.02em">
-                      <span class="d-sm-none" style="color:var(--muted); font-size:.7rem; font-weight:400; margin-right:.5rem">Check-in:</span>
-                      <i class="far fa-clock me-2" style="font-size:.8rem; opacity:.7"></i>${h.check_in_time}
-                    </div>
-                  </div>
-                </div>
-              </div>`;
-            }).join('')}
+    <div class="col-lg-8">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent)"></i>Temporal History (30 Days)</div>
+        <div class="tbl-wrap" style="max-height:500px; overflow-y:auto;">
+          <table class="tbl">
+            <thead><tr><th>Epoch Date</th><th>Status</th><th>Sync Time</th><th>Work Load</th></tr></thead>
+            <tbody>${data.history.length === 0 ? '<tr><td colspan="4" class="text-center py-5 text-muted">No temporal records found</td></tr>' : 
+              data.history.map(h => {
+                const isAbsent = h.status === 'Absent';
+                return `<tr>
+                  <td style="font-weight:700; color:var(--text);">${h.date}</td>
+                  <td><span class="badge-role ${isAbsent?'badge-high':'badge-completed'}">${h.status}</span></td>
+                  <td style="font-family:monospace; color:${isAbsent?'var(--muted)':'var(--accent3)'};">${h.check_in_time}</td>
+                  <td style="font-weight:600;">${isAbsent?'0.0h':'8.0h'}</td>
+                </tr>`;
+              }).join('')}</tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -499,36 +516,36 @@ async function markPresent() {
 }
 
 function renderPerformance() {
-  document.getElementById('pageTitle').textContent = 'Performance Analytics';
+  document.getElementById('pageTitle').textContent = 'Intelligence Analytics';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
+  <div class="row g-4">
     <div class="col-lg-8">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Performance Metrics</div>
-        <div class="chart-wrap" style="height: 300px"><canvas id="perfBarChart"></canvas></div>
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Efficiency Vector Analysis</div>
+        <div class="chart-wrap" style="height: 320px"><canvas id="perfBarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Monthly Trend</div>
-        <div class="chart-wrap" style="height: 300px"><canvas id="perfTrendChart"></canvas></div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent3)"></i>Performance Progression</div>
+        <div class="chart-wrap" style="height: 320px"><canvas id="perfTrendChart"></canvas></div>
       </div>
     </div>
     <div class="col-lg-4">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent2)"></i>Score Breakdown</div>
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent2)"></i>Capability Matrix</div>
         <div class="chart-wrap" style="height: 300px"><canvas id="perfRadarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent4)"></i>Metrics Insight</div>
-        <div class="row g-2">
+        <div class="panel-title"><i class="fas fa-info-circle glow-accent" style="color:var(--accent4)"></i>Analytic Insights</div>
+        <div class="row g-3">
           ${[['Productivity', perfData.productivity_score + '%', 'var(--accent)'], 
-             ['Attendance', perfData.attendance_pct + '%', 'var(--accent3)'],
-             ['Task Comp.', perfData.task_completion + '%', 'var(--accent4)'],
+             ['Consistency', perfData.attendance_pct + '%', 'var(--accent3)'],
+             ['Completion', perfData.task_completion + '%', 'var(--accent4)'],
              ['Quality', perfData.quality_rating + '/10', 'var(--accent2)']
             ].map(([l, v, c]) => `
-            <div class="col-sm-6 col-12">
-              <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:.75rem; text-align:center; display:flex; align-items:center; justify-content:space-between">
-                <div style="color:var(--muted); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em">${l}</div>
-                <div style="font-weight:700; color:${c}; font-size:1.1rem">${v}</div>
+            <div class="col-6">
+              <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1.25rem; text-align:center;">
+                <div style="color:var(--muted); font-size:0.65rem; text-transform:uppercase; font-weight:800; margin-bottom:0.5rem;">${l}</div>
+                <div style="font-weight:800; color:${c}; font-size:1.2rem;">${v}</div>
               </div>
             </div>`).join('')}
         </div>
@@ -540,66 +557,52 @@ function renderPerformance() {
     new Chart(document.getElementById('perfBarChart'), {
       type: 'bar',
       data: {
-        labels: ['Productivity', 'Attendance', 'Task Comp.', 'Quality (x10)', 'TL Score (x10)'],
+        labels: ['Productivity', 'Attendance', 'Tasks', 'Quality', 'Leader Eval'],
         datasets: [{
-          label: 'Your Scores',
-          data: [
-            perfData.productivity_score || 0,
-            perfData.attendance_pct || 0,
-            perfData.task_completion || 0,
-            (perfData.quality_rating || 0) * 10,
-            (perfData.tl_score || 0) * 10
-          ],
+          label: 'Your Metrics',
+          data: [perfData.productivity_score||0, perfData.attendance_pct||0, perfData.task_completion||0, (perfData.quality_rating||0)*10, (perfData.tl_score||0)*10],
           backgroundColor: ['var(--accent)', 'var(--accent3)', 'var(--accent4)', 'var(--accent2)', 'var(--accent)'],
-          borderRadius: 8
+          borderRadius: 10,
+          borderWidth: 0
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { min: 0, max: 100, ticks: { color: '#7a7a9a' }, grid: { color: '#2a2a38' } },
-          x: { ticks: { color: '#7a7a9a' }, grid: { display: false } }
+          y: { min: 0, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+          x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
         }
       }
     });
 
     createChart('perfTrendChart', 'line', ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'], [{
-      label: 'Performance',
+      label: 'Overall Efficiency',
       data: perfData.monthly_trend || [70, 72, 74, 76, 75, 77],
       borderColor: 'var(--accent3)',
       backgroundColor: 'rgba(67,233,123,.1)',
-      fill: true,
-      tension: 0.4
+      fill: true, tension: 0.4, pointRadius: 5
     }]);
 
     new Chart(document.getElementById('perfRadarChart'), {
       type: 'radar',
       data: {
-        labels: ['Productivity', 'Attendance', 'Task Comp.', 'Quality', 'TL Score'],
+        labels: ['Productivity', 'Attendance', 'Tasks', 'Quality', 'Eval'],
         datasets: [{
-          label: 'Current Status',
-          data: [
-            perfData.productivity_score || 0,
-            perfData.attendance_pct || 0,
-            perfData.task_completion || 0,
-            (perfData.quality_rating || 0) * 10,
-            (perfData.tl_score || 0) * 10
-          ],
-          backgroundColor: 'rgba(108,99,255,.2)',
+          data: [perfData.productivity_score||0, perfData.attendance_pct||0, perfData.task_completion||0, (perfData.quality_rating||0)*10, (perfData.tl_score||0)*10],
+          backgroundColor: 'rgba(108,99,255,.15)',
           borderColor: 'var(--accent)',
-          pointBackgroundColor: 'var(--accent)'
+          pointBackgroundColor: 'var(--accent)',
+          borderWidth: 2
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         scales: {
           r: {
-            angleLines: { color: '#2a2a38' },
-            grid: { color: '#2a2a38' },
-            pointLabels: { color: '#7a7a9a', font: { size: 10 } },
+            angleLines: { color: 'rgba(255,255,255,0.05)' },
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } },
             ticks: { display: false },
             min: 0, max: 100
           }
@@ -611,21 +614,56 @@ function renderPerformance() {
 }
 
 function renderWeekly() {
-  document.getElementById('pageTitle').textContent = 'Weekly Self Update';
+  document.getElementById('pageTitle').textContent = 'Epoch Performance Log';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="panel" style="max-width:700px">
-    <div class="panel-title"><i class="fas fa-calendar-week" style="color:var(--accent)"></i>Submit Weekly Update</div>
-    <div class="mb-3"><label class="form-label-sm">Project Work Done This Week</label>
-      <textarea class="form-ctrl" id="proj_work" rows="3" placeholder="Describe what you accomplished..."></textarea></div>
-    <div class="mb-3"><label class="form-label-sm">New Technologies / Skills Learned</label>
-      <input class="form-ctrl" id="tech_learned" placeholder="e.g., Docker, Redis, GraphQL..."></div>
-    <div class="mb-3"><label class="form-label-sm">Problems / Blockers Faced</label>
-      <textarea class="form-ctrl" id="problems" rows="2" placeholder="Any challenges or blockers..."></textarea></div>
-    <div class="mb-3"><label class="form-label-sm">Task Completion Level</label>
-      <input type="range" class="form-range" id="completion" min="0" max="100" value="75" oninput="document.getElementById('compVal').textContent=this.value+'%'">
-      <span id="compVal" style="color:var(--accent);font-weight:700">75%</span></div>
-    <button class="btn-primary-custom" onclick="submitWeekly()"><i class="fas fa-paper-plane me-2"></i>Submit Weekly Update</button>
-    <div id="weeklyMsg" style="margin-top:1rem;display:none"></div>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-calendar-plus glow-accent" style="color:var(--accent)"></i>New Epoch Submission</div>
+        <div class="mb-3">
+          <label class="form-label-sm">MISSION ACCOMPLISHMENTS</label>
+          <textarea class="form-ctrl" id="proj_work" rows="4" placeholder="Describe objectives met this week..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">SKILL ACQUISITION</label>
+          <input class="form-ctrl" id="tech_learned" placeholder="e.g. Docker, Neural Networks...">
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">SYSTEM BLOCKERS</label>
+          <textarea class="form-ctrl" id="problems" rows="2" placeholder="Any impediments faced..."></textarea>
+        </div>
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label-sm mb-0">COMPLETION LEVEL</label>
+            <span id="compVal" style="color:var(--accent); font-weight:800; font-size:1.1rem;">75%</span>
+          </div>
+          <input type="range" class="form-range" id="completion" min="0" max="100" value="75" oninput="document.getElementById('compVal').textContent=this.value+'%'">
+        </div>
+        <button class="btn-primary-custom w-100" onclick="submitWeekly()"><i class="fas fa-paper-plane me-2"></i>SUBMIT EPOCH LOG</button>
+        <div id="weeklyMsg" class="mt-3" style="display:none"></div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent3)"></i>Historical Epochs</div>
+        <div class="tbl-wrap" style="max-height:550px; overflow-y:auto;">
+          <table class="tbl">
+            <thead><tr><th>Epoch End</th><th>Primary Focus</th><th>Efficiency</th><th>Status</th></tr></thead>
+            <tbody>${weeklyData.map(w=>`<tr>
+              <td style="font-weight:700; color:var(--text);">${w.week_ending}</td>
+              <td><div style="font-weight:600; font-size:0.9rem;">${w.title}</div></td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress-bar-wrap" style="width:60px; height:4px;"><div class="progress-fill" style="width:${w.efficiency||70}%; background:var(--accent3)"></div></div>
+                  <small style="font-weight:800; color:var(--accent3)">${w.efficiency||70}%</small>
+                </div>
+              </td>
+              <td><span class="badge-role ${w.status==='Approved'?'badge-completed':'badge-pending'}">${w.status}</span></td>
+            </tr>`).join('')||'<tr><td colspan="4" class="text-center py-5 text-muted">No historical epochs indexed</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -655,7 +693,7 @@ async function submitWeekly() {
 }
 
 function renderLearning() {
-  document.getElementById('pageTitle').textContent = 'Learning & Growth';
+  document.getElementById('pageTitle').textContent = 'Skill Acquisition Hub';
   const _courses = [
     {name:'System Design Fundamentals',provider:'Coursera',duration:'8h',status:'Recommended'},
     {name:'AWS Cloud Practitioner',provider:'AWS',duration:'20h',status:'Recommended'},
@@ -676,7 +714,6 @@ function renderLearning() {
       const select = document.getElementById('certSkill');
       if(select) {
           select.value = name;
-          // Visual feedback
           select.style.borderColor = 'var(--accent)';
           setTimeout(() => select.style.borderColor = 'var(--border)', 1000);
       }
@@ -685,64 +722,82 @@ function renderLearning() {
   const courseOptions = _courses.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-file-upload" style="color:var(--accent)"></i>Submit New Skill / Certificate</div>
-        <p style="color:var(--muted); font-size: 0.85rem; margin-bottom: 1rem">Upload your completion certificate to permanently add a new skill to your profile.</p>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-file-upload glow-accent" style="color:var(--accent)"></i>Credential Ingestion</div>
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem">Upload completion metadata to permanently index new skills into your personnel profile.</p>
         
-        <div class="mb-2"><label class="form-label-sm">Skill Name</label>
-        <select class="form-ctrl" id="certSkill">
-            <option value="" disabled selected>Select a recommended course</option>
+        <div class="mb-3">
+          <label class="form-label-sm">SPECIFICATION</label>
+          <select class="form-ctrl" id="certSkill">
+            <option value="" disabled selected>— Select Objective —</option>
             ${courseOptions}
-        </select>
+          </select>
         </div>
-        <div class="mb-2"><label class="form-label-sm">Completion Level</label>
-            <input type="range" class="form-range" id="certCompletion" min="0" max="100" value="100" oninput="document.getElementById('certCompVal').textContent=this.value+'%'">
-            <span id="certCompVal" style="color:var(--accent);font-weight:700">100%</span>
-        </div>
-        
-        <div class="mb-3"><label class="form-label-sm">Upload Certificate (Image, PDF)</label>
-            <input type="file" id="certFile" class="form-ctrl" accept=".pdf,image/*">
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Required only for 100% completion.</div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label-sm mb-0">MASTERY LEVEL</label>
+            <span id="certCompVal" style="color:var(--accent); font-weight:800;">100%</span>
+          </div>
+          <input type="range" class="form-range" id="certCompletion" min="0" max="100" value="100" oninput="document.getElementById('certCompVal').textContent=this.value+'%'">
         </div>
         
-        <button class="btn-primary-custom w-100" onclick="submitCertificate()"><i class="fas fa-arrow-up me-2"></i>Submit & Add Skill</button>
-        <div id="certMsg" style="margin-top:0.75rem;display:none"></div>
+        <div class="mb-4">
+          <label class="form-label-sm">EVIDENCE (PDF/IMAGE)</label>
+          <input type="file" id="certFile" class="form-ctrl" accept=".pdf,image/*">
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:0.5rem;">Mandatory for 100% mastery verification.</div>
+        </div>
+        
+        <button class="btn-primary-custom w-100" onclick="submitCertificate()"><i class="fas fa-microchip me-2"></i>INGEST CREDENTIAL</button>
+        <div id="certMsg" class="mt-3" style="display:none"></div>
       </div>
       
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-book" style="color:var(--accent)"></i>Recommended Training</div>
-        ${courses.map(c=>`<div onclick="selectCourse('${c.name}')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='rgba(108,99,255,.05)'" onmouseout="this.style.background='var(--surface)'">
-          <div><div style="font-weight:600;font-size:.88rem">${c.name}</div><div style="font-size:.75rem;color:var(--muted)">${c.provider} • ${c.duration}</div></div>
-          <span class="badge-role ${c.status==='In Progress'?'badge-inprogress':c.status==='Completed'?'badge-completed':'badge-pending'}">${c.status}</span>
-        </div>`).join('')}
+        <div class="panel-title"><i class="fas fa-graduation-cap glow-accent" style="color:var(--accent3)"></i>Strategic Training Vectors</div>
+        <div class="d-flex flex-column gap-2">
+          ${courses.map(c=>`
+          <div onclick="selectCourse('${c.name}')" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1rem; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:0.3s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div>
+              <div style="font-weight:800; font-size:0.9rem; color:var(--text);">${c.name}</div>
+              <div style="font-size:0.7rem; color:var(--muted); font-weight:600;">${c.provider} • ${c.duration}</div>
+            </div>
+            <span class="badge-role ${c.status==='In Progress'?'badge-inprogress':c.status==='Completed'?'badge-completed':'badge-pending'}">${c.status}</span>
+          </div>`).join('')}
+        </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent3)"></i>Skill Gap Analysis</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="skillChart"></canvas></div>
+    
+    <div class="col-lg-6">
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent4)"></i>Skill Coverage Analysis</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="skillChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-certificate" style="color:var(--accent4)"></i>Learning Progress & Certifications</div>
-        ${Object.keys(empData.learning_progress || {}).length === 0 ? '<div style="color:var(--muted);font-size:0.85rem;padding:1rem;text-align:center">No learning progress tracked yet. Submit a skill to get started!</div>' : 
+        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>Indexed Growth Progress</div>
+        ${Object.keys(empData.learning_progress || {}).length === 0 ? '<div class="text-center py-5 text-muted">No growth vectors indexed yet.</div>' : 
           Object.entries(empData.learning_progress || {}).map(([c,p], idx)=>`
-        <div style="margin-bottom:1.25rem; background:var(--surface); padding:.75rem; border-radius:10px; border:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;margin-bottom:.5rem">
-            <span style="font-size:.85rem;font-weight:600">${c}</span>
-            <span id="prog_val_${idx}" style="font-size:.78rem;color:var(--accent4);font-weight:700">${p}%</span>
+        <div style="margin-bottom:1.5rem; background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:18px; border:1px solid var(--border)">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem">
+            <span style="font-weight:800; font-size:0.9rem; color:var(--text);">${c}</span>
+            <span id="prog_val_${idx}" style="font-weight:800; color:var(--accent4); font-size:1rem;">${p}%</span>
           </div>
+          <div class="progress-bar-wrap mb-3" style="height:6px;"><div class="progress-fill" style="width:${p}%; background:var(--accent4)"></div></div>
           <input type="range" class="form-range" value="${p}" min="0" max="100" 
             oninput="document.getElementById('prog_val_${idx}').textContent=this.value+'%'"
             onchange="updateLearningProgress('${c.replace(/'/g, "\\'")}', this.value)">
-          <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">${p===100?'Course Completed!':'Slide to update your progress'}</div>
         </div>`).join('')}
       </div>
     </div>
   </div>`;
+  
   setTimeout(() => {
-    createChart('skillChart','doughnut',['Matched Skills','Gap Skills'],[{data:[65,35],backgroundColor:['rgba(67,233,123,.7)','rgba(255,101,132,.7)'],borderColor:['var(--accent3)','var(--accent2)']}]);
+    createChart('skillChart','doughnut',['Verified Skills','Target Gaps'],[{
+      data:[65,35],
+      backgroundColor:['rgba(67,233,123,.6)','rgba(255,101,132,.6)'],
+      borderWidth: 0,
+      hoverOffset: 15
+    }], { plugins: { legend: { position: 'bottom' } } });
   }, 100);
 }
 
@@ -975,26 +1030,32 @@ async function submitLeaveRequest() {
 
 <!-- 2FA Setup Modal -->
 <div class="modal-custom" id="tfaSetupModal">
-  <div class="modal-box" style="max-width:400px">
-    <div class="modal-header-custom">
-      <span class="modal-title-custom">Two-Factor Auth Setup</span>
+  <div class="modal-box" style="max-width:440px; border-top: 4px solid var(--accent3);">
+    <div class="modal-header-custom mb-4">
+      <span class="modal-title-custom" style="font-family:'Syne'; font-weight:800; font-size:1.4rem">Neural-Sync 2FA Setup</span>
       <button class="modal-close" onclick="hideModal('tfaSetupModal')">✕</button>
     </div>
     <div class="text-center">
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
-      <div style="background:#fff;padding:10px;border-radius:12px;display:inline-block;margin-bottom:1rem">
-        <img id="qrCodeImg" style="width:180px;height:180px;display:block">
+      <div style="background:rgba(67,233,123,0.1); color:var(--accent3); padding:1rem; border-radius:16px; font-size:0.85rem; font-weight:600; margin-bottom:1.5rem; border:1px solid rgba(67,233,123,0.2)">
+        <i class="fas fa-shield-virus me-2"></i>Scan the biometric seed with your authenticator app.
       </div>
-      <div style="background:var(--surface);padding:.75rem;border-radius:8px;border:1px solid var(--border);margin-bottom:1.5rem">
-        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase">Manual Entry Key</div>
-        <div id="tfaSecret" style="font-weight:700;letter-spacing:2px;color:var(--accent);margin-top:.25rem"></div>
+      
+      <div style="background:#fff; padding:15px; border-radius:24px; display:inline-block; margin-bottom:1.5rem; box-shadow:0 0 30px rgba(255,255,255,0.1)">
+        <img id="qrCodeImg" style="width:200px; height:200px; display:block; filter:contrast(1.1)">
       </div>
-      <div class="mb-3 text-start">
-        <label class="form-label-sm">Enter 6-digit Verification Code</label>
-        <input class="form-ctrl text-center" id="tfaCode" placeholder="000000" maxlength="6" style="font-size:1.5rem;letter-spacing:5px">
+      
+      <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; border:1px solid var(--border); margin-bottom:2rem; text-align:left">
+        <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.4rem">Manual Ingestion Key</div>
+        <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center"></div>
       </div>
-      <button class="btn-success-custom w-100" onclick="verifyAndEnable2FA()">
-        <i class="fas fa-check-circle me-2"></i>Verify and Enable 2FA
+      
+      <div class="mb-4 text-start">
+        <label class="form-label-sm" style="color:var(--muted); font-weight:800; text-transform:uppercase; font-size:0.65rem; margin-bottom:0.75rem; display:block">Verify 6-Digit Neural Code</label>
+        <input class="form-ctrl text-center" id="tfaCode" placeholder="000 000" maxlength="6" style="font-size:1.8rem; letter-spacing:8px; font-family:'Syne'; border-radius:16px; background:rgba(255,255,255,0.05) !important">
+      </div>
+      
+      <button class="btn-primary-custom w-100" onclick="verifyAndEnable2FA()" style="padding:1rem; border-radius:16px; background:linear-gradient(135deg, var(--accent3), #2ecc71) !important">
+        <i class="fas fa-check-circle me-2"></i>AUTHORIZE LINK
       </button>
     </div>
   </div>

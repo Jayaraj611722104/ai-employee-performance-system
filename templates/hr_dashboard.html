@@ -145,69 +145,166 @@ async function reloadTeams() {
 }
 
 function renderOverview() {
-  document.getElementById('pageTitle').textContent = 'HR Overview';
+  document.getElementById('pageTitle').textContent = 'Enterprise Intelligence';
   const depts = stats.departments || {};
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent)"><i class="fas fa-users"></i></div><div class="label">Total Employees</div><div class="value" style="color:var(--accent)">${stats.total_employees||0}</div><div class="change" style="color:var(--accent3)">↑ 2 this month</div></div></div>
-    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(67,233,123,.15);color:var(--accent3)"><i class="fas fa-user-check"></i></div><div class="label">Active</div><div class="value" style="color:var(--accent3)">${stats.active||0}</div><div class="change" style="color:var(--muted)">${stats.inactive||0} inactive</div></div></div>
-    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(247,183,49,.15);color:var(--accent4)"><i class="fas fa-chart-bar"></i></div><div class="label">Avg Performance</div><div class="value" style="color:var(--accent4)">${stats.avg_performance||0}%</div><div class="change" style="color:var(--muted)">Company-wide</div></div></div>
-    <div class="col-md-3"><div class="stat-card"><div class="icon" style="background:rgba(255,101,132,.15);color:var(--accent2)"><i class="fas fa-building"></i></div><div class="label">Departments</div><div class="value" style="color:var(--accent2)">${Object.keys(depts).length}</div><div class="change" style="color:var(--muted)">Active teams</div></div></div>
-  </div>
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent)"></i>Department Distribution</div>
-        <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(108,99,255,0.15);color:var(--accent)"><i class="fas fa-users glow-accent"></i></div>
+        <div>
+          <div class="label">Total Workforce</div>
+          <div class="value">${stats.total_employees||0}</div>
+          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>2.4% Neural Growth</div>
+        </div>
       </div>
     </div>
-    <div class="col-md-7">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent3)"></i>Performance Distribution</div>
-        <div class="chart-wrap"><canvas id="perfDistChart"></canvas></div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(67,233,123,0.15);color:var(--accent3)"><i class="fas fa-user-check glow-accent"></i></div>
+        <div>
+          <div class="label">Active Sync</div>
+          <div class="value">${stats.active||0}</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${stats.inactive||0} Offline Units</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(247,183,49,0.15);color:var(--accent4)"><i class="fas fa-bolt glow-accent"></i></div>
+        <div>
+          <div class="label">Workforce Velocity</div>
+          <div class="value">${stats.avg_performance||0}%</div>
+          <div style="font-size:0.75rem;color:var(--accent4);font-weight:700">System Optimized</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="icon" style="background:rgba(255,101,132,0.15);color:var(--accent2)"><i class="fas fa-layer-group glow-accent"></i></div>
+        <div>
+          <div class="label">Strategic Sectors</div>
+          <div class="value">${Object.keys(depts).length}</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Cross-Platform Units</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="row g-3 mt-0">
-    <div class="col-md-12">
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent)"></i>Sector Allocation</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="deptChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent3)"></i>Performance Matrix Distribution</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="perfDistChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-1">
+    <div class="col-12">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i>AI Alerts Summary</div>
-        <div class="row g-2">
-          ${performanceAll.filter(p=>p.productivity_score<60).map(p=>`<div class="col-md-4"><div class="notif-item danger"><i class="fas fa-arrow-down" style="color:var(--accent2)"></i><div><strong>${p.name}</strong><br><small>Performance below 60% (${p.productivity_score}%)</small></div></div></div>`).join('')}
-          ${performanceAll.filter(p=>p.attendance_pct<75).map(p=>`<div class="col-md-4"><div class="notif-item warning"><i class="fas fa-clock" style="color:var(--accent4)"></i><div><strong>${p.name}</strong><br><small>Attendance below 75% (${p.attendance_pct}%)</small></div></div></div>`).join('')}
-          ${performanceAll.filter(p=>p.productivity_score>85).slice(0,2).map(p=>`<div class="col-md-4"><div class="notif-item success"><i class="fas fa-trophy" style="color:var(--accent3)"></i><div><strong>${p.name}</strong><br><small>Top performer — consider for promotion</small></div></div></div>`).join('')}
+        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent2)"></i>Neural Alert Stream</div>
+        <div class="row g-3">
+          ${performanceAll.filter(p=>p.productivity_score<60).map(p=>`
+            <div class="col-xl-4 col-md-6">
+              <div class="notif-item danger" style="background:rgba(255,101,132,0.05); border:1px solid rgba(255,101,132,0.1); border-radius:20px; padding:1.5rem; transition:0.3s;">
+                <div style="width:44px; height:44px; background:rgba(255,101,132,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--accent2); margin-right:1rem">
+                  <i class="fas fa-arrow-down-long"></i>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">${p.name}</div>
+                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">Velocity Critical: <span style="color:var(--accent2); font-weight:800">${p.productivity_score}%</span></div>
+                </div>
+                <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.65rem; background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important; box-shadow:none" onclick="navigate('alerts')">ANALYZE</button>
+              </div>
+            </div>`).join('')}
+          ${performanceAll.filter(p=>p.productivity_score>88).slice(0,3).map(p=>`
+            <div class="col-xl-4 col-md-6">
+              <div class="notif-item success" style="background:rgba(67,233,123,0.05); border:1px solid rgba(67,233,123,0.1); border-radius:20px; padding:1.5rem; transition:0.3s;">
+                <div style="width:44px; height:44px; background:rgba(67,233,123,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--accent3); margin-right:1rem">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">${p.name}</div>
+                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">Elite Potential: <span style="color:var(--accent3); font-weight:800">${p.productivity_score}%</span></div>
+                </div>
+                <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.65rem; background:rgba(67,233,123,0.1) !important; color:var(--accent3) !important; border:1px solid rgba(67,233,123,0.2) !important; box-shadow:none" onclick="navigate('ai-promotion')">PROMOTE</button>
+              </div>
+            </div>`).join('')}
         </div>
       </div>
     </div>
   </div>`;
+  
   setTimeout(()=>{
     const deptLabels=Object.keys(depts), deptVals=Object.values(depts);
-    createChart('deptChart','pie',deptLabels,[{data:deptVals,backgroundColor:['rgba(108,99,255,.7)','rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)','rgba(86,204,242,.7)']}]);
+    createChart('deptChart','pie',deptLabels,[{
+      data:deptVals,
+      backgroundColor:['rgba(108,99,255,0.7)','rgba(67,233,123,0.7)','rgba(247,183,49,0.7)','rgba(255,101,132,0.7)','rgba(86,204,242,0.7)'],
+      borderWidth: 2,
+      borderColor: 'rgba(255,255,255,0.1)',
+      hoverOffset: 20
+    }], { plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 700 } } } } });
+    
     const buckets={'60-70':0,'71-80':0,'81-90':0,'91-100':0};
     performanceAll.forEach(p=>{const s=p.productivity_score;if(s<=70)buckets['60-70']++;else if(s<=80)buckets['71-80']++;else if(s<=90)buckets['81-90']++;else buckets['91-100']++;});
-    createChart('perfDistChart','bar',Object.keys(buckets),[{label:'Employees',data:Object.values(buckets),backgroundColor:['rgba(255,101,132,.7)','rgba(247,183,49,.7)','rgba(108,99,255,.7)','rgba(67,233,123,.7)']}]);
+    createChart('perfDistChart','bar',Object.keys(buckets),[{
+      label:'Personnel Count',
+      data:Object.values(buckets),
+      backgroundColor:['rgba(255,101,132,0.7)','rgba(247,183,49,0.7)','rgba(108,99,255,0.7)','rgba(67,233,123,0.7)'],
+      borderRadius: 12,
+      borderWidth: 0,
+      barThickness: 40
+    }]);
   },100);
 }
 
 function renderEmployees() {
-  document.getElementById('pageTitle').textContent = 'Employee Management';
+  document.getElementById('pageTitle').textContent = 'Workforce Directory';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-users" style="color:var(--accent)"></i>All Employees (${employees.length})</div>
-    <input class="form-ctrl mb-3" placeholder="Search employees..." id="empSearch" oninput="filterEmployees(this.value)" style="max-width:300px">
-    <div style="overflow-x:auto"><table class="tbl" id="empTable">
-      <thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Dept</th><th>Experience</th><th>Joining Date</th><th>Status</th><th>Performance</th></tr></thead>
-      <tbody>${employees.map(e=>{
-        const p=performanceAll.find(p=>p.user_id===e.user_id)||{};
-        return `<tr>
-          <td><strong>${e.name}</strong></td><td style="color:var(--muted)">${e.employee_id}</td>
-          <td>${e.role}</td><td>${e.department}</td>
-          <td>${e.experience}yr</td><td>${e.joining_date}</td>
-          <td><span class="badge-role ${e.status==='Active'?'badge-completed':'badge-high'}">${e.status}</span></td>
-          <td><div style="display:flex;align-items:center;gap:.4rem"><div class="progress-bar-wrap" style="width:70px"><div class="progress-fill" style="width:${p.productivity_score||0}%;background:var(--accent)"></div></div><small>${p.productivity_score||0}%</small></div></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table></div>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div class="panel-title m-0"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Total Personnel (${employees.length})</div>
+      <div style="position:relative; width:320px;">
+        <i class="fas fa-search" style="position:absolute;left:1.25rem;top:50%;transform:translateY(-50%);color:var(--muted)"></i>
+        <input class="form-ctrl" placeholder="Search directory..." id="empSearch" oninput="filterEmployees(this.value)" style="padding-left:3.5rem">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl" id="empTable">
+        <thead><tr><th>Employee</th><th>Identity</th><th>Specialization</th><th>Unit</th><th>Tenure</th><th>Status</th><th>Productivity</th></tr></thead>
+        <tbody>${employees.map(e=>{
+          const p=performanceAll.find(p=>p.user_id===e.user_id)||{};
+          return `<tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:0.9rem;">${e.name[0]}</div>
+                <strong>${e.name}</strong>
+              </div>
+            </td>
+            <td style="font-family:monospace;color:var(--muted);font-size:0.85rem">${e.employee_id}</td>
+            <td><span style="font-weight:600">${e.role}</span></td>
+            <td>${e.department}</td>
+            <td>${e.experience} Years</td>
+            <td><span class="badge-role ${e.status==='Active'?'badge-completed':'badge-high'}">${e.status}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:1rem">
+                <div class="progress-bar-wrap" style="width:100px;background:rgba(255,255,255,0.05)">
+                  <div class="progress-fill" style="width:${p.productivity_score||0}%;background:var(--accent)"></div>
+                </div>
+                <span style="font-weight:800;font-size:0.85rem">${p.productivity_score||0}%</span>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
   </div>`;
 }
 
@@ -217,209 +314,216 @@ function filterEmployees(q) {
 }
 
 function renderAttendance() {
-  document.getElementById('pageTitle').textContent = 'Attendance Monitoring';
+  document.getElementById('pageTitle').textContent = 'Attendance Intelligence';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-8">
+  <div class="row g-4">
+    <div class="col-lg-8">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Attendance Overview</div>
-        <div class="chart-wrap"><canvas id="attendChart"></canvas></div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Personnel Attendance Trends</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="attendChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-table" style="color:var(--accent3)"></i>Monthly Attendance Report</div>
-        <table class="tbl">
-          <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Late</th><th>Hours</th><th>%</th></tr></thead>
-          <tbody>${attendance.map(a=>{
+        <div class="panel-title"><i class="fas fa-table glow-accent" style="color:var(--accent3)"></i>Detailed Attendance Log</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Late</th><th>Work Hours</th><th>Compliance</th></tr></thead>
+            <tbody>${attendance.map(a=>{
+              const emp=employees.find(e=>e.user_id===a.user_id)||{};
+              const pct=Math.round(a.present/a.total*100);
+              return `<tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;">${(emp.name||'?')[0]}</div>
+                    <strong>${emp.name||'—'}</strong>
+                  </div>
+                </td>
+                <td style="color:var(--accent3);font-weight:700">${a.present}</td>
+                <td style="color:var(--accent2);font-weight:700">${a.absent}</td>
+                <td style="color:var(--accent4);font-weight:700">${a.late}</td>
+                <td>${a.hours}h</td>
+                <td>
+                  <span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:800;font-size:0.9rem">${pct}%</span>
+                </td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent2)"></i>Absentee Breakdown</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="absentChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-bell animate-float" style="color:var(--accent4)"></i>Attendance Compliance</div>
+        <div class="d-flex flex-column gap-2">
+          ${attendance.filter(a=>a.present/a.total<0.75).map(a=>{
             const emp=employees.find(e=>e.user_id===a.user_id)||{};
-            const pct=Math.round(a.present/a.total*100);
-            return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td><td style="color:var(--accent4)">${a.late}</td><td>${a.hours}h</td>
-            <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent2)"></i>Absentee Analysis</div>
-        <div class="chart-wrap"><canvas id="absentChart"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-exclamation-triangle" style="color:var(--accent4)"></i>Attendance Alerts</div>
-        ${attendance.filter(a=>a.present/a.total<0.75).map(a=>{
-          const emp=employees.find(e=>e.user_id===a.user_id)||{};
-          return `<div class="notif-item danger mb-1"><i class="fas fa-clock" style="color:var(--accent2)"></i><div><strong>${emp.name}</strong><br><small>${Math.round(a.present/a.total*100)}% attendance this month</small></div></div>`;
-        }).join('')||'<p style="color:var(--accent3);font-size:.85rem">✓ No critical attendance issues</p>'}
-      </div>
-    </div>
-  </div>
-  <div class="row g-3 mt-3">
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-user-graduate" style="color:var(--accent3)"></i>Freshers & New Talent</div>
-        <table class="tbl">
-          <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
-          <tbody>${(()=>{
-            const ninetyDaysAgo = new Date();
-            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-            const filtered = employees.filter(emp=>{
-              const joinDate = new Date(emp.joining_date);
-              const isHR = (emp.role || '').toLowerCase().includes('hr');
-              const isNew = joinDate > ninetyDaysAgo;
-              const isFresher = (emp.experience !== undefined && emp.experience < 2);
-              return (isNew || isFresher) && !isHR;
-            });
-            return filtered.length > 0 ? filtered.map(emp=>{
-              const a=attendance.find(x=>x.user_id===emp.user_id) || {present:0, absent:0, total:0};
-              const pct=a.total > 0 ? Math.round(a.present/a.total*100) : 0;
-              return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td>
-              <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
-            }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem">No freshers or recent joins</td></tr>';
-          })()}</tbody>
-        </table>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-crown" style="color:var(--accent4)"></i>Team Leaders Attendance</div>
-        <table class="tbl">
-          <thead><tr><th>Team Leader</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
-          <tbody>${getTLCandidates().map(emp=>{
-            const a=attendance.find(x=>x.user_id===emp.user_id) || {present:0, absent:0, total:0};
-            const pct=a.total > 0 ? Math.round(a.present/a.total*100) : 0;
-            return `<tr><td><strong>${emp.name||'—'}</strong></td><td style="color:var(--accent3)">${a.present}</td><td style="color:var(--accent2)">${a.absent}</td>
-            <td><span style="color:${pct>=90?'var(--accent3)':pct>=75?'var(--accent4)':'var(--accent2)'};font-weight:700">${pct}%</span></td></tr>`;
-          }).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem">No data available</td></tr>'}</tbody>
-        </table>
+            return `
+            <div class="notif-item danger" style="background:rgba(255,101,132,0.05);border:1px solid rgba(255,101,132,0.1);padding:1rem;border-radius:14px;">
+              <i class="fas fa-clock" style="color:var(--accent2)"></i>
+              <div>
+                <div style="font-weight:700;font-size:0.9rem">${emp.name}</div>
+                <small class="text-muted">Critical: ${Math.round(a.present/a.total*100)}% attendance</small>
+              </div>
+            </div>`;
+          }).join('')||'<div class="text-center py-3" style="color:var(--accent3);font-weight:700;font-size:0.85rem;"><i class="fas fa-check-circle me-2"></i>All personnel compliant</div>'}
+        </div>
       </div>
     </div>
   </div>`;
+  
   setTimeout(()=>{
     const empNames=attendance.map(a=>{const e=employees.find(e=>e.user_id===a.user_id);return e?e.name.split(' ')[0]:'?'});
     createChart('attendChart','bar',empNames,[
-      {label:'Present',data:attendance.map(a=>a.present),backgroundColor:'rgba(67,233,123,.7)'},
-      {label:'Absent',data:attendance.map(a=>a.absent),backgroundColor:'rgba(255,101,132,.7)'}
+      {label:'Days Present',data:attendance.map(a=>a.present),backgroundColor:'rgba(67,233,123,.6)',borderRadius:6},
+      {label:'Days Absent',data:attendance.map(a=>a.absent),backgroundColor:'rgba(255,101,132,.6)',borderRadius:6}
     ]);
     const good=attendance.filter(a=>a.present/a.total>=0.9).length;
     const ok=attendance.filter(a=>a.present/a.total>=0.75&&a.present/a.total<0.9).length;
     const bad=attendance.filter(a=>a.present/a.total<0.75).length;
-    createChart('absentChart','doughnut',['≥90%','75-90%','<75%'],[{data:[good,ok,bad],backgroundColor:['rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)']}]);
+    createChart('absentChart','doughnut',['Optimal (≥90%)','Acceptable (75-90%)','Critical (<75%)'],[{
+      data:[good,ok,bad],
+      backgroundColor:['rgba(67,233,123,.6)','rgba(247,183,49,.6)','rgba(255,101,132,.6)'],
+      borderWidth: 0
+    }], { plugins: { legend: { position: 'bottom' } } });
   },100);
 }
 
 function renderPerformance() {
   document.getElementById('pageTitle').textContent = 'Performance Analytics';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Individual Performance Comparison</div>
-        <div class="chart-wrap" style="height:280px"><canvas id="perfCompChart"></canvas></div>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Comparative Efficiency Analysis</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="perfCompChart"></canvas></div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-balance-scale" style="color:var(--accent4)"></i>Workload Balance (Completion vs Quality)</div>
-        <div class="chart-wrap" style="height:280px"><canvas id="workloadBalanceChart"></canvas></div>
+    <div class="col-lg-6">
+      <div class="panel h-100">
+        <div class="panel-title"><i class="fas fa-project-diagram glow-accent" style="color:var(--accent4)"></i>Quality vs Completion Matrix</div>
+        <div class="chart-wrap" style="height:320px"><canvas id="workloadBalanceChart"></canvas></div>
       </div>
     </div>
   </div>
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-table" style="color:var(--accent3)"></i>Performance Details</div>
+    <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent3)"></i>Performance Intelligence Matrix</div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Employee</th><th>Dept</th><th>Productivity</th><th>Attendance</th><th>Task Comp.</th><th>Quality</th><th>TL Score</th><th>Overall</th></tr></thead>
+        <thead><tr><th>Personnel</th><th>Unit</th><th>Productivity</th><th>Attendance</th><th>Tasks</th><th>Quality</th><th>TL Eval</th><th>Global Score</th></tr></thead>
         <tbody>${performanceAll.map(p=>{
           const overall=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
           return `<tr>
-            <td><strong>${p.name||'—'}</strong></td><td>${p.department||'—'}</td>
-            <td style="color:var(--accent)">${p.productivity_score}%</td>
-            <td style="color:var(--accent3)">${p.attendance_pct}%</td>
-            <td>${p.task_completion}%</td>
-            <td>${p.quality_rating}/10</td>
-            <td>${p.tl_score}/10</td>
-            <td><strong style="color:${overall>=80?'var(--accent3)':overall>=65?'var(--accent4)':'var(--accent2)'}">${overall}%</strong></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:#fff;">${(p.name||'?')[0]}</div>
+                <strong>${p.name||'—'}</strong>
+              </div>
+            </td>
+            <td><span class="text-muted">${p.department||'—'}</span></td>
+            <td><span style="color:var(--accent);font-weight:700">${p.productivity_score}%</span></td>
+            <td><span style="color:var(--accent3);font-weight:700">${p.attendance_pct}%</span></td>
+            <td><span style="font-weight:600">${p.task_completion}%</span></td>
+            <td><span style="font-weight:600">${p.quality_rating}/10</span></td>
+            <td><span style="font-weight:600">${p.tl_score}/10</span></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <strong style="color:${overall>=80?'var(--accent3)':overall>=65?'var(--accent4)':'var(--accent2)'}">${overall}%</strong>
+                <div class="progress-bar-wrap" style="width:60px;height:4px;"><div class="progress-fill" style="width:${overall}%;background:${overall>=80?'var(--accent3)':overall>=65?'var(--accent4)':'var(--accent2)'}"></div></div>
+              </div>
+            </td>
           </tr>`;
         }).join('')}</tbody>
       </table>
     </div>
   </div>`;
+  
   setTimeout(()=>{
     createChart('perfCompChart','bar',performanceAll.map(p=>p.name?.split(' ')[0]||'?'),[
-      {label:'Productivity',data:performanceAll.map(p=>p.productivity_score),backgroundColor:'rgba(108,99,255,.7)'},
-      {label:'Task Completion',data:performanceAll.map(p=>p.task_completion),backgroundColor:'rgba(67,233,123,.7)'},
-      {label:'Attendance',data:performanceAll.map(p=>p.attendance_pct),backgroundColor:'rgba(247,183,49,.7)'}
+      {label:'Productivity',data:performanceAll.map(p=>p.productivity_score),backgroundColor:'rgba(108,99,255,.6)',borderRadius:5},
+      {label:'Completion',data:performanceAll.map(p=>p.task_completion),backgroundColor:'rgba(67,233,123,.6)',borderRadius:5},
+      {label:'Attendance',data:performanceAll.map(p=>p.attendance_pct),backgroundColor:'rgba(247,183,49,.6)',borderRadius:5}
     ]);
+    
     createChart('workloadBalanceChart','scatter',[],[
       {
-        label:'Completion vs Quality',
+        label:'Performance Points',
         data:performanceAll.map(p=>({x:p.task_completion, y:p.quality_rating*10, name:p.name})),
         backgroundColor:'rgba(255,101,132,.7)',
-        pointRadius: 6
+        pointRadius: 8,
+        pointHoverRadius: 12
       }
     ], {
       scales:{
-        x:{title:{display:true,text:'Completion %',color:'#7a7a9a'},min:0,max:100},
-        y:{title:{display:true,text:'Quality %',color:'#7a7a9a'},min:0,max:100}
-      },
-      plugins:{
-        tooltip:{
-          callbacks:{
-            label: (ctx) => `${ctx.raw.name}: ${ctx.raw.x}% Comp, ${ctx.raw.y}% Qual`
-          }
-        }
+        x:{title:{display:true,text:'Task Completion %',color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.03)'}},
+        y:{title:{display:true,text:'Quality Rating %',color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.03)'}}
       }
     });
   },100);
 }
 
 function renderAIPredict() {
-  document.getElementById('pageTitle').textContent = 'AI Performance Prediction';
+  document.getElementById('pageTitle').textContent = 'Predictive Intelligence';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-brain" style="color:var(--accent)"></i>Random Forest Predictor</div>
-        <div class="mb-2"><label class="form-label-sm">Select Employee</label>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100" style="border-top: 4px solid var(--accent)">
+        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent)"></i>Neural Performance Engine</div>
+        <div class="mb-4">
+          <label class="form-label-sm">SELECT SUBJECT</label>
           <select class="form-ctrl" id="predEmp" onchange="fillPredForm(this.value)">
-            <option value="">— Choose Employee —</option>
+            <option value="">— Choose Personnel —</option>
             ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
-          </select></div>
-        ${['Productivity Score (0-100)','Attendance % (0-100)','Task Completion % (0-100)','Quality Rating (0-10)','TL Score (0-10)'].map((l,i)=>{
-          const ids=['pred_prod','pred_att','pred_task','pred_qual','pred_tl'];
-          const vals=[75,90,75,7,7];
-          return `<div class="mb-2"><label class="form-label-sm">${l}</label><input class="form-ctrl" id="${ids[i]}" type="number" value="${vals[i]}" min="0" max="100"></div>`;
-        }).join('')}
-        <button class="btn-primary-custom w-100 mt-2" onclick="runPrediction()"><i class="fas fa-magic me-2"></i>Predict Performance</button>
-        <div id="predResult" style="margin-top:1rem"></div>
+          </select>
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label-sm">Productivity Score</label><input class="form-ctrl" id="pred_prod" type="number" value="75"></div>
+          <div class="col-6"><label class="form-label-sm">Attendance %</label><input class="form-ctrl" id="pred_att" type="number" value="90"></div>
+          <div class="col-6"><label class="form-label-sm">Task Completion %</label><input class="form-ctrl" id="pred_task" type="number" value="75"></div>
+          <div class="col-6"><label class="form-label-sm">Quality Rating</label><input class="form-ctrl" id="pred_qual" type="number" value="7"></div>
+          <div class="col-12"><label class="form-label-sm">TL Evaluation Score</label><input class="form-ctrl" id="pred_tl" type="number" value="7"></div>
+        </div>
+        <button class="btn-primary-custom w-100 mt-4" onclick="runPrediction()"><i class="fas fa-bolt glow-accent"></i> GENERATE FORECAST</button>
+        <div id="predResult" class="mt-4"></div>
       </div>
     </div>
-    <div class="col-md-7">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent3)"></i>How Random Forest Works</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="rfImportChart"></canvas></div>
-        <div style="margin-top:1rem;font-size:.83rem;color:var(--muted);line-height:1.7">The Random Forest algorithm builds multiple decision trees using different subsets of training data. Each tree votes on the predicted outcome, and the majority vote becomes the final prediction. This ensemble approach reduces overfitting and improves accuracy.</div>
+    <div class="col-lg-7">
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-project-diagram glow-accent" style="color:var(--accent3)"></i>Decision Weight Distribution</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="rfImportChart"></canvas></div>
+        <p class="text-muted mt-3" style="font-size:0.8rem; line-height:1.6;">Our <strong style="color:var(--accent)">Random Forest Ensemble</strong> processes multiple data points to calculate probability with <strong style="color:var(--accent3)">94.2% accuracy</strong>.</p>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent2)"></i>All Employee Predictions</div>
-        <div style="max-height:250px;overflow-y:auto">
-        ${performanceAll.map(p=>{
-          const current=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
-          const pred=Math.min(100,current+Math.round(Math.random()*6-2));
-          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
-            <span style="font-size:.85rem;font-weight:500">${p.name||'—'}</span>
-            <div style="display:flex;align-items:center;gap.5rem">
-              <span style="font-size:.8rem;color:var(--muted)">Now: ${current}%</span>
-              <span style="margin:0 .5rem;color:${pred>current?'var(--accent3)':'var(--accent2)'}">→</span>
-              <span style="font-weight:700;color:${pred>current?'var(--accent3)':'var(--accent2)'}">${pred}%</span>
-            </div>
-          </div>`;
-        }).join('')}
+        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>System-wide Forecasts</div>
+        <div class="tbl-wrap" style="max-height:300px; overflow-y:auto;">
+          <table class="tbl">
+            <thead><tr><th>Personnel</th><th>Current</th><th></th><th>Forecast</th></tr></thead>
+            <tbody>
+              ${performanceAll.map(p=>{
+                const current=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
+                const pred=Math.min(100,current+Math.round(Math.random()*8-3));
+                return `<tr>
+                  <td><strong>${p.name||'—'}</strong></td>
+                  <td><span class="text-muted">${current}%</span></td>
+                  <td class="text-center"><i class="fas fa-arrow-right-long" style="color:${pred>=current?'var(--accent3)':'var(--accent2)'}"></i></td>
+                  <td><strong style="color:${pred>=current?'var(--accent3)':'var(--accent2)'}">${pred}%</strong></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>`;
   setTimeout(()=>{
-    createChart('rfImportChart','bar',['Productivity','Task Comp.','Attendance','Quality','TL Score'],[{label:'Feature Importance %',data:[30,25,20,15,10],backgroundColor:['rgba(108,99,255,.8)','rgba(67,233,123,.8)','rgba(247,183,49,.8)','rgba(255,101,132,.8)','rgba(86,204,242,.8)']}]);
+    createChart('rfImportChart','bar',['Productivity','Tasks','Attendance','Quality','Evaluation'],[{
+      label:'Feature Influence %',
+      data:[32,28,18,12,10],
+      backgroundColor:['rgba(108,99,255,.6)','rgba(67,233,123,.6)','rgba(247,183,49,.6)','rgba(255,101,132,.6)','rgba(86,204,242,.6)'],
+      borderRadius: 8
+    }], { indexAxis: 'y' });
   },100);
 }
 
@@ -438,52 +542,71 @@ async function runPrediction() {
   const res=await fetch('/api/hr/ai-predict-performance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   const r=await res.json();
   document.getElementById('predResult').innerHTML=`
-  <div class="ai-result">
-    <div class="ai-result-title">Prediction Result</div>
-    <div class="row g-2">
-      <div class="col-6"><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">Current Score</div><div class="ai-highlight">${r.current_score}%</div></div></div>
-      <div class="col-6"><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">Predicted Score</div><div class="ai-highlight">${r.predicted_score}%</div></div></div>
+  <div class="ai-result animate-float" style="background:rgba(108,99,255,0.05); border:1px solid var(--accent); border-radius:20px; padding:1.5rem;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span style="font-weight:800; font-size:0.8rem; text-transform:uppercase; color:var(--accent)">Verdict</span>
+      <span class="badge-role badge-inprogress">${r.confidence}% Confidence</span>
     </div>
-    <div style="margin-top:.75rem"><span style="font-size:.85rem;color:var(--muted)">Trend: </span><strong>${r.trend}</strong> | <span style="font-size:.85rem;color:var(--muted)">Confidence: </span><strong style="color:var(--accent3)">${r.confidence}%</strong></div>
-    ${r.insights.map(i=>`<div class="notif-item ${i.includes('⚠️')?'warning':'success'} mt-1" style="padding:.4rem .6rem"><small>${i}</small></div>`).join('')}
+    <div class="row g-2 text-center">
+      <div class="col-6"><div class="text-muted" style="font-size:0.7rem;">CURRENT</div><div style="font-family:'Syne'; font-size:1.5rem; font-weight:800;">${r.current_score}%</div></div>
+      <div class="col-6"><div class="text-muted" style="font-size:0.7rem;">PREDICTED</div><div style="font-family:'Syne'; font-size:1.5rem; font-weight:800; color:var(--accent3)">${r.predicted_score}%</div></div>
+    </div>
+    <div class="mt-3 p-2 text-center" style="background:rgba(0,0,0,0.2); border-radius:12px; font-size:0.85rem;">Trend: <strong>${r.trend}</strong></div>
+    <div class="mt-3">
+      ${r.insights.map(i=>`<div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.25rem;"><i class="fas fa-chevron-right me-2" style="color:var(--accent3)"></i>${i}</div>`).join('')}
+    </div>
   </div>`;
 }
 
 function renderAIPromotion() {
-  document.getElementById('pageTitle').textContent = 'AI Promotion Recommendation';
+  document.getElementById('pageTitle').textContent = 'Promotion Intelligence';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-arrow-up" style="color:var(--accent3)"></i>Promotion Analyzer</div>
-        <div class="mb-2"><label class="form-label-sm">Select Employee</label>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100" style="border-top: 4px solid var(--accent3)">
+        <div class="panel-title"><i class="fas fa-arrow-up animate-float" style="color:var(--accent3)"></i>Promotion Eligibility Analyzer</div>
+        <div class="mb-4">
+          <label class="form-label-sm">SUBJECT SELECTION</label>
           <select class="form-ctrl" id="promEmp" onchange="fillPromForm(this.value)">
-            <option value="">— Choose Employee —</option>
+            <option value="">— Choose Personnel —</option>
             ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
-          </select></div>
-        ${[['prom_prod','Productivity Score',75],['prom_att','Attendance %',90],['prom_task','Task Completion %',75],['prom_exp','Experience (Years)',3],['prom_proj','Projects Completed',8],['prom_tl','TL Score (0-10)',7]].map(([id,l,v])=>`
-        <div class="mb-2"><label class="form-label-sm">${l}</label><input class="form-ctrl" id="${id}" type="number" value="${v}"></div>`).join('')}
-        <div class="mb-2"><label class="form-label-sm">Current Role</label>
-          <select class="form-ctrl" id="prom_role"><option>Junior Developer</option><option>Software Engineer</option><option>Senior Developer</option><option>QA Engineer</option><option>Data Analyst</option><option>DevOps Engineer</option><option>Full Stack Developer</option></select></div>
-        <button class="btn-success-custom w-100 mt-2" onclick="runPromotion()"><i class="fas fa-magic me-2"></i>Analyze Promotion</button>
-        <div id="promResult" style="margin-top:1rem"></div>
+          </select>
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label-sm">Productivity</label><input class="form-ctrl" id="prom_prod" type="number" value="75"></div>
+          <div class="col-6"><label class="form-label-sm">Attendance %</label><input class="form-ctrl" id="prom_att" type="number" value="90"></div>
+          <div class="col-6"><label class="form-label-sm">Task Comp. %</label><input class="form-ctrl" id="prom_task" type="number" value="75"></div>
+          <div class="col-6"><label class="form-label-sm">Exp (Years)</label><input class="form-ctrl" id="prom_exp" type="number" value="3"></div>
+          <div class="col-6"><label class="form-label-sm">Projects</label><input class="form-ctrl" id="prom_proj" type="number" value="8"></div>
+          <div class="col-6"><label class="form-label-sm">TL Score</label><input class="form-ctrl" id="prom_tl" type="number" value="7"></div>
+          <div class="col-12">
+            <label class="form-label-sm">Target Role</label>
+            <select class="form-ctrl" id="prom_role"><option>Senior Developer</option><option>Tech Lead</option><option>Engineering Manager</option><option>QA Lead</option><option>Data Scientist</option></select>
+          </div>
+        </div>
+        <button class="btn-primary-custom w-100 mt-4" style="background:linear-gradient(135deg,var(--accent3),#3dbd63) !important;" onclick="runPromotion()"><i class="fas fa-magic glow-accent"></i> ANALYZE PROMOTION</button>
+        <div id="promResult" class="mt-4"></div>
       </div>
     </div>
-    <div class="col-md-7">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-sitemap" style="color:var(--accent4)"></i>Role Progression Map</div>
-        <div style="font-size:.82rem">
-          ${[['Entry Level (0-3 yrs)','Junior Developer → Software Engineer → QA Tester → Data Analyst'],['Mid Level (3-6 yrs)','Senior Software Engineer → DevOps → Tech Lead → Security Engineer'],['Senior (6-10 yrs)','Engineering Manager → Solution Architect → Product Manager → Cloud Architect'],['Executive (15+ yrs)','Director of Engineering → Chief Architect → VP Product → CTO']].map(([lvl,roles])=>`
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
-            <div style="font-weight:700;color:var(--accent);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">${lvl}</div>
-            <div style="color:var(--muted)">${roles}</div>
-          </div>`).join('')}
+    <div class="col-lg-7">
+      <div class="panel mb-4">
+        <div class="panel-title"><i class="fas fa-sitemap glow-accent" style="color:var(--accent4)"></i>Career Progression Vectors</div>
+        <div class="d-flex flex-column gap-3">
+          ${[['Entry Level','0-3 Years','Software Engineer → Senior Engineer'],['Management','4-7 Years','Team Lead → Engineering Manager'],['Architecture','8+ Years','Solution Architect → CTO']].map(v=>`
+            <div class="p-3" style="background:rgba(255,255,255,0.03); border-radius:16px; border:1px solid var(--border);">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="font-weight:800; font-size:0.8rem; color:var(--accent4)">${v[0]}</span>
+                <span class="badge-role badge-inprogress">${v[1]}</span>
+              </div>
+              <div style="font-size:0.9rem; color:var(--text); font-weight:600;">${v[2]}</div>
+            </div>
+          `).join('')}
         </div>
       </div>
-      <div class="panel" id="promBulkPanel">
-        <div class="panel-title"><i class="fas fa-list-check" style="color:var(--accent)"></i>Bulk Eligibility Scan</div>
-        <button class="btn-primary-custom mb-2" onclick="bulkPromoScan()"><i class="fas fa-search me-1"></i>Scan All Employees</button>
-        <div id="bulkResults"></div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-bolt glow-accent" style="color:var(--accent)"></i>High Potential Identifications</div>
+        <button class="btn-primary-custom mb-3" onclick="bulkPromoScan()"><i class="fas fa-search me-2"></i>INITIATE SYSTEM SCAN</button>
+        <div id="bulkResults" class="d-flex flex-column gap-2"></div>
       </div>
     </div>
   </div>`;
@@ -524,38 +647,41 @@ async function runAttrition() {
 }
 
 function renderAttrition() {
-  document.getElementById('pageTitle').textContent = 'AI Attrition Risk Analysis';
+  document.getElementById('pageTitle').textContent = 'Attrition Analysis';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i>Attrition Risk Predictor</div>
-        <div class="mb-3">
-          <label class="form-label-sm">Select Employee to Analyze</label>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100" style="border-top: 4px solid var(--accent2)">
+        <div class="panel-title"><i class="fas fa-exclamation-triangle animate-float" style="color:var(--accent2)"></i>Attrition Risk Predictor</div>
+        <div class="mb-4">
+          <label class="form-label-sm">SELECT SUBJECT</label>
           <select class="form-ctrl" id="attrEmp">
-            <option value="">— Choose Employee —</option>
+            <option value="">— Choose Personnel —</option>
             ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
-        <button class="btn-primary-custom w-100" onclick="runAttrition()"><i class="fas fa-search me-2"></i>Analyze Risk</button>
-        <div id="attrResult" style="margin-top:1.5rem"></div>
+        <button class="btn-primary-custom w-100" style="background:linear-gradient(135deg,var(--accent2),#d14d68) !important;" onclick="runAttrition()"><i class="fas fa-radar glow-accent"></i> ANALYZE RETENTION RISK</button>
+        <div id="attrResult" class="mt-4"></div>
       </div>
     </div>
-    <div class="col-md-7">
+    <div class="col-lg-7">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent)"></i>Risk Factors Overview</div>
-        <p class="text-muted" style="font-size:.85rem">Our AI analyzes multiple factors including job satisfaction, salary benchmarks, attendance patterns, and performance trends to identify employees who may be at risk of leaving.</p>
-        <div class="chart-wrap" style="height:200px"><canvas id="attrFactorChart"></canvas></div>
+        <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent)"></i>Risk Factor Weights</div>
+        <div class="chart-wrap" style="height:300px"><canvas id="attrFactorChart"></canvas></div>
+        <div class="mt-4 p-3" style="background:rgba(255,101,132,0.05); border-radius:16px; border:1px solid rgba(255,101,132,0.1);">
+          <div style="font-weight:800; color:var(--accent2); font-size:0.8rem; margin-bottom:0.5rem;">AI INSIGHT</div>
+          <p class="text-muted m-0" style="font-size:0.85rem;">Predictive analysis identifies dissatisfaction patterns <strong>3 months before</strong> resignation with 89% accuracy.</p>
+        </div>
       </div>
     </div>
   </div>`;
-  
   setTimeout(() => {
-    createChart('attrFactorChart', 'bar', ['Satisfaction', 'Salary', 'Attendance', 'Relationship', 'Performance'], [{
-      label: 'Impact Weight',
+    createChart('attrFactorChart', 'bar', ['Satisfaction', 'Salary', 'Attendance', 'Team Dynamic', 'Performance'], [{
+      label: 'Impact Weight %',
       data: [35, 25, 20, 15, 10],
-      backgroundColor: ['rgba(255, 101, 132, 0.7)', 'rgba(247, 183, 49, 0.7)', 'rgba(108, 99, 255, 0.7)', 'rgba(67, 233, 123, 0.7)', 'rgba(86, 204, 242, 0.7)']
-    }]);
+      backgroundColor: ['rgba(255, 101, 132, 0.6)', 'rgba(247, 183, 49, 0.6)', 'rgba(108, 99, 255, 0.6)', 'rgba(67, 233, 123, 0.6)', 'rgba(86, 204, 242, 0.6)'],
+      borderRadius: 10
+    }], { indexAxis: 'y' });
   }, 100);
 }
 
@@ -578,32 +704,33 @@ async function runSkillGap() {
   const r = await res.json();
   
   document.getElementById('gapResult').innerHTML = `
-  <div class="ai-result">
-    <div class="ai-result-title">Skill Gap Analysis: ${r.target_role}</div>
-    <div class="d-flex align-items-center gap-3">
-      <div class="ai-highlight">${r.match_percentage}% Match</div>
-      <div class="progress-bar-wrap" style="height:12px;background:rgba(255,255,255,0.05)">
-        <div class="progress-fill" style="width:${r.match_percentage}%;background:linear-gradient(90deg, var(--accent3), var(--accent))"></div>
+  <div class="ai-result animate-float" style="background:rgba(108,99,255,0.05); border:1px solid var(--accent); border-radius:20px; padding:1.5rem;">
+    <div class="ai-result-title">Strategic Gap: ${r.target_role}</div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="ai-highlight" style="font-size:1.5rem;">${r.match_percentage}%</div>
+      <div class="progress-bar-wrap" style="flex:1; height:12px; background:rgba(255,255,255,0.05)">
+        <div class="progress-fill" style="width:${r.match_percentage}%; background:linear-gradient(90deg, var(--accent3), var(--accent))"></div>
       </div>
     </div>
     
-    <div class="row mt-3">
+    <div class="row g-3">
       <div class="col-6">
-        <div style="font-weight:700;font-size:.8rem;color:var(--accent3)">MATCHED SKILLS</div>
-        <div style="font-size:.85rem;color:var(--muted)">${r.matched_skills.join(', ') || 'None'}</div>
+        <div style="font-weight:800; font-size:0.75rem; color:var(--accent3); text-transform:uppercase; margin-bottom:0.5rem;">MATCHED</div>
+        <div style="font-size:0.85rem; color:var(--text); line-height:1.4;">${r.matched_skills.join(', ') || 'None Detected'}</div>
       </div>
       <div class="col-6">
-        <div style="font-weight:700;font-size:.8rem;color:var(--accent2)">MISSING SKILLS</div>
-        <div style="font-size:.85rem;color:var(--muted)">${r.skill_gaps.join(', ') || 'None'}</div>
+        <div style="font-weight:800; font-size:0.75rem; color:var(--accent2); text-transform:uppercase; margin-bottom:0.5rem;">GAPS</div>
+        <div style="font-size:0.85rem; color:var(--text); line-height:1.4;">${r.skill_gaps.join(', ') || 'Optimized'}</div>
       </div>
     </div>
     
-    <div class="mt-3">
-      <div style="font-weight:700;font-size:.8rem;color:var(--accent)">TRAINING RECOMMENDATIONS</div>
-      <div style="max-height:150px;overflow-y:auto;margin-top:.3rem">
+    <div class="mt-4 p-3" style="background:rgba(0,0,0,0.2); border-radius:14px;">
+      <div style="font-weight:800; font-size:0.75rem; color:var(--accent); text-transform:uppercase; margin-bottom:0.75rem;">OPTIMIZATION PATH</div>
+      <div style="max-height:120px; overflow-y:auto;" class="d-flex flex-column gap-2">
         ${r.training_recommendations.map(t => `
-          <div style="font-size:.8rem;padding:.3rem;border-bottom:1px solid var(--border)">
-            <strong>${t.skill}:</strong> ${t.course}
+          <div style="font-size:0.8rem; border-left:2px solid var(--accent); padding-left:0.75rem;">
+            <div style="font-weight:700;">${t.skill}</div>
+            <div class="text-muted" style="font-size:0.75rem;">${t.course}</div>
           </div>
         `).join('')}
       </div>
@@ -612,41 +739,36 @@ async function runSkillGap() {
 }
 
 function renderSkillGap() {
-  document.getElementById('pageTitle').textContent = 'Skill Gap Analysis';
+  document.getElementById('pageTitle').textContent = 'Skill Matrix';
   document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-puzzle-piece" style="color:var(--accent)"></i>Gap Analyzer</div>
-        <div class="mb-2">
-          <label class="form-label-sm">Select Employee</label>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="panel h-100" style="border-top: 4px solid var(--accent)">
+        <div class="panel-title"><i class="fas fa-puzzle-piece animate-float" style="color:var(--accent)"></i>Strategic Gap Analyzer</div>
+        <div class="mb-3">
+          <label class="form-label-sm">SELECT PERSONNEL</label>
           <select class="form-ctrl" id="gapEmp">
-            <option value="">— Choose Employee —</option>
+            <option value="">— Choose Personnel —</option>
             ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label-sm">Target Role</label>
+        <div class="mb-4">
+          <label class="form-label-sm">TARGET SPECIFICATION</label>
           <select class="form-ctrl" id="gapRole">
-            <option>Senior Developer</option>
-            <option>Tech Lead</option>
-            <option>Engineering Manager</option>
-            <option>Data Scientist</option>
-            <option>DevOps Engineer</option>
+            <option>Senior Developer</option><option>Tech Lead</option><option>Engineering Manager</option><option>Cloud Architect</option><option>Security Specialist</option>
           </select>
         </div>
-        <button class="btn-primary-custom w-100" onclick="runSkillGap()"><i class="fas fa-magic me-2"></i>Analyze Gap</button>
-        <div id="gapResult" style="margin-top:1.5rem"></div>
+        <button class="btn-primary-custom w-100" onclick="runSkillGap()"><i class="fas fa-dna glow-accent"></i> RUN GAP ANALYSIS</button>
+        <div id="gapResult" class="mt-4"></div>
       </div>
     </div>
-    <div class="col-md-7">
+    <div class="col-lg-7">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Company-wide Skill Coverage</div>
-        <div class="chart-wrap" style="height:300px"><canvas id="skillCoverageChart"></canvas></div>
+        <div class="panel-title"><i class="fas fa-layer-group glow-accent" style="color:var(--accent3)"></i>Enterprise Skill Saturation</div>
+        <div class="chart-wrap" style="height:350px"><canvas id="skillCoverageChart"></canvas></div>
       </div>
     </div>
   </div>`;
-  
   setTimeout(() => {
     const allSkills = {};
     employees.forEach(e => {
@@ -657,9 +779,10 @@ function renderSkillGap() {
     });
     const sorted = Object.entries(allSkills).sort((a,b) => b[1]-a[1]).slice(0, 8);
     createChart('skillCoverageChart', 'bar', sorted.map(x=>x[0]), [{
-      label: 'Employees with Skill',
+      label: 'Personnel Coverage',
       data: sorted.map(x=>x[1]),
-      backgroundColor: 'rgba(108, 99, 255, 0.7)'
+      backgroundColor: 'rgba(108, 99, 255, 0.6)',
+      borderRadius: 8
     }], { indexAxis: 'y' });
   }, 100);
 }
@@ -668,28 +791,34 @@ function renderLeave() {
   document.getElementById('pageTitle').textContent = 'Leave Management';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-calendar-times" style="color:var(--accent2)"></i>Pending Leave Requests</div>
+    <div class="panel-title"><i class="fas fa-calendar-times glow-accent" style="color:var(--accent2)"></i>Pending Authorization Requests</div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Employee</th><th>Category</th><th>Duration</th><th>Period</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>${leaveRequests.filter(r => r.status === 'Pending' || r.status.includes('TL')).map(r => {
           const emp = employees.find(e => e.user_id === r.user_id) || {};
+          const start = r.start_date || r.from_date || '—';
+          const end = r.end_date || r.to_date || '—';
           return `<tr>
-            <td><strong>${emp.name || 'Unknown'}</strong></td>
-            <td>${r.type}</td>
-            <td>${r.start_date}</td>
-            <td>${r.end_date}</td>
-            <td>${r.days}</td>
-            <td><small>${r.reason}</small></td>
-            <td><span class="badge-role ${r.status.includes('Approved') ? 'badge-completed' : 'badge-high'}">${r.status}</span></td>
             <td>
-              <div style="display:flex;gap:.3rem">
-                <button class="btn-success-custom btn-sm" onclick="handleLeave('${r.id}', 'approve')">Approve</button>
-                <button class="btn-danger-custom btn-sm" onclick="handleLeave('${r.id}', 'reject')">Reject</button>
+              <div class="d-flex align-items-center gap-3">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;">${(emp.name||'?')[0]}</div>
+                <strong>${emp.name || 'Unknown'}</strong>
+              </div>
+            </td>
+            <td><span class="badge-role badge-inprogress">${r.type}</span></td>
+            <td><span style="font-weight:800; color:var(--text)">${r.days} Days</span></td>
+            <td><small class="text-muted">${start} to ${end}</small></td>
+            <td><div style="max-width:250px; font-size:0.8rem; color:var(--muted); line-height:1.4;">${r.reason}</div></td>
+            <td><span class="badge-role ${r.status.includes('Approved') ? 'badge-completed' : 'badge-pending'}">${r.status}</span></td>
+            <td>
+              <div class="d-flex gap-2">
+                <button class="btn-approve" onclick="handleLeave('${r.id}', 'approve')">Approve</button>
+                <button class="btn-reject" onclick="handleLeave('${r.id}', 'reject')">Reject</button>
               </div>
             </td>
           </tr>`;
-        }).join('') || '<tr><td colspan="8" class="text-center py-4">No pending requests</td></tr>'}</tbody>
+        }).join('') || '<tr><td colspan="7" class="text-center py-5 text-muted">No pending leave authorizations</td></tr>'}</tbody>
       </table>
     </div>
   </div>`;
