@@ -114,10 +114,16 @@ window.addEventListener('offline', async () => {
 
 // Initial check
 (async () => {
+  resetBtn(); // Ensure button is reset on page load/back
   if (!(await checkOnlineStatus())) {
     document.getElementById('offlineOverlay').style.display = 'flex';
   }
 })();
+
+// Handle browser back button (pageshow event)
+window.addEventListener('pageshow', (event) => {
+  resetBtn();
+});
 
 async function doLogin() {
   if (!navigator.onLine) { window.location.href = '/offline.html'; return; }
