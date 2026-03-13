@@ -50,17 +50,33 @@ window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 let teamData=[], taskData=[], leaveData=[], taskStats=[], teamInfo={};
 
 async function init() {
-  [teamData, taskData, leaveData, taskStats, teamInfo] = await Promise.all([
-    fetch('/api/tl/team').then(r=>r.json()),
-    fetch('/api/tl/tasks').then(r=>r.json()),
-    fetch('/api/tl/leave-requests').then(r=>r.json()),
-    fetch('/api/tl/team-task-stats').then(r=>r.json()),
-    fetch('/api/tl/team-info').then(r=>r.json())
-  ]);
-  
-  // Restore section from sessionStorage or default to overview
-  const lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
-  navigate(lastSec);
+  try {
+    [teamData, taskData, leaveData, taskStats, teamInfo] = await Promise.all([
+      fetch('/api/tl/team').then(r=>r.json()),
+      fetch('/api/tl/tasks').then(r=>r.json()),
+      fetch('/api/tl/leave-requests').then(r=>r.json()),
+      fetch('/api/tl/team-task-stats').then(r=>r.json()),
+      fetch('/api/tl/team-info').then(r=>r.json())
+    ]);
+    
+    // Restore section from sessionStorage or default to overview
+    let lastSec = 'overview';
+    try {
+      lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
+    } catch(e) { console.warn('SessionStorage blocked', e); }
+    
+    navigate(lastSec);
+  } catch (err) {
+    console.error("Initialization failed:", err);
+    document.getElementById('sectionContent').innerHTML = `
+      <div class="panel text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+        <h4>Dashboard Error</h4>
+        <p class="text-muted">Failed to load data. Please check your connection.</p>
+        <div class="text-muted small mb-3">${err.message}</div>
+        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+      </div>`;
+  }
 }
 
 function renderMyProfile() {

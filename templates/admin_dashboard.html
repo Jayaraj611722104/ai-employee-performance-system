@@ -174,16 +174,32 @@ window.navigate = s => {
 let users=[], sysStats={}, loginLogs=[], integrations={};
 
 async function init() {
-  [users, sysStats, loginLogs, integrations] = await Promise.all([
-    fetch('/api/admin/users').then(r=>r.json()),
-    fetch('/api/admin/system-stats').then(r=>r.json()),
-    fetch('/api/admin/login-logs').then(r=>r.json()),
-    fetch('/api/admin/integrations').then(r=>r.json())
-  ]);
+  try {
+    [users, sysStats, loginLogs, integrations] = await Promise.all([
+      fetch('/api/admin/users').then(r=>r.json()),
+      fetch('/api/admin/system-stats').then(r=>r.json()),
+      fetch('/api/admin/login-logs').then(r=>r.json()),
+      fetch('/api/admin/integrations').then(r=>r.json())
+    ]);
 
-  // Restore section from sessionStorage or default to overview
-  const lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
-  navigate(lastSec);
+    // Restore section from sessionStorage or default to overview
+    let lastSec = 'overview';
+    try {
+      lastSec = sessionStorage.getItem('lastSection_' + window.location.pathname) || 'overview';
+    } catch(e) { console.warn('SessionStorage blocked', e); }
+    
+    navigate(lastSec);
+  } catch (err) {
+    console.error("Dashboard Init Error:", err);
+    document.getElementById('sectionContent').innerHTML = `
+      <div class="panel text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+        <h4>Dashboard Error</h4>
+        <p class="text-muted">Failed to load data. Please check your connection.</p>
+        <div class="text-muted small mb-3">${err.message}</div>
+        <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
+      </div>`;
+  }
 }
 
 function renderOverview() {
@@ -555,34 +571,6 @@ function open2FASetup() {
   });
 }
 
-async function verifyAndEnable2FA() {
-  const code = document.getElementById('tfaCode').value.trim();
-  if(!code) return showToast('Error', 'Please enter verification code', 'danger');
-  
-  const res = await fetch('/api/auth/enable-2fa', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({code})
-  });
-  const data = await res.json();
-  if(data.success) {
-    showToast('Success', 'Two-Factor Authentication enabled!');
-    hideModal('tfaSetupModal');
-    renderSecurity();
-  } else {
-    showToast('Error', data.message || 'Invalid code', 'danger');
-  }
-}
-
-async function disable2FA() {
-  showConfirm('Disable 2FA', 'Are you sure you want to disable two-factor authentication?', async () => {
-    const res = await fetch('/api/auth/disable-2fa', {method: 'POST'});
-    const data = await res.json();
-    if(data.success) {
-      showToast('2FA Disabled', 'Two-factor authentication has been turned off.');
-      renderSecurity();
-    }
-  });
-}
 
 function renderConfig() {
   document.getElementById('pageTitle').textContent = 'System Configuration';
@@ -774,6 +762,36 @@ async function testCalendar(){
   msg.style.display='block';
 }
 
+async function verifyAndEnable2FA() {
+  const code = document.getElementById('tfaCode').value.trim();
+  if(!code) return showToast('Error', 'Please enter verification code', 'danger');
+  
+  const res = await fetch('/api/auth/enable-2fa', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code})
+  });
+  const data = await res.json();
+  if(data.success) {
+    showToast('Success', 'Two-Factor Authentication enabled!');
+    hideModal('tfaSetupModal');
+    renderSecurity();
+  } else {
+    showToast('Error', data.message || 'Invalid code', 'danger');
+  }
+}
+
+async function disable2FA() {
+  showConfirm('Disable 2FA', 'Are you sure you want to disable two-factor authentication?', async () => {
+    const res = await fetch('/api/auth/disable-2fa', {method: 'POST'});
+    const data = await res.json();
+    if(data.success) {
+      showToast('2FA Disabled', 'Two-factor authentication has been turned off.');
+      renderSecurity();
+    }
+  });
+}
+</script>
+
 <!-- 2FA Setup Modal -->
 <div class="modal-custom" id="tfaSetupModal">
   <div class="modal-box" style="max-width:400px">
@@ -801,6 +819,7 @@ async function testCalendar(){
   </div>
 </div>
 
+<script>
 init();
 </script>
 {% endblock %}
