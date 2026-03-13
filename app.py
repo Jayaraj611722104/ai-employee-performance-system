@@ -255,14 +255,20 @@ def login():
     if user:
         # Check password hash (handle plain text for migration)
         is_valid = False
-        if user['password'].startswith('pbkdf2:sha256:'):
-            is_valid = check_password_hash(user['password'], password)
-        else:
-            # Migration: if plain text password matches, hash it now
-            if user['password'] == password:
-                user['password'] = generate_password_hash(password)
-                save_db_data(db)
+        
+        # 1. Try verifying as a hash first (supports pbkdf2, scrypt, etc.)
+        try:
+            if check_password_hash(user['password'], password):
                 is_valid = True
+        except Exception:
+            # Not a valid hash format, might be plain text
+            pass
+            
+        # 2. If not valid yet, check plain text (legacy support)
+        if not is_valid and user['password'] == password:
+            user['password'] = generate_password_hash(password)
+            save_db_data(db)
+            is_valid = True
 
         if is_valid:
             # Check for 2FA
