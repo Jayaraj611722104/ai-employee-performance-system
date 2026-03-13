@@ -15,73 +15,115 @@
   --accent4:#f7b731;--text:#e8e8f0;--muted:#7a7a9a;--sidebar-w:260px
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html, body { height: 100%; margin: 0; }
-body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;min-height:100vh;overflow-x:hidden}
+html, body { margin: 0; padding: 0; }
+/* BASE LAYOUT */
+:root { --sidebar-w: 260px; }
 
-/* RESPONSIVE HELPERS */
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.main {
+  margin-left: var(--sidebar-w);
+  width: calc(100% - var(--sidebar-w));
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+
+.menu-toggle {
+  display: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* MOBILE OVERRIDES (Max-width: 992px) */
 @media (max-width: 992px) {
-  :root { --sidebar-w: 0px !important; }
-  .sidebar { 
-    transform: translateX(-100%); 
-    width: 280px !important; 
-    visibility: hidden; 
-    position: fixed !important; 
-    left: 0; 
-    top: 0; 
-    bottom: 0;
-    z-index: 5000; /* Extremely high z-index */
+  :root { --sidebar-w: 0px; }
+  
+  .sidebar {
+    width: 280px !important;
+    transform: translateX(-100%);
     box-shadow: none;
-    transition: transform 0.3s ease, visibility 0.3s;
   }
-  .sidebar.show { 
-    transform: translateX(0); 
-    visibility: visible; 
-    box-shadow: 20px 0 50px rgba(0,0,0,.8); 
+  
+  .sidebar.show {
+    transform: translateX(0);
+    box-shadow: 15px 0 40px rgba(0,0,0,0.7);
   }
-  .main { 
-    margin-left: 0 !important; 
-    width: 100% !important; 
-    flex: 1; 
+  
+  .main {
+    margin-left: 0;
+    width: 100%;
   }
-  .sidebar-overlay { 
-    display: none; 
-    position: fixed; 
-    inset: 0; 
-    background: rgba(0,0,0,.8); 
-    z-index: 4000; 
-    backdrop-filter: none;
+  
+  .menu-toggle {
+    display: flex;
   }
-  .sidebar-overlay.show { 
-    display: block; 
+  
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 900;
   }
-  .menu-toggle { 
-    display: flex !important; 
+  
+  .sidebar-overlay.show {
+    display: block;
   }
+  
   .topbar {
-    padding: 0.75rem 1rem;
-    position: sticky;
-    top: 0;
-    width: 100%;
+    padding: 0.6rem 1rem;
   }
+  
   .topbar h1 {
-    font-size: 1.1rem;
-    max-width: 180px;
-  }
-  .page-content {
-    padding: 1rem;
-    width: 100%;
-    overflow-x: hidden;
-  }
-  .panel {
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-  .stat-card .value {
-    font-size: 1.5rem;
+    font-size: 1rem;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
-/* SIDEBAR */
+/* SIDEBAR BRAND & NAV */
 .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:.3s}
 .sidebar-brand{padding:1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.75rem}
 .sidebar-brand-content { display: flex; align-items: center; gap: 0.75rem; }
@@ -421,10 +463,15 @@ window.pulseConfirm = showConfirm;
 window.pulseAlert = (title, msg, type='info') => showToast(title, msg, type);
 
 function toggleSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.querySelector('.sidebar-overlay');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
   if (sidebar) sidebar.classList.toggle('show');
   if (overlay) overlay.classList.toggle('show');
+  
+  // Prevent body scrolling when sidebar is open on mobile
+  if (window.innerWidth <= 992) {
+    document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+  }
 }
 
 // Close sidebar when clicking overlay
@@ -549,24 +596,23 @@ window.addEventListener('error', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Hide loader after 8 seconds no matter what to prevent "stuck" blank screens
+  // Global safety: hide loader after 6 seconds no matter what
   setTimeout(() => {
     const loader = document.getElementById('loadingIndicator');
     if (loader && loader.style.display !== 'none') {
-      console.warn("Forcing loader hide due to timeout.");
       loader.style.display = 'none';
-      const sectionContent = document.getElementById('sectionContent');
-      if (sectionContent && !sectionContent.innerHTML.trim()) {
-         sectionContent.innerHTML = `
+      const section = document.getElementById('sectionContent');
+      if (section && !section.innerHTML.trim()) {
+        section.innerHTML = `
           <div class="panel text-center py-5">
-            <i class="fas fa-exclamation-circle fa-3x mb-3 text-warning"></i>
-            <h4>Dashboard Load Timeout</h4>
-            <p class="text-muted">Loading is taking too long. Please try refreshing.</p>
-            <button class="btn-primary-custom" onclick="location.reload(true)">Refresh Now</button>
+            <i class="fas fa-redo fa-2x mb-3 text-accent"></i>
+            <h5>Connection is slow</h5>
+            <p class="text-muted small">The dashboard is taking longer than usual to load.</p>
+            <button class="btn-primary-custom btn-sm" onclick="location.reload()">Try Refreshing</button>
           </div>`;
       }
     }
-  }, 8000); 
+  }, 6000);
 
   window.addEventListener('online', () => toggleOfflineOverlay(false));
   window.addEventListener('offline', () => toggleOfflineOverlay(true));
