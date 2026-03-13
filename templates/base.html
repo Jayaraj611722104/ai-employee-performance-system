@@ -15,21 +15,17 @@
   --accent4:#f7b731;--text:#e8e8f0;--muted:#7a7a9a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html, body { height: 100%; width: 100%; overflow: hidden; }
+html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink); color: var(--text); font-family: 'DM Sans', sans-serif; }
 
 /* ═══════════════════════════════════════════════════════
-   STABLE MOBILE-FIRST LAYOUT (RECREATED)
+   STABLE MULTI-VIEW LAYOUT (RE-ALIGNED)
    ═══════════════════════════════════════════════════════ */
-body {
-  background: var(--ink);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-}
 
 .app-container {
-  display: flex;
+  display: block; /* Removed flex to fix width calculations */
   height: 100vh;
   width: 100vw;
+  position: relative;
 }
 
 .sidebar {
@@ -46,24 +42,26 @@ body {
 }
 
 .main-content {
-  flex: 1;
   margin-left: 260px;
+  width: calc(100% - 260px);
+  height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  background: var(--ink);
 }
 
 /* --- Mobile Breakpoint (< 992px) --- */
 @media (max-width: 991.98px) {
   .sidebar { transform: translateX(-100%); visibility: hidden; }
   .sidebar.show { transform: translateX(0); visibility: visible; box-shadow: 10px 0 40px rgba(0,0,0,0.5); }
-  .main-content { margin-left: 0; }
+  .main-content { margin-left: 0; width: 100%; }
   .menu-toggle { display: flex !important; }
   .sidebar-close { display: block !important; }
 }
 
-/* --- Desktop Breakpoint (> 992px) --- */
 @media (min-width: 992px) {
   .menu-toggle, .sidebar-close, .sidebar-overlay { display: none !important; }
 }
@@ -88,52 +86,77 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
+  min-height: 64px;
 }
-.menu-toggle { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 38px; height: 38px; border-radius: 8px; align-items: center; justify-content: center; cursor: pointer; display: none; }
+.menu-toggle { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 40px; height: 40px; border-radius: 10px; align-items: center; justify-content: center; cursor: pointer; display: none; transition: .2s; }
+.menu-toggle:hover { background: var(--card2); border-color: var(--accent); }
 .topbar h1 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem; margin:0; }
 
-/* --- Original Feature Styles (Restored) --- */
-.page-content { padding: 1.5rem; }
+/* --- Feature Components --- */
+.page-content { padding: 1.5rem; width: 100%; flex: 1; }
 @media (max-width: 768px) { .page-content { padding: 1rem; } }
 
 .sidebar-brand { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.sidebar-brand .logo { width:38px; height:38px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; color:#fff; }
-.sidebar-brand h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
-.sidebar-close { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; display: none; }
-.sidebar-nav { flex:1; overflow-y:auto; padding:1rem 0; }
-.nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.2rem; color:var(--muted); text-decoration:none; font-size:.88rem; font-weight:500; cursor:pointer; border-left:3px solid transparent; margin:.1rem .5rem; border-radius:0 8px 8px 0; transition: .2s; }
+.sidebar-brand .logo { width:40px; height:40px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; color:#fff; }
+.sidebar-brand h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.15rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
+.sidebar-close { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; display: none; }
+
+.sidebar-nav { flex:1; overflow-y:auto; padding:1rem 0; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.sidebar-nav::-webkit-scrollbar { width: 5px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+.nav-section { display: block; padding: 1rem 1.25rem 0.4rem; font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+.nav-item { display:flex; align-items:center; gap:.8rem; padding:.7rem 1.25rem; color:var(--muted); text-decoration:none !important; font-size:.9rem; font-weight:500; cursor:pointer; border-left:3px solid transparent; margin:.15rem .5rem; border-radius:0 10px 10px 0; transition: .2s; }
+.nav-item i { width: 20px; text-align: center; font-size: 1rem; }
 .nav-item:hover { background: var(--card); color: var(--text); }
-.nav-item.active { background:rgba(108,99,255,.12); color:var(--accent); border-left-color:var(--accent); }
+.nav-item.active { background:rgba(108,99,255,.15); color:var(--accent); border-left-color:var(--accent); }
 .sidebar-footer { padding:1rem; border-top:1px solid var(--border); }
 
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;transition:.2s;height: 100%;}
-.stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.stat-card .label{font-size:.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
-.stat-card .value{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;margin:.25rem 0}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.25rem}
-.panel-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;flex-wrap: wrap;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;transition:.2s;height: 100%; display: flex; flex-direction: column; justify-content: center;}
+.stat-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow: 0 10px 20px rgba(0,0,0,0.2);}
+.stat-card .label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.stat-card .value{font-family:'Syne',sans-serif;font-size:2rem;font-weight:700;margin:.4rem 0; color: var(--text);}
 
-.tbl-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; } 
-.tbl{width:100%;border-collapse:collapse;min-width: 600px;}
-.tbl th{background:var(--surface);color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;padding:.65rem 1rem;border-bottom:1px solid var(--border);font-weight:600;text-align:left}
-.tbl td{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.85rem;vertical-align:middle}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+.panel-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem; color: var(--text);}
 
-.badge-role{padding:.3rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600}
-.badge-completed{background:rgba(67,233,123,.12);color:var(--accent3)}
-.badge-inprogress{background:rgba(108,99,255,.12);color:var(--accent)}
-.badge-pending{background:rgba(247,183,49,.12);color:var(--accent4)}
-.badge-high{background:rgba(255,101,132,.12);color:var(--accent2)}
+/* --- Tables & Lists --- */
+.tbl-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); background: var(--card); } 
+.tbl{width:100%;border-collapse:collapse;min-width: 700px;}
+.tbl th{background:var(--surface);color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;padding:1rem;border-bottom:1px solid var(--border);font-weight:700;text-align:left}
+.tbl td{padding:1rem;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:middle; color: var(--text);}
+.tbl tr:last-child td { border-bottom: none; }
 
-.btn-primary-custom{background:linear-gradient(135deg,var(--accent),#5a52d5);border:none;color:#fff;padding:.5rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s}
-.form-ctrl{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.6rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;width:100%;outline:none;transition:.2s}
-.form-label-sm{font-size:.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;display:block}
+.badge-role{padding:.35rem .8rem;border-radius:20px;font-size:.75rem;font-weight:700;display: inline-block;}
+.badge-completed{background:rgba(67,233,123,.15);color:var(--accent3)}
+.badge-inprogress{background:rgba(108,99,255,.15);color:var(--accent)}
+.badge-pending{background:rgba(247,183,49,.15);color:var(--accent4)}
+.badge-high{background:rgba(255,101,132,.15);color:var(--accent2)}
 
-.modal-custom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;align-items:center;justify-content:center}
-.modal-custom.show{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;width:95%;max-width:500px;max-height:90vh;overflow-y:auto}
+/* --- Form Elements (Fixed White Button Issue) --- */
+button, input, select, textarea { outline: none !important; }
 
-/* --- Error Display --- */
-#critical-error-display { display: none; position: fixed; top: 1rem; left: 1rem; right: 1rem; background: #6e1616; color: white; border: 2px solid var(--accent2); border-radius: 12px; padding: 1rem; z-index: 10000; font-family: monospace; font-size: 0.8rem; }
+.btn-primary-custom{background:linear-gradient(135deg,var(--accent),#5a52d5) !important; border:none !important; color:#fff !important; padding:.7rem 1.5rem; border-radius:10px; font-size:.9rem; font-weight:700; cursor:pointer; transition:.25s; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; box-shadow: 0 4px 15px rgba(108,99,255,0.3);}
+.btn-primary-custom:hover { opacity: 0.95; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); }
+.btn-primary-custom:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.form-ctrl{background:var(--surface) !important; border:1px solid var(--border) !important; color:var(--text) !important; padding:.7rem 1.1rem; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:.9rem; width:100%; transition:.2s;}
+.form-ctrl:focus{border-color:var(--accent) !important; background:var(--card2) !important; box-shadow: 0 0 0 3px rgba(108,99,255,0.15);}
+.form-label-sm{font-size:.8rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.4rem; display:block;}
+
+.notif-item { display: flex; gap: 1rem; padding: 1rem; background: var(--card2); border-radius: 12px; border-left: 4px solid var(--border); transition: 0.2s; margin-bottom: 0.75rem; border: 1px solid var(--border); }
+.notif-item i { font-size: 1.1rem; margin-top: 0.2rem; }
+.notif-item.info { border-left-color: var(--accent); }
+.notif-item.success { border-left-color: var(--accent3); }
+.notif-item.warning { border-left-color: var(--accent4); }
+.notif-item.danger { border-left-color: var(--accent2); }
+
+.ai-result { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; border-left: 5px solid var(--accent); }
+.ai-result-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+.ai-highlight { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--text); }
+
+/* --- Error & Loading --- */
+#critical-error-display { display: none; position: fixed; top: 1rem; left: 1rem; right: 1rem; background: #6e1616; color: white; border: 2px solid var(--accent2); border-radius: 12px; padding: 1.25rem; z-index: 10000; font-family: monospace; font-size: 0.85rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
 </style>
 {% block extra_head %}{% endblock %}
@@ -144,7 +167,7 @@ body {
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.8rem;">
         <div class="logo"><i class="fas fa-brain"></i></div>
         <h2>PulseHR</h2>
       </div>
@@ -154,11 +177,11 @@ body {
       {% block sidebar_nav %}{% endblock %}
     </nav>
     <div class="sidebar-footer">
-      <div class="user-card" style="background:var(--card);border-radius:10px;padding:.75rem;display:flex;align-items:center;gap:.75rem;">
-        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;">{{ user.name[0] | upper }}</div>
-        <div>
-          <p style="font-weight:600;font-size:.85rem;margin:0;">{{ user.name }}</p>
-          <span style="font-size:.75rem;color:var(--muted);">{{ user.role | title }}</span>
+      <div class="user-card" style="background:var(--card);border-radius:12px;padding:.85rem;display:flex;align-items:center;gap:.85rem;border:1px solid var(--border);">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:1rem;">{{ user.name[0] | upper }}</div>
+        <div style="overflow: hidden; flex: 1;">
+          <p style="font-weight:700;font-size:.9rem;margin:0;white-space: nowrap;text-overflow: ellipsis;color:var(--text);">{{ user.name }}</p>
+          <span style="font-size:.78rem;color:var(--muted);font-weight:500;">{{ user.role | title }}</span>
         </div>
       </div>
     </div>
@@ -166,72 +189,74 @@ body {
 
   <div class="main-content">
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:1rem;">
+      <div style="display:flex;align-items:center;gap:1.25rem;">
         <button class="menu-toggle" onclick="toggleSidebar()">
           <i class="fas fa-bars"></i>
         </button>
         <h1 id="pageTitle">{% block page_title %}Dashboard{% endblock %}</h1>
       </div>
       <div style="display:flex;align-items:center;gap:1rem;">
-        <button class="btn-primary-custom" style="padding:.4rem;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;" onclick="location.reload(true)">
+        <button class="notif-btn" style="background:var(--card);border:1px solid var(--border);color:var(--muted);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;" onclick="location.reload(true)">
           <i class="fas fa-sync-alt"></i>
         </button>
-        <a href="/logout" style="color:var(--accent2);text-decoration:none;display:flex;align-items:center;gap:.5rem;">
+        <a href="/logout" style="color:var(--accent2);text-decoration:none !important;display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:0.88rem;padding:.5rem 1rem;background:rgba(255,101,132,.12);border-radius:10px;border:1px solid rgba(255,101,132,0.2);transition:.2s;">
           <i class="fas fa-sign-out-alt"></i>
           <span class="d-none d-sm-inline">Logout</span>
         </a>
       </div>
     </div>
     <div class="page-content" id="pageContent">
-      <div id="loadingIndicator" style="text-align:center;padding:3rem 0;">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p style="color:var(--muted);margin-top:1rem;">Loading Dashboard...</p>
+      <div id="loadingIndicator" style="text-align:center;padding:5rem 0;">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        <p style="color:var(--muted);margin-top:1.5rem;font-weight:500;letter-spacing:0.05em;">Initialising Dashboard Systems...</p>
       </div>
-      {% block content %}{% endblock %}
+      <div id="sectionContent">
+        {% block content %}{% endblock %}
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Reusable Modals (Restored) -->
+<!-- Reusable Modals (Aligned) -->
 <div class="modal-custom" id="globalConfirmModal">
-  <div class="modal-box" style="width: 350px; text-align: center;">
-    <div style="font-size: 2.5rem; color: var(--accent); margin-bottom: 1rem;"><i id="confirmIcon" class="fas fa-question-circle"></i></div>
-    <h5 id="confirmTitle" style="font-family: 'Syne', sans-serif; font-weight: 700;">Confirm Action</h5>
-    <p id="confirmMessage" style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem;">Proceed?</p>
-    <div style="display: flex; gap: 0.75rem;">
-      <button class="btn-primary-custom" onclick="hideModal('globalConfirmModal')" style="flex: 1; background: var(--card2); color: var(--text);">Cancel</button>
-      <button class="btn-primary-custom" id="confirmSubmitBtn" style="flex: 1;">Submit</button>
+  <div class="modal-box" style="width: 380px; text-align: center;">
+    <div style="font-size: 3rem; color: var(--accent); margin-bottom: 1.25rem;"><i id="confirmIcon" class="fas fa-question-circle"></i></div>
+    <h5 id="confirmTitle" style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem;">Confirm Action</h5>
+    <p id="confirmMessage" style="font-size: 0.95rem; color: var(--muted); margin-bottom: 1.75rem; line-height: 1.5;">Proceed with this operation?</p>
+    <div style="display: flex; gap: 1rem;">
+      <button class="btn-primary-custom" onclick="hideModal('globalConfirmModal')" style="flex: 1; background: var(--card2) !important; border: 1px solid var(--border) !important; color: var(--text) !important; box-shadow: none;">Cancel</button>
+      <button class="btn-primary-custom" id="confirmSubmitBtn" style="flex: 1;">Proceed</button>
     </div>
   </div>
 </div>
 
 <div class="modal-custom" id="globalPromptModal">
-  <div class="modal-box" style="width: 350px;">
-    <h5 id="promptTitle" style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 1rem; text-align: center;">Enter Value</h5>
-    <div class="mb-3">
+  <div class="modal-box" style="width: 380px;">
+    <h5 id="promptTitle" style="font-family: 'Syne', sans-serif; font-weight: 800; margin-bottom: 1.5rem; text-align: center; font-size: 1.25rem;">Enter Details</h5>
+    <div class="mb-4">
       <label id="promptLabel" class="form-label-sm">Value</label>
-      <input type="text" id="promptInput" class="form-ctrl">
+      <input type="text" id="promptInput" class="form-ctrl" placeholder="Type here...">
     </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <button class="btn-primary-custom" onclick="hideModal('globalPromptModal')" style="flex: 1; background: var(--card2); color: var(--text);">Cancel</button>
+    <div style="display: flex; gap: 1rem;">
+      <button class="btn-primary-custom" onclick="hideModal('globalPromptModal')" style="flex: 1; background: var(--card2) !important; border: 1px solid var(--border) !important; color: var(--text) !important; box-shadow: none;">Cancel</button>
       <button class="btn-primary-custom" id="promptSubmitBtn" style="flex: 1;">Confirm</button>
     </div>
   </div>
 </div>
 
-<!-- Global Toast (Restored) -->
-<div id="globalToast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1rem 1.5rem; z-index:5000; box-shadow:0 10px 30px rgba(0,0,0,.5); min-width:300px;">
-  <div style="display:flex; align-items:center; gap:0.75rem;">
-    <div id="toastIcon" style="width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff;"></div>
+<!-- Global Toast -->
+<div id="globalToast" style="display:none; position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.25rem 2rem; z-index:5000; box-shadow:0 15px 40px rgba(0,0,0,.6); min-width:320px;">
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <div id="toastIcon" style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.1rem;"></div>
     <div style="flex:1;">
-      <div id="toastTitle" style="font-weight:700; font-size:0.9rem;">Success</div>
-      <div id="toastMessage" style="font-size:0.8rem; color:var(--muted);">Done.</div>
+      <div id="toastTitle" style="font-weight:800; font-size:0.95rem; font-family:'Syne',sans-serif;">Success</div>
+      <div id="toastMessage" style="font-size:0.85rem; color:var(--muted); font-weight:500;">Action completed.</div>
     </div>
   </div>
 </div>
 
 <script>
-// --- CORE API (Restored & Optimized) --- 
+// --- CORE UTILITIES (ALIGNED) --- 
 
 const sessionData = {{ user | tojson | safe }};
 
@@ -239,7 +264,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   const errDisp = document.getElementById('critical-error-display');
   if (errDisp) {
     errDisp.style.display = 'block';
-    errDisp.innerHTML = `<h5>Critical Error</h5><p>${message}</p><p>At: ${source.split('/').pop()}:${lineno}</p>`;
+    errDisp.innerHTML = `<h5>System Runtime Error</h5><p>${message}</p><p>Location: ${source.split('/').pop()}:${lineno}</p>`;
   }
   const loader = document.getElementById('loadingIndicator');
   if (loader) loader.style.display = 'none';
@@ -264,6 +289,16 @@ function navigate(section) {
   if (el) el.classList.add('active');
   if (window.loadSection) window.loadSection(section);
   try { sessionStorage.setItem('lastSection_' + window.location.pathname, section); } catch(e) {}
+  
+  if (window.innerWidth < 992) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar.classList.contains('show')) {
+      sidebar.classList.remove('show');
+      overlay.classList.remove('show');
+      document.body.style.overflow = 'auto';
+    }
+  }
 }
 
 function showModal(id) { document.getElementById(id).classList.add('show'); }
@@ -275,8 +310,8 @@ function createChart(id, type, labels, datasets, options={}) {
   if (ctx._chart) ctx._chart.destroy();
   const defaults = {
     responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:'#7a7a9a',font:{size:11}}}},
-    scales: type !== 'pie' && type !== 'doughnut' ? {
+    plugins:{legend:{labels:{color:'#7a7a9a',font:{size:11, family:'DM Sans', weight:500}}}},
+    scales: type !== 'pie' && type !== 'doughnut' && type !== 'radar' ? {
       x:{ticks:{color:'#7a7a9a',font:{size:10}},grid:{color:'#2a2a38'}},
       y:{ticks:{color:'#7a7a9a',font:{size:10}},grid:{color:'#2a2a38'}}
     } : {}
@@ -292,7 +327,7 @@ function showToast(title, msg, type='success') {
   icon.style.background = type === 'success' ? 'var(--accent3)' : (type === 'danger' ? 'var(--accent2)' : 'var(--accent4)');
   icon.innerHTML = `<i class="fas fa-${type==='success'?'check':(type==='danger'?'times':'exclamation')}"></i>`;
   toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 4000);
+  setTimeout(() => { toast.style.display = 'none'; }, 4500);
 }
 
 function showConfirm(title, message, callback, type='primary', icon='question-circle') {
@@ -328,12 +363,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loadingIndicator');
     if (loader && loader.style.display !== 'none') {
       loader.style.display = 'none';
-      const content = document.getElementById('pageContent');
-      if (!content.querySelector('.panel')) {
-        content.innerHTML = `<div style="text-align:center;padding:2rem;background:var(--card);border-radius:12px;"><h5>Connection is slow</h5><p>Data is taking too long to load.</p><button class="btn-primary-custom" onclick="location.reload()">Retry</button></div>`;
+      const content = document.getElementById('sectionContent');
+      if (!content || !content.innerHTML.trim()) {
+        const pageContent = document.getElementById('pageContent');
+        pageContent.innerHTML += `<div style="text-align:center;padding:3rem;background:var(--card);border-radius:16px;border:1px solid var(--border);">
+          <i class="fas fa-signal fa-3x mb-3 text-accent" style="opacity:0.5"></i>
+          <h5 style="font-family:'Syne',sans-serif;font-weight:800;">Optimising Connection...</h5>
+          <p class="text-muted small">The system is taking longer than expected to synchronise data.</p>
+          <button class="btn-primary-custom" onclick="location.reload()">Force Refresh</button>
+        </div>`;
       }
     }
-  }, 6000);
+  }, 10000);
 });
 
 </script>
