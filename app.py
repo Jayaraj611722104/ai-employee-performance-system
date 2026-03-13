@@ -454,8 +454,25 @@ def get_attendance_history():
     uid = session['user_id']
     history = [a for a in db.get('daily_attendance', []) if a['user_id'] == uid]
     
+    # Ensure we show last 30 days history including gaps
+    today = datetime.now()
+    full_history = []
+    for i in range(30):
+        d = (today - timedelta(days=i)).strftime('%Y-%m-%d')
+        entry = next((a for a in history if a['date'] == d), None)
+        if entry:
+            full_history.append(entry)
+        else:
+            full_history.append({
+                'user_id': uid,
+                'date': d,
+                'status': 'Absent',
+                'check_in_time': '—',
+                'is_gap': True
+            })
+
     # Calculate monthly score
-    month_name = datetime.now().strftime('%B')
+    month_name = today.strftime('%B')
     monthly_data = next((a for a in db.get('attendance', []) if a['user_id'] == uid and a['month'] == month_name), None)
     
     present = monthly_data['present'] if monthly_data else 0
@@ -463,9 +480,9 @@ def get_attendance_history():
     score = round((present / total) * 100, 1) if total > 0 else 0
     
     return jsonify({
-        'history': history[::-1][:30], # Last 30 days, newest first
+        'history': full_history, # Already sorted newest first
         'monthly_score': score,
-        'today_marked': any(a for a in history if a['date'] == datetime.now().strftime('%Y-%m-%d'))
+        'today_marked': any(a for a in history if a['date'] == today.strftime('%Y-%m-%d'))
     })
 
 @app.route('/api/employee/profile')
@@ -475,16 +492,14 @@ def get_employee_profile():
     uid = session['user_id']
     emp = next((e for e in db['employees'] if e['user_id'] == uid), {})
     
-    # Inject learning progress and certificates
-    if 'learning_progress' not in db:
-        db['learning_progress'] = {}
-    if uid not in db['learning_progress']:
-        db['learning_progress'][uid] = {}
+    # Ensure learning_progress exists in the employee record
+    if 'learning_progress' not in emp:
+        # Check if it exists in the old root-level storage for migration
+        old_progress = db.get('learning_progress', {}).get(uid, {})
+        emp['learning_progress'] = old_progress
+        save_db_data(db)
         
-    emp_data = dict(emp)
-    emp_data['learning_progress'] = db['learning_progress'][uid]
-    
-    return jsonify(emp_data)
+    return jsonify(emp)
 
 
 @app.route('/api/employee/tasks')
@@ -695,12 +710,15 @@ def submit_certificate_update():
     db = get_db_data()
     uid = session['user_id']
     
-    if 'learning_progress' not in db:
-        db['learning_progress'] = {}
-    if uid not in db['learning_progress']:
-        db['learning_progress'][uid] = {}
+    # Update progress in employee record
+    emp = next((e for e in db.get('employees', []) if e['user_id'] == uid), None)
+    if not emp:
+        return jsonify({'success': False, 'message': 'Employee record not found.'}), 404
         
-    db['learning_progress'][uid][skill_name] = completion_val
+    if 'learning_progress' not in emp:
+        emp['learning_progress'] = {}
+        
+    emp['learning_progress'][skill_name] = completion_val
     save_db_data(db)
 
     # If < 100%, we just save the progress, no certificate needed.

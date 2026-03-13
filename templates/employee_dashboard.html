@@ -241,24 +241,42 @@ function renderTasks() {
             <div style="font-size:.78rem;color:${timerColor};margin-top:.3rem"><i class="fas fa-clock"></i> ${days > 0 ? days+' days left' : 'OVERDUE'}</div>
           </div>
         </div>
-        <div style="margin-top:.75rem;display:flex;align-items:center;gap:.75rem">
-          <div class="progress-bar-wrap"><div class="progress-fill" style="width:${t.progress}%;background:var(--accent)"></div></div>
-          <span style="font-size:.78rem;color:var(--muted);min-width:30px">${t.progress}%</span>
-          <select class="form-ctrl" style="width:140px;padding:.3rem .5rem" onchange="updateTask('${t.id}',this.value)">
-            <option ${t.status==='Pending'?'selected':''}>Pending</option>
-            <option ${t.status==='In Progress'?'selected':''}>In Progress</option>
-            <option ${t.status==='Completed'?'selected':''}>Completed</option>
-          </select>
+        
+        <div style="margin-top:1.25rem; border-top:1px solid var(--border); padding-top:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+            <label class="form-label-sm mb-0">Update Completion & Status</label>
+            <span id="task_prog_val_${t.id}" style="color:var(--accent);font-weight:700">${t.progress}%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <input type="range" class="form-range" style="flex:1; min-width:150px" value="${t.progress}" min="0" max="100" 
+              oninput="document.getElementById('task_prog_val_${t.id}').textContent=this.value+'%'"
+              onchange="updateTask('${t.id}', null, this.value)">
+            
+            <select class="form-ctrl" style="width:140px;padding:.3rem .5rem" onchange="updateTask('${t.id}',this.value, null)">
+              <option value="Pending" ${t.status==='Pending'?'selected':''}>Pending</option>
+              <option value="In Progress" ${t.status==='In Progress'?'selected':''}>In Progress</option>
+              <option value="Completed" ${t.status==='Completed'?'selected':''}>Completed</option>
+            </select>
+          </div>
         </div>
       </div>`;
     }).join('')}
   </div>`;
 }
 
-async function updateTask(taskId, status) {
+async function updateTask(taskId, status, progress) {
+  const task = tasksData.find(t => t.id === taskId);
+  const newStatus = status || task.status;
+  let newProgress = progress !== null ? parseInt(progress) : task.progress;
+  
+  // Auto-update progress if status changes to Completed
+  if (status === 'Completed') newProgress = 100;
+  if (status === 'Pending') newProgress = 0;
+  if (status === 'In Progress' && newProgress === 0) newProgress = 10;
+
   await fetch('/api/employee/update-task', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({task_id: taskId, status, progress: status==='Completed'?100:status==='In Progress'?50:0})
+    body: JSON.stringify({task_id: taskId, status: newStatus, progress: newProgress})
   });
   tasksData = await fetch('/api/employee/tasks').then(r=>r.json());
   renderTasks();
@@ -277,7 +295,7 @@ async function renderAttendance() {
         <div id="attendanceAction">
           ${data.today_marked ? 
             `<div class="badge-role badge-completed p-3" style="font-size:1rem"><i class="fas fa-check-circle me-2"></i>Attendance Marked</div>
-             <div class="text-muted mt-2" style="font-size:.8rem">Marked at ${data.history[0]?.check_in_time || 'N/A'}</div>` :
+             <div class="text-muted mt-2" style="font-size:.8rem">Marked at ${data.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || 'N/A'}</div>` :
             `<button class="btn-primary-custom w-100 p-3" onclick="markPresent()"><i class="fas fa-fingerprint me-2"></i>Mark Present</button>`
           }
         </div>
@@ -294,25 +312,41 @@ async function renderAttendance() {
           <span style="font-size:.7rem; color:var(--muted); font-weight:400">Showing recent activity</span>
         </div>
         <div id="attendanceHistoryList" style="padding:0 .5rem">
-          <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; padding:0 1.5rem .75rem; color:var(--muted); font-size:.7rem; text-transform:uppercase; font-weight:700; letter-spacing:.1em">
+          <div class="d-none d-sm-grid" style="grid-template-columns:1.2fr 1fr 1fr; padding:0 1.5rem .75rem; color:var(--muted); font-size:.7rem; text-transform:uppercase; font-weight:700; letter-spacing:.1em">
             <span>Date</span><span>Status</span><span>Check-in Time</span>
           </div>
           ${data.history.length === 0 ? '<div class="text-center py-5 text-muted">No attendance history found. Mark present to get started!</div>' : 
-            data.history.map(h => `
-            <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-bottom:1rem; transition:all .3s ease; box-shadow:0 4px 12px rgba(0,0,0,.1)" onmouseover="this.style.borderColor='var(--accent3)'; this.style.transform='translateX(5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,.2)'" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'">
-              <div style="font-weight:700; font-size:1.05rem; color:var(--text); display:flex; align-items:center; gap:.75rem">
-                <div style="width:8px; height:8px; background:var(--accent3); border-radius:50%"></div>
-                ${h.date}
-              </div>
-              <div>
-                <span class="badge-role badge-completed" style="padding:.5rem 1rem; font-size:.75rem; border-radius:30px; background:rgba(67,233,123,.1); color:var(--accent3); border:1px solid rgba(67,233,123,.2)">
-                  <i class="fas fa-check-circle me-2"></i>${h.status}
-                </span>
-              </div>
-              <div style="font-weight:700; color:var(--accent3); font-family:'Syne',sans-serif; font-size:1.1rem; letter-spacing:.02em">
-                <i class="far fa-clock me-2" style="font-size:.9rem; opacity:.7"></i>${h.check_in_time}
-              </div>
-            </div>`).join('')}
+            data.history.map(h => {
+              const isAbsent = h.status === 'Absent';
+              const statusColor = isAbsent ? 'var(--accent2)' : 'var(--accent3)';
+              const statusBg = isAbsent ? 'rgba(255,101,132,.1)' : 'rgba(67,233,123,.1)';
+              const statusBorder = isAbsent ? 'rgba(255,101,132,.2)' : 'rgba(67,233,123,.2)';
+              const icon = isAbsent ? 'fa-times-circle' : 'fa-check-circle';
+              
+              return `
+              <div class="attend-history-item" style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1rem 1.5rem; margin-bottom:0.75rem; transition:all .3s ease; box-shadow:0 4px 12px rgba(0,0,0,.1)">
+                <div class="row align-items-center">
+                  <div class="col-sm-4 col-6 mb-2 mb-sm-0">
+                    <div style="font-weight:700; font-size:1rem; color:var(--text); display:flex; align-items:center; gap:.75rem">
+                      <div style="width:8px; height:8px; background:${statusColor}; border-radius:50%"></div>
+                      ${h.date}
+                    </div>
+                  </div>
+                  <div class="col-sm-4 col-6 text-end text-sm-start mb-2 mb-sm-0">
+                    <span class="badge-role" style="padding:.5rem 1.2rem; font-size:.75rem; border-radius:12px; background:${statusBg}; color:${statusColor}; border:1px solid ${statusBorder}; display:inline-flex; align-items:center; gap:.5rem; box-shadow:0 2px 8px ${statusBorder}">
+                      <i class="fas ${icon}"></i>
+                      <span>${h.status}</span>
+                    </span>
+                  </div>
+                  <div class="col-sm-4 col-12 text-sm-end">
+                    <div style="font-weight:700; color:${statusColor}; font-family:'Syne',sans-serif; font-size:1rem; letter-spacing:.02em">
+                      <span class="d-sm-none" style="color:var(--muted); font-size:.7rem; font-weight:400; margin-right:.5rem">Check-in:</span>
+                      <i class="far fa-clock me-2" style="font-size:.8rem; opacity:.7"></i>${h.check_in_time}
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
         </div>
       </div>
     </div>
@@ -344,33 +378,111 @@ function renderPerformance() {
   document.getElementById('pageTitle').textContent = 'Performance Analytics';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-3">
-    <div class="col-md-8">
+    <div class="col-lg-8">
       <div class="panel">
         <div class="panel-title"><i class="fas fa-chart-bar" style="color:var(--accent)"></i>Performance Metrics</div>
-        <div class="chart-wrap"><canvas id="perfBarChart"></canvas></div>
+        <div class="chart-wrap" style="height: 300px"><canvas id="perfBarChart"></canvas></div>
       </div>
       <div class="panel">
         <div class="panel-title"><i class="fas fa-chart-line" style="color:var(--accent3)"></i>Monthly Trend</div>
-        <div class="chart-wrap"><canvas id="trendLineChart"></canvas></div>
+        <div class="chart-wrap" style="height: 300px"><canvas id="perfTrendChart"></canvas></div>
       </div>
     </div>
-    <div class="col-md-4">
-      ${[['Productivity Score',perfData.productivity_score,'accent'],['Attendance %',perfData.attendance_pct,'accent3'],['Task Completion',perfData.task_completion,'accent4'],['Quality Rating',(perfData.quality_rating||0)*10,'accent2'],['TL Work Score',(perfData.tl_score||0)*10,'accent']].map(([l,v,c])=>`
-      <div class="stat-card mb-2">
-        <div class="label">${l}</div>
-        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem">
-          <div class="progress-bar-wrap"><div class="progress-fill" style="width:${v}%;background:var(--${c})"></div></div>
-          <span style="font-weight:700;color:var(--${c})">${v}${l.includes('Score')?'%':l.includes('%')?'%':''}</span>
+    <div class="col-lg-4">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-chart-pie" style="color:var(--accent2)"></i>Score Breakdown</div>
+        <div class="chart-wrap" style="height: 300px"><canvas id="perfRadarChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-info-circle" style="color:var(--accent4)"></i>Metrics Insight</div>
+        <div class="row g-2">
+          ${[['Productivity', perfData.productivity_score + '%', 'var(--accent)'], 
+             ['Attendance', perfData.attendance_pct + '%', 'var(--accent3)'],
+             ['Task Comp.', perfData.task_completion + '%', 'var(--accent4)'],
+             ['Quality', perfData.quality_rating + '/10', 'var(--accent2)']
+            ].map(([l, v, c]) => `
+            <div class="col-sm-6 col-12">
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:.75rem; text-align:center; display:flex; align-items:center; justify-content:space-between">
+                <div style="color:var(--muted); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em">${l}</div>
+                <div style="font-weight:700; color:${c}; font-size:1.1rem">${v}</div>
+              </div>
+            </div>`).join('')}
         </div>
-      </div>`).join('')}
+      </div>
     </div>
   </div>`;
+  
   setTimeout(() => {
-    createChart('perfBarChart','bar',['Productivity','Attendance','Task Comp.','Quality (×10)','TL Score (×10)'],
-      [{label:'Your Scores',data:[perfData.productivity_score,perfData.attendance_pct,perfData.task_completion,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],
-      backgroundColor:['rgba(108,99,255,.7)','rgba(67,233,123,.7)','rgba(247,183,49,.7)','rgba(255,101,132,.7)','rgba(108,99,255,.5)']}]);
-    createChart('trendLineChart','line',['Aug','Sep','Oct','Nov','Dec','Jan'],
-      [{label:'Performance',data:perfData.monthly_trend||[],borderColor:'var(--accent3)',backgroundColor:'rgba(67,233,123,.1)',fill:true,tension:.4}]);
+    new Chart(document.getElementById('perfBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Productivity', 'Attendance', 'Task Comp.', 'Quality (x10)', 'TL Score (x10)'],
+        datasets: [{
+          label: 'Your Scores',
+          data: [
+            perfData.productivity_score || 0,
+            perfData.attendance_pct || 0,
+            perfData.task_completion || 0,
+            (perfData.quality_rating || 0) * 10,
+            (perfData.tl_score || 0) * 10
+          ],
+          backgroundColor: ['var(--accent)', 'var(--accent3)', 'var(--accent4)', 'var(--accent2)', 'var(--accent)'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: '#7a7a9a' }, grid: { color: '#2a2a38' } },
+          x: { ticks: { color: '#7a7a9a' }, grid: { display: false } }
+        }
+      }
+    });
+
+    createChart('perfTrendChart', 'line', ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'], [{
+      label: 'Performance',
+      data: perfData.monthly_trend || [70, 72, 74, 76, 75, 77],
+      borderColor: 'var(--accent3)',
+      backgroundColor: 'rgba(67,233,123,.1)',
+      fill: true,
+      tension: 0.4
+    }]);
+
+    new Chart(document.getElementById('perfRadarChart'), {
+      type: 'radar',
+      data: {
+        labels: ['Productivity', 'Attendance', 'Task Comp.', 'Quality', 'TL Score'],
+        datasets: [{
+          label: 'Current Status',
+          data: [
+            perfData.productivity_score || 0,
+            perfData.attendance_pct || 0,
+            perfData.task_completion || 0,
+            (perfData.quality_rating || 0) * 10,
+            (perfData.tl_score || 0) * 10
+          ],
+          backgroundColor: 'rgba(108,99,255,.2)',
+          borderColor: 'var(--accent)',
+          pointBackgroundColor: 'var(--accent)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            angleLines: { color: '#2a2a38' },
+            grid: { color: '#2a2a38' },
+            pointLabels: { color: '#7a7a9a', font: { size: 10 } },
+            ticks: { display: false },
+            min: 0, max: 100
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
   }, 100);
 }
 
