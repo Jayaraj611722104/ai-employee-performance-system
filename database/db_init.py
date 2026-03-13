@@ -24,6 +24,10 @@ DEMO_DATA = {
         {"id": "U0011", "name": "Ivan Martinez", "email": "ivan@gmail.com", "password": "emp123", "role": "employee", "status": "Active"},
         {"id": "U0012", "name": "Julia Wilson", "email": "julia@gmail.com", "password": "emp123", "role": "employee", "status": "Active"},
         {"id": "U0013", "name": "Kevin Anderson", "email": "kevin@gmail.com", "password": "emp123", "role": "employee", "status": "Active"},
+        {"id": "U0014", "name": "BHUVANESH", "email": "bhuvanesh050305@gmail.com", "password": "password123", "role": "hr", "status": "Active"},
+        {"id": "U0015", "name": "KAVEEN", "email": "kaveen12@gmail.com", "password": "password123", "role": "employee", "status": "Active"},
+        {"id": "U0016", "name": "JAYARAJ", "email": "jayaraj@gmail.com", "password": "password123", "role": "teamleader", "status": "Active"},
+        {"id": "U0017", "name": "RAJ", "email": "rajjayaraj957@gmail.com", "password": "password123", "role": "employee", "status": "Active"},
     ],
     "employees": [
         {"user_id": "U0003", "name": "David Chen", "employee_id": "TL001", "role": "Tech Lead", "department": "Engineering", "skills": "Python, React, Node.js, AWS, Leadership", "experience": 7, "joining_date": "2017-03-15", "projects_completed": 24, "status": "Active", "team_leader_id": None, "salary": 95000},
@@ -37,6 +41,10 @@ DEMO_DATA = {
         {"user_id": "U0011", "name": "Ivan Martinez", "employee_id": "EMP008", "role": "Junior Developer", "department": "Engineering", "skills": "Python, Django, HTML", "experience": 0, "joining_date": "2024-01-08", "projects_completed": 1, "status": "Active", "team_leader_id": "U0003", "salary": 50000},
         {"user_id": "U0012", "name": "Julia Wilson", "employee_id": "EMP009", "role": "Data Scientist", "department": "Analytics", "skills": "Python, ML, TensorFlow, Pandas, NumPy", "experience": 5, "joining_date": "2019-09-30", "projects_completed": 16, "status": "Active", "team_leader_id": "U0003", "salary": 90000},
         {"user_id": "U0013", "name": "Kevin Anderson", "employee_id": "EMP010", "role": "Web Developer", "department": "Engineering", "skills": "PHP, Laravel, MySQL, Bootstrap", "experience": 2, "joining_date": "2022-04-18", "projects_completed": 5, "status": "Inactive", "team_leader_id": "U0003", "salary": 60000},
+        {"user_id": "U0014", "name": "BHUVANESH", "employee_id": "HR001", "role": "software engineering", "department": "BE", "skills": "PYTHON, SQL, JAVA, AI, ML", "experience": 6, "joining_date": "2026-03-09", "projects_completed": 0, "status": "Active", "team_leader_id": None, "salary": 0.0},
+        {"user_id": "U0015", "name": "KAVEEN", "employee_id": "EMP0015", "role": "software engineering", "department": "BE", "skills": "PYTHON, SQL, JAVA, AI", "experience": 6, "joining_date": "2026-03-09", "projects_completed": 0, "status": "Active", "team_leader_id": "U0016", "salary": 0.0},
+        {"user_id": "U0016", "name": "JAYARAJ", "employee_id": "TL002", "role": "software engineering", "department": "BE", "skills": "PYTHON, SQL, AI", "experience": 8, "joining_date": "2026-03-09", "projects_completed": 0, "status": "Active", "team_leader_id": "U0016", "salary": 0.0},
+        {"user_id": "U0017", "name": "RAJ", "employee_id": "EMP0017", "role": "software engineering", "department": "BE", "skills": "PYTHON, SQL, JAVA, AI", "experience": 0, "joining_date": "2026-03-11", "projects_completed": 0, "status": "Active", "team_leader_id": "U0016", "salary": 0.0},
     ],
     "performance": [
         {"user_id": "U0004", "productivity_score": 88, "attendance_pct": 96, "task_completion": 90, "quality_rating": 9, "tl_score": 9, "monthly_trend": [80, 83, 85, 87, 88, 88], "satisfaction": 85},
@@ -49,6 +57,10 @@ DEMO_DATA = {
         {"user_id": "U0011", "productivity_score": 58, "attendance_pct": 85, "task_completion": 60, "quality_rating": 6, "tl_score": 5, "monthly_trend": [50, 52, 55, 57, 58, 58], "satisfaction": 60},
         {"user_id": "U0012", "productivity_score": 90, "attendance_pct": 97, "task_completion": 92, "quality_rating": 9, "tl_score": 9, "monthly_trend": [85, 87, 88, 89, 90, 90], "satisfaction": 88},
         {"user_id": "U0013", "productivity_score": 55, "attendance_pct": 72, "task_completion": 50, "quality_rating": 5, "tl_score": 4, "monthly_trend": [60, 58, 57, 55, 53, 55], "satisfaction": 40},
+        {"user_id": "U0014", "productivity_score": 0, "attendance_pct": 100, "task_completion": 0, "quality_rating": 0, "tl_score": 0, "monthly_trend": [0, 0, 0, 0, 0, 0], "satisfaction": 75},
+        {"user_id": "U0015", "productivity_score": 0, "attendance_pct": 100, "task_completion": 0, "quality_rating": 0, "tl_score": 0, "monthly_trend": [0, 0, 0, 0, 0, 0], "satisfaction": 75},
+        {"user_id": "U0016", "productivity_score": 0, "attendance_pct": 100, "task_completion": 0, "quality_rating": 0, "tl_score": 0, "monthly_trend": [0, 0, 0, 0, 0, 0], "satisfaction": 75},
+        {"user_id": "U0017", "productivity_score": 0, "attendance_pct": 100, "task_completion": 0, "quality_rating": 0, "tl_score": 0, "monthly_trend": [0, 0, 0, 0, 0, 0], "satisfaction": 75},
     ],
     "tasks": [
         {"id": "T0001", "title": "Build REST API for Auth Module", "description": "Implement JWT-based authentication with refresh tokens", "priority": "High", "deadline": (datetime.now() + timedelta(days=5)).strftime('%Y-%m-%d'), "required_skills": ["Python", "Flask", "JWT"], "assigned_to": "U0004", "assigned_by": "U0003", "status": "In Progress", "progress": 60, "created_at": datetime.now().isoformat()},
