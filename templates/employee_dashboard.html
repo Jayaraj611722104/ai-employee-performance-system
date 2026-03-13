@@ -836,7 +836,7 @@ async function renderMyTeam() {
           <hr style="border-color:var(--border); margin:1.5rem 0">
           <div style="font-size:.85rem">
             <div style="display:flex; justify-content:space-between; margin-bottom:.75rem"><span style="color:var(--muted)">Department</span><span style="font-weight:600">${tl.department}</span></div>
-            <div style="display:flex; justify-content:space-between"><span style="color:var(--muted)">Team ID</span><span style="font-weight:600">${data.team_name.split(' ')[0]}</span></div>
+            <div style="display:flex; justify-content:space-between"><span style="color:var(--muted)">Team ID</span><span style="font-weight:600">${data.team_name ? data.team_name.split(' ')[0] : 'N/A'}</span></div>
           </div>
         ` : `<div class="text-center py-5 text-muted">No Team Leader assigned</div>`}
       </div>
