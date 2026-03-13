@@ -34,6 +34,12 @@ app.secret_key = os.environ.get('SECRET_KEY', 'pulsehr_secret_key_2024_change_in
 from database.db_init import get_db_data, save_db_data, init_db
 print("ℹ️ Using Local JSON Database")
 
+# Log server startup
+try:
+    log_system_activity("System initialized/restarted")
+except Exception:
+    pass
+
 def _next_user_id(db):
     """Generate next user ID safely (collision-free after deletions)."""
     if not db['users']:
@@ -80,11 +86,8 @@ def log_system_activity(message, db=None):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = f"[{timestamp}] ACTIVITY: {message}"
     
-    # 1. Print to terminal immediately with extra visibility
-    print("\n" + "="*50, flush=True)
+    # 1. Print to terminal
     print(log_entry, flush=True)
-    print("="*50 + "\n", flush=True)
-    sys.stdout.flush()
     
     # 2. Append to activity.log file
     try:
@@ -93,16 +96,30 @@ def log_system_activity(message, db=None):
     except Exception:
         pass
     
-    # 3. Save to database if db is provided
-    if db is not None:
-        if 'system_activities' not in db:
-            db['system_activities'] = []
-        db['system_activities'].append({
-            'time': datetime.now().isoformat(),
-            'message': message,
-            'ip': request.remote_addr if request else '127.0.0.1'
-        })
-        save_db_data(db)
+    # 3. Save to database
+    # If db not provided, try to get it
+    _db = db
+    if _db is None:
+        try:
+            from database.db_init import get_db_data
+            _db = get_db_data()
+        except Exception:
+            return
+
+    if 'system_activities' not in _db:
+        _db['system_activities'] = []
+    
+    _db['system_activities'].append({
+        'time': datetime.now().isoformat(),
+        'message': message,
+        'ip': request.remote_addr if request else '127.0.0.1'
+    })
+    
+    # Keep only last 200 activities to prevent DB bloat
+    if len(_db['system_activities']) > 200:
+        _db['system_activities'] = _db['system_activities'][-200:]
+        
+    save_db_data(_db)
 
 # ═══════════════════════════════════════════════════════
 #  ERROR HANDLERS
@@ -253,7 +270,8 @@ def login():
 @app.route('/logout')
 def logout():
     db = get_db_data()
-    log_system_activity(f"User {session.get('name')} logged out", db)
+    user_name = session.get('name', 'Unknown User')
+    log_system_activity(f"User {user_name} logged out", db)
     session.clear()
     return redirect(url_for('login'))
 

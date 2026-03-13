@@ -432,12 +432,12 @@ function renderActivity() {
   document.getElementById('pageTitle').textContent = 'System Activity Monitor';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title" style="justify-content:space-between">
-      <span><i class="fas fa-terminal" style="color:var(--accent)"></i>Live Activity Feed</span>
-      <div style="font-size:.8rem;color:var(--muted)">Auto-refreshing...</div>
+    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span><i class="fas fa-satellite-dish" style="color:var(--accent)"></i> Live System Activity Feed</span>
+      <span class="badge-role badge-completed" style="font-size:.7rem;padding:.2rem .6rem">LIVE UPDATING</span>
     </div>
-    <div id="activityFeed" style="max-height:600px;overflow-y:auto">
-      <div style="text-align:center;padding:2rem;color:var(--muted)"><i class="fas fa-spinner fa-spin me-2"></i>Loading activities...</div>
+    <div id="activityFeed" class="activity-feed">
+      <div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading live activity...</div>
     </div>
   </div>`;
   
