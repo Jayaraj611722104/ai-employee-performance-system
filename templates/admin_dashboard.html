@@ -21,11 +21,11 @@
 <div class="modal-custom" id="createUserModal">
   <div class="modal-box">
     <div class="modal-header-custom">
-      <div class="modal-title-custom"><i class="fas fa-user-plus me-2" style="color:var(--accent)"></i>Establish New Identity</div>
-      <button class="modal-close" onclick="hideModal('createUserModal')">✕</button>
+      <div class="modal-title-custom"><i class="fas fa-user-plus me-2" style="color:var(--accent)"></i>Create New User</div>
+      <button class="modal-close" onclick="hideModal('createUserModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="row g-3">
-      <div class="col-6"><label class="form-label-sm">Personnel Name</label><input class="form-ctrl" id="uName" placeholder="Full Name"></div>
+      <div class="col-6"><label class="form-label-sm">Full Name</label><input class="form-ctrl" id="uName" placeholder="Full Name"></div>
       <div class="col-6"><label class="form-label-sm">Email Address</label><input class="form-ctrl" id="uEmail" type="email" placeholder="email@pulsehr.com"></div>
       <div class="col-6"><label class="form-label-sm">Initial Password</label><input class="form-ctrl" id="uPass" type="password" value="password123"></div>
       <div class="col-6"><label class="form-label-sm">Access Level</label>
@@ -35,11 +35,11 @@
         </select></div>
       <div id="empFields" class="col-12">
         <div class="row g-3">
-          <div class="col-12"><label class="form-label-sm">Professional Designation</label><input class="form-ctrl" id="uJobRole" placeholder="e.g. Senior Software Engineer"></div>
-          <div class="col-6"><label class="form-label-sm">Department Unit</label><input class="form-ctrl" id="uDept" placeholder="Engineering"></div>
-          <div class="col-3"><label class="form-label-sm">Tenure</label><input class="form-ctrl" id="uExp" type="number" value="0"></div>
+          <div class="col-12"><label class="form-label-sm">Job Title</label><input class="form-ctrl" id="uJobRole" placeholder="e.g. Senior Software Engineer"></div>
+          <div class="col-6"><label class="form-label-sm">Department</label><input class="form-ctrl" id="uDept" placeholder="Engineering"></div>
+          <div class="col-3"><label class="form-label-sm">Experience (Yrs)</label><input class="form-ctrl" id="uExp" type="number" value="0"></div>
           <div class="col-3"><label class="form-label-sm">Salary</label><input class="form-ctrl" id="uSalary" type="number" value="0"></div>
-          <div class="col-12"><label class="form-label-sm">Skill Matrix (Comma separated)</label><input class="form-ctrl" id="uSkills" placeholder="Python, React, SQL"></div>
+          <div class="col-12"><label class="form-label-sm">Skills (Comma separated)</label><input class="form-ctrl" id="uSkills" placeholder="Python, React, SQL"></div>
         </div>
       </div>
     </div>
@@ -52,12 +52,12 @@
 <div class="modal-custom" id="editUserModal">
   <div class="modal-box">
     <div class="modal-header-custom">
-      <div class="modal-title-custom"><i class="fas fa-user-edit me-2" style="color:var(--accent)"></i>Modify Identity</div>
-      <button class="modal-close" onclick="hideModal('editUserModal')">✕</button>
+      <div class="modal-title-custom"><i class="fas fa-user-edit me-2" style="color:var(--accent)"></i>Edit User</div>
+      <button class="modal-close" onclick="hideModal('editUserModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <input type="hidden" id="editUid">
     <div class="row g-3">
-      <div class="col-6"><label class="form-label-sm">Personnel Name</label><input class="form-ctrl" id="editName"></div>
+      <div class="col-6"><label class="form-label-sm">Full Name</label><input class="form-ctrl" id="editName"></div>
       <div class="col-6"><label class="form-label-sm">Email Address</label><input class="form-ctrl" id="editEmail" type="email"></div>
       <div class="col-6"><label class="form-label-sm">Access Level</label>
         <select class="form-ctrl" id="editRole" onchange="toggleEditEmpFields(this.value)">
@@ -66,15 +66,15 @@
         </select></div>
       <div id="editEmpFields" class="col-12">
         <div class="row g-3">
-          <div class="col-12"><label class="form-label-sm">Professional Designation</label><input class="form-ctrl" id="editJobRole"></div>
-          <div class="col-6"><label class="form-label-sm">Department Unit</label><input class="form-ctrl" id="editDept"></div>
-          <div class="col-3"><label class="form-label-sm">Tenure</label><input class="form-ctrl" id="editExp" type="number"></div>
+          <div class="col-12"><label class="form-label-sm">Job Title</label><input class="form-ctrl" id="editJobRole"></div>
+          <div class="col-6"><label class="form-label-sm">Department</label><input class="form-ctrl" id="editDept"></div>
+          <div class="col-3"><label class="form-label-sm">Experience (Yrs)</label><input class="form-ctrl" id="editExp" type="number"></div>
           <div class="col-3"><label class="form-label-sm">Salary</label><input class="form-ctrl" id="editSalary" type="number"></div>
-          <div class="col-12"><label class="form-label-sm">Skill Matrix</label><input class="form-ctrl" id="editSkills"></div>
+          <div class="col-12"><label class="form-label-sm">Skills</label><input class="form-ctrl" id="editSkills"></div>
         </div>
       </div>
     </div>
-    <button class="btn-primary-custom w-100 mt-4" onclick="updateUser()"><i class="fas fa-save me-2"></i>SAVE MODIFICATIONS</button>
+    <button class="btn-primary-custom w-100 mt-4" onclick="updateUser()"><i class="fas fa-save me-2"></i>SAVE CHANGES</button>
     <div id="editUserMsg" class="mt-3" style="display:none"></div>
   </div>
 </div>
@@ -83,16 +83,16 @@
 <div class="modal-custom" id="emailModal">
   <div class="modal-box">
     <div class="modal-header-custom">
-      <div class="modal-title-custom"><i class="fas fa-envelope me-2" style="color:var(--accent3)"></i>SMTP Gateway Configuration</div>
-      <button class="modal-close" onclick="hideModal('emailModal')">✕</button>
+      <div class="modal-title-custom"><i class="fas fa-envelope me-2" style="color:var(--accent3)"></i>Email Server (SMTP) Settings</div>
+      <button class="modal-close" onclick="hideModal('emailModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="row g-3">
       <div class="col-8"><label class="form-label-sm">SMTP Host</label><input class="form-ctrl" id="emHost" placeholder="smtp.provider.com"></div>
       <div class="col-4"><label class="form-label-sm">Port</label><input class="form-ctrl" id="emPort" type="number" value="587"></div>
-      <div class="col-6"><label class="form-label-sm">Gateway User</label><input class="form-ctrl" id="emUser"></div>
-      <div class="col-6"><label class="form-label-sm">Gateway Password</label><input class="form-ctrl" id="emPass" type="password" placeholder="••••••••"></div>
-      <div class="col-6"><label class="form-label-sm">System Sender Email</label><input class="form-ctrl" id="emFrom" placeholder="noreply@pulsehr.com"></div>
-      <div class="col-6"><label class="form-label-sm">Sender Identity</label><input class="form-ctrl" id="emFromName" placeholder="PulseHR System"></div>
+      <div class="col-6"><label class="form-label-sm">SMTP Username</label><input class="form-ctrl" id="emUser"></div>
+      <div class="col-6"><label class="form-label-sm">SMTP Password</label><input class="form-ctrl" id="emPass" type="password" placeholder="••••••••"></div>
+      <div class="col-6"><label class="form-label-sm">From Email</label><input class="form-ctrl" id="emFrom" placeholder="noreply@pulsehr.com"></div>
+      <div class="col-6"><label class="form-label-sm">From Name</label><input class="form-ctrl" id="emFromName" placeholder="PulseHR System"></div>
       <div class="col-6"><label class="form-label-sm">TLS Encryption</label>
         <select class="form-ctrl" id="emTLS"><option value="true">ENABLED</option><option value="false">DISABLED</option></select>
       </div>
@@ -100,7 +100,7 @@
         <select class="form-ctrl" id="emEnabled"><option value="true">ENABLED</option><option value="false">DISABLED</option></select>
       </div>
     </div>
-    <button class="btn-primary-custom w-100 mt-4" style="background:var(--accent3) !important;" onclick="saveEmailCfg()"><i class="fas fa-save me-2"></i>COMMIT GATEWAY SETTINGS</button>
+    <button class="btn-primary-custom w-100 mt-4" style="background:var(--accent3) !important;" onclick="saveEmailCfg()"><i class="fas fa-save me-2"></i>SAVE EMAIL SETTINGS</button>
     <div class="row g-2 mt-3">
       <div class="col-8"><input class="form-ctrl" id="emTestTo" placeholder="Test Recipient Address"></div>
       <div class="col-4"><button class="btn-primary-custom w-100" style="padding:0.9rem;" onclick="testEmail()"><i class="fas fa-paper-plane"></i></button></div>
@@ -113,18 +113,18 @@
 <div class="modal-custom" id="slackModal">
   <div class="modal-box">
     <div class="modal-header-custom">
-      <div class="modal-title-custom"><i class="fab fa-slack me-2" style="color:var(--accent)"></i>Slack Webhook Integration</div>
-      <button class="modal-close" onclick="hideModal('slackModal')">✕</button>
+      <div class="modal-title-custom"><i class="fab fa-slack me-2" style="color:var(--accent)"></i>Slack Integration</div>
+      <button class="modal-close" onclick="hideModal('slackModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="row g-3">
       <div class="col-12"><label class="form-label-sm">Webhook URL</label><input class="form-ctrl" id="slWebhook" placeholder="https://hooks.slack.com/services/..."></div>
       <div class="col-6"><label class="form-label-sm">Target Channel</label><input class="form-ctrl" id="slChannel" placeholder="#system-alerts"></div>
-      <div class="col-6"><label class="form-label-sm">Bot Identity</label><input class="form-ctrl" id="slBotName" placeholder="PulseHR Intelligence"></div>
+      <div class="col-6"><label class="form-label-sm">Bot Name</label><input class="form-ctrl" id="slBotName" placeholder="PulseHR Bot"></div>
       <div class="col-12"><label class="form-label-sm">Interface Status</label>
         <select class="form-ctrl" id="slEnabled"><option value="true">ENABLED</option><option value="false">DISABLED</option></select>
       </div>
     </div>
-    <button class="btn-primary-custom w-100 mt-4" onclick="saveSlackCfg()"><i class="fas fa-save me-2"></i>COMMIT SLACK SETTINGS</button>
+    <button class="btn-primary-custom w-100 mt-4" onclick="saveSlackCfg()"><i class="fas fa-save me-2"></i>SAVE SLACK SETTINGS</button>
     <div class="row g-2 mt-3">
       <div class="col-8"><input class="form-ctrl" id="slTestText" placeholder="Test Message Payload" value="Neural system check: OK"></div>
       <div class="col-4"><button class="btn-primary-custom w-100" style="padding:0.9rem;" onclick="testSlack()"><i class="fas fa-paper-plane"></i></button></div>
@@ -137,8 +137,8 @@
 <div class="modal-custom" id="calModal">
   <div class="modal-box">
     <div class="modal-header-custom">
-      <div class="modal-title-custom"><i class="fas fa-calendar-alt me-2" style="color:var(--accent4)"></i>Temporal API Interface</div>
-      <button class="modal-close" onclick="hideModal('calModal')">✕</button>
+      <div class="modal-title-custom"><i class="fas fa-calendar-alt me-2" style="color:var(--accent4)"></i>Calendar Integration</div>
+      <button class="modal-close" onclick="hideModal('calModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="row g-3">
       <div class="col-6"><label class="form-label-sm">Service Provider</label>
@@ -151,9 +151,9 @@
       <div class="col-12"><label class="form-label-sm">Authorization Token / API Key</label><input class="form-ctrl" id="calKey" type="password" placeholder="••••••••"></div>
       <div class="col-12"><label class="form-label-sm">ICS Remote URL (Fallback)</label><input class="form-ctrl" id="calICS" placeholder="https://.../calendar.ics"></div>
     </div>
-    <button class="btn-primary-custom w-100 mt-4" style="background:var(--accent4) !important;" onclick="saveCalCfg()"><i class="fas fa-save me-2"></i>COMMIT TEMPORAL SETTINGS</button>
+    <button class="btn-primary-custom w-100 mt-4" style="background:var(--accent4) !important;" onclick="saveCalCfg()"><i class="fas fa-save me-2"></i>SAVE CALENDAR SETTINGS</button>
     <div class="mt-3">
-      <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important;" onclick="testCalendar()"><i class="fas fa-search me-2"></i>VALIDATE NEXT SYNC</button>
+      <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important;" onclick="testCalendar()"><i class="fas fa-search me-2"></i>TEST CONNECTION</button>
     </div>
     <div id="calMsg" class="mt-3" style="display:none"></div>
   </div>
@@ -218,7 +218,7 @@ async function init() {
       sectionContent.innerHTML = `
         <div class="panel text-center py-5">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-          <h4>Mobile Load Error</h4>
+          <h4>Dashboard Load Error</h4>
           <p class="text-muted">Data failed to load. Please check your connection.</p>
           <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
         </div>`;
@@ -227,7 +227,7 @@ async function init() {
 }
 
 function renderOverview() {
-  document.getElementById('pageTitle').textContent = 'System Intelligence';
+  document.getElementById('pageTitle').textContent = 'Admin Dashboard';
   
   if (!Array.isArray(users)) {
     console.error("Users data is not an array:", users);
@@ -244,7 +244,7 @@ function renderOverview() {
         <div>
           <div class="label">Total Accounts</div>
           <div class="value">${sysStats.total_users||0}</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${sysStats.total_employees||0} active personnel</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${sysStats.total_employees||0} active users</div>
         </div>
       </div>
     </div>
@@ -262,7 +262,7 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(247,183,49,.1);color:var(--accent4)"><i class="fas fa-fingerprint"></i></div>
         <div>
-          <div class="label">Access Events</div>
+          <div class="label">Recent Logins</div>
           <div class="value">${sysStats.login_logs_count||0}</div>
           <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Secure logs tracked</div>
         </div>
@@ -273,7 +273,7 @@ function renderOverview() {
         <div class="icon" style="background:rgba(255,101,132,.1);color:var(--accent2)"><i class="fas fa-server"></i></div>
         <div>
           <div class="label">Server Health</div>
-          <div class="value" style="font-size:1.5rem">${sysStats.server_status||'OPTIMAL'}</div>
+          <div class="value" style="font-size:1.5rem">${sysStats.server_status||'RUNNING'}</div>
           <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Storage: ${sysStats.db_size_kb||0}KB</div>
         </div>
       </div>
@@ -283,16 +283,16 @@ function renderOverview() {
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent)"></i>Account Role Distribution</div>
+        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent)"></i>User Role Distribution</div>
         <div class="chart-wrap" style="height:320px"><canvas id="roleChart"></canvas></div>
       </div>
     </div>
     <div class="col-lg-7">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-shield-halved glow-accent" style="color:var(--accent3)"></i>Real-time Access Logs</div>
+        <div class="panel-title"><i class="fas fa-shield-halved glow-accent" style="color:var(--accent3)"></i>Recent Login Logs</div>
         <div class="tbl-wrap">
-          <table class="tbl">
-            <thead><tr><th>Subject</th><th>Authorization</th><th>Network Identity</th><th>Timestamp</th></tr></thead>
+          <table class="tbl" style="min-width: unset;">
+            <thead><tr><th>User</th><th>Role</th><th>IP Address</th><th>Timestamp</th></tr></thead>
             <tbody>${loginLogs.slice(-6).reverse().map(l=>`<tr>
               <td>
                 <div class="d-flex align-items-center gap-2">
@@ -323,16 +323,16 @@ function renderOverview() {
 }
 
 function renderUsers() {
-  document.getElementById('pageTitle').textContent = 'Account Governance';
+  document.getElementById('pageTitle').textContent = 'User Management';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-      <div class="panel-title m-0"><i class="fas fa-users-cog glow-accent" style="color:var(--accent)"></i>Identity Matrix (${users.length})</div>
-      <button class="btn-primary-custom" onclick="showModal('createUserModal')"><i class="fas fa-user-plus me-2"></i>ESTABLISH IDENTITY</button>
+      <div class="panel-title m-0"><i class="fas fa-users-cog glow-accent" style="color:var(--accent)"></i>User List (${users.length})</div>
+      <button class="btn-primary-custom" onclick="showModal('createUserModal')"><i class="fas fa-user-plus me-2"></i>CREATE NEW USER</button>
     </div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Personnel</th><th>Digital Identity</th><th>Access Level</th><th>Status</th><th>Command</th></tr></thead>
+        <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="userTableBody">${renderUserRows()}</tbody>
       </table>
     </div>
@@ -354,7 +354,7 @@ function renderUserRows() {
       <div class="d-flex gap-2">
         <button class="btn-sm" style="background:rgba(247,183,49,0.1); border:1px solid rgba(247,183,49,0.2); color:var(--accent4); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="toggleUser('${u.id}')" title="Toggle Access"><i class="fas fa-power-off"></i></button>
         <button class="btn-sm" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2); color:var(--accent); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="showEditModal('${u.id}')" title="Modify"><i class="fas fa-edit"></i></button>
-        <button class="btn-sm" style="background:rgba(255,101,132,0.1); border:1px solid rgba(255,101,132,0.2); color:var(--accent2); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="deleteUser('${u.id}','${u.name}')" title="Purge"><i class="fas fa-trash"></i></button>
+        <button class="btn-sm" style="background:rgba(255,101,132,0.1); border:1px solid rgba(255,101,132,0.2); color:var(--accent2); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="deleteUser('${u.id}','${u.name}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     </td>
   </tr>`).join('');
@@ -477,13 +477,13 @@ async function updateUser() {
 }
 
 function renderLogs() {
-  document.getElementById('pageTitle').textContent = 'Security Audit Logs';
+  document.getElementById('pageTitle').textContent = 'System Logs';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-list-alt glow-accent" style="color:var(--accent)"></i>Recent Access History (50 Events)</div>
+    <div class="panel-title"><i class="fas fa-list-alt glow-accent" style="color:var(--accent)"></i>Recent Login History (50 Events)</div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>#</th><th>Personnel</th><th>Authorization</th><th>Network Identity</th><th>Timestamp</th></tr></thead>
+        <thead><tr><th>#</th><th>User</th><th>Role</th><th>IP Address</th><th>Timestamp</th></tr></thead>
         <tbody>${[...loginLogs].reverse().map((l,i)=>`<tr>
           <td style="color:var(--muted);font-size:0.8rem;">${loginLogs.length-i}</td>
           <td>
@@ -502,19 +502,19 @@ function renderLogs() {
 }
 
 function renderMonitoring() {
-  document.getElementById('pageTitle').textContent = 'System Diagnostics';
+  document.getElementById('pageTitle').textContent = 'System Monitoring';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4 mb-4">
     <div class="col-lg-6">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-server glow-accent" style="color:var(--accent)"></i>Core Infrastructure Health</div>
+        <div class="panel-title"><i class="fas fa-server glow-accent" style="color:var(--accent)"></i>Server Health</div>
         <div class="tbl-wrap">
-          <table class="tbl">
-            <thead><tr><th>Vector</th><th>Metric</th><th>Status</th></tr></thead>
+          <table class="tbl" style="min-width: unset;">
+            <thead><tr><th>Component</th><th>Metric</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>CPU Compute</td><td id="cpuVal" style="font-weight:800;color:var(--accent3)">4.2%</td><td><span class="badge-role badge-completed">OPTIMAL</span></td></tr>
-              <tr><td>Memory Allocation</td><td id="memVal" style="font-weight:800;color:var(--accent3)">128MB</td><td><span class="badge-role badge-completed">OPTIMAL</span></td></tr>
-              <tr><td>Storage Cluster</td><td id="dbSizeVal" style="font-weight:800;color:var(--accent3)">${sysStats.db_size_kb||0}KB</td><td><span class="badge-role badge-completed">NORMAL</span></td></tr>
+              <tr><td>CPU Usage</td><td id="cpuVal" style="font-weight:800;color:var(--accent3)">4.2%</td><td><span class="badge-role badge-completed">OPTIMAL</span></td></tr>
+              <tr><td>Memory Usage</td><td id="memVal" style="font-weight:800;color:var(--accent3)">128MB</td><td><span class="badge-role badge-completed">OPTIMAL</span></td></tr>
+              <tr><td>Database Size</td><td id="dbSizeVal" style="font-weight:800;color:var(--accent3)">${sysStats.db_size_kb||0}KB</td><td><span class="badge-role badge-completed">NORMAL</span></td></tr>
               <tr><td>Network Latency</td><td style="font-weight:800;color:var(--accent3)">12ms</td><td><span class="badge-role badge-completed">EXCELLENT</span></td></tr>
             </tbody>
           </table>
@@ -529,9 +529,9 @@ function renderMonitoring() {
     </div>
   </div>
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-database glow-accent" style="color:var(--accent4)"></i>Data Integrity Summary</div>
+    <div class="panel-title"><i class="fas fa-database glow-accent" style="color:var(--accent4)"></i>System Data Summary</div>
     <div class="row g-4">
-      ${[['Identity Count',sysStats.total_users,'accent'],['Personnel Count',sysStats.total_employees,'accent3'],['Task Count',sysStats.total_tasks,'accent4'],['Audit Records',sysStats.login_logs_count,'accent2']].map(([l,v,c])=>`
+      ${[['User Count',sysStats.total_users,'accent'],['Employee Count',sysStats.total_employees,'accent3'],['Task Count',sysStats.total_tasks,'accent4'],['Security Logs',sysStats.login_logs_count,'accent2']].map(([l,v,c])=>`
       <div class="col-xl-3 col-md-6">
         <div class="stat-card" style="padding:1.5rem; height:auto;">
           <div class="label" style="font-size:0.7rem;">${l}</div>
@@ -555,11 +555,11 @@ function renderMonitoring() {
 }
 
 function renderActivity() {
-  document.getElementById('pageTitle').textContent = 'System Activity Monitor';
+  document.getElementById('pageTitle').textContent = 'Activity Feed';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
     <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span><i class="fas fa-satellite-dish" style="color:var(--accent)"></i> Live System Activity Feed</span>
+      <span><i class="fas fa-satellite-dish" style="color:var(--accent)"></i> Live System Activity</span>
       <span class="badge-role badge-completed" style="font-size:.7rem;padding:.2rem .6rem">LIVE UPDATING</span>
     </div>
     <div id="activityFeed" class="activity-feed">
@@ -588,7 +588,7 @@ async function updateActivityFeed() {
     feed.innerHTML = `
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Timestamp</th><th>System Event</th><th>Identity</th></tr></thead>
+        <thead><tr><th>Timestamp</th><th>Update</th><th>IP Address</th></tr></thead>
         <tbody>${activities.reverse().map(act => {
           const msg = act.message || '';
           let badgeClass = '';
@@ -610,7 +610,7 @@ async function updateActivityFeed() {
 }
 
 function renderSecurity() {
-  document.getElementById('pageTitle').textContent = 'Security Governance';
+  document.getElementById('pageTitle').textContent = 'Security Settings';
   
   fetch('/api/employee/profile').then(r=>r.json()).then(user => {
     const tfaEnabled = user.two_factor_enabled;
@@ -619,7 +619,7 @@ function renderSecurity() {
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="panel h-100">
-          <div class="panel-title"><i class="fas fa-shield-alt glow-accent" style="color:var(--accent)"></i>Identity Authorization Vectors</div>
+          <div class="panel-title"><i class="fas fa-shield-alt glow-accent" style="color:var(--accent)"></i>User Roles & Permissions</div>
           ${[['Employee','View profile, tasks, performance'],['Team Leader','Manage team tasks, view team data'],['HR Manager','Full HR access, AI modules, reports'],['Admin','Full system access, user management']].map(([role,perms])=>`
           <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-bottom:0.75rem;transition:0.3s">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
@@ -632,21 +632,21 @@ function renderSecurity() {
       </div>
       <div class="col-lg-6">
         <div class="panel h-100">
-          <div class="panel-title"><i class="fas fa-lock glow-accent" style="color:var(--accent2)"></i>System Hardening Protocols</div>
+          <div class="panel-title"><i class="fas fa-lock glow-accent" style="color:var(--accent2)"></i>Security Protocols</div>
           <div class="d-flex flex-column gap-3">
             <div class="p-3" style="background:rgba(108,99,255,0.05); border-radius:18px; border:1px solid rgba(108,99,255,0.1);">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div style="font-weight:800; font-size:0.9rem;">Two-Factor Authentication</div>
-                <span class="badge-role ${tfaEnabled?'badge-completed':'badge-high'}">${tfaEnabled?'SECURED':'VULNERABLE'}</span>
+                <span class="badge-role ${tfaEnabled?'badge-completed':'badge-high'}">${tfaEnabled?'SECURE':'VULNERABLE'}</span>
               </div>
               <div class="d-flex justify-content-between align-items-center">
-                <span style="font-size:0.75rem; color:var(--muted);">Protect identity with TOTP challenge</span>
+                <span style="font-size:0.75rem; color:var(--muted);">Protect account with authenticator app</span>
                 <button class="btn-primary-custom" style="padding:0.4rem 1rem; font-size:0.75rem;" onclick="${tfaEnabled?'disable2FA()':'open2FASetup()'}">
                   <i class="fas fa-${tfaEnabled?'unlock':'shield-alt'} me-1"></i>${tfaEnabled?'DISABLE':'CONFIGURE'}
                 </button>
               </div>
             </div>
-            ${[['Password Hashing','Argon2id (Salted)','accent3'],['Session Integrity','AES-256 Encrypted','accent3'],['Audit Persistence','Immutable JSON Logs','accent3'],['Endpoint Security','RBAC Middleware','accent3']].map(([f,s,c])=>`
+            ${[['Password Hashing','Argon2id (Salted)','accent3'],['Session Encryption','AES-256','accent3'],['Activity Logging','Secure Logs','accent3'],['Access Control','RBAC Middleware','accent3']].map(([f,s,c])=>`
             <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom:1px solid var(--border)">
               <div style="font-size:0.9rem; font-weight:600;">${f}</div>
               <div style="color:var(--${c}); font-size:0.85rem; font-weight:800; letter-spacing:0.05em;">${s}</div>
@@ -670,7 +670,7 @@ function open2FASetup() {
 
 
 function renderConfig() {
-  document.getElementById('pageTitle').textContent = 'Global Parameters';
+  document.getElementById('pageTitle').textContent = 'System Configuration';
   const emailConfigured = integrations.email?.enabled && integrations.email?.smtp_host && (integrations.email?.from_email);
   const slackConfigured = integrations.slack?.enabled && integrations.slack?.webhook_url;
   const calConfigured = integrations.calendar?.enabled && (integrations.calendar?.provider) && ((integrations.calendar?.api_key) || (integrations.calendar?.ics_url));
@@ -678,24 +678,24 @@ function renderConfig() {
   <div class="row g-4">
     <div class="col-lg-6">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-cog glow-accent" style="color:var(--accent)"></i>System Environmental Constants</div>
+        <div class="panel-title"><i class="fas fa-cog glow-accent" style="color:var(--accent)"></i>System Information</div>
         <div class="d-flex flex-column gap-3">
-          ${[['Company Identity','PulseHR Technologies'],['Core Engine','v2.4.0-Stable'],['Intelligence','Ensemble Random Forest'],['Persistence','Atomic JSON Store'],['Auth Timeout','1800 Seconds'],['Audit Retention','365 Days']].map(([k,v])=>`
+          ${[['Company Name','PulseHR Technologies'],['System Version','v2.4.0'],['AI Engine','Ensemble Random Forest'],['Database Type','Atomic JSON Store'],['Auth Timeout','1800 Seconds'],['Log Retention','365 Days']].map(([k,v])=>`
           <div>
             <label class="form-label-sm">${k}</label>
             <input class="form-ctrl" value="${v}" readonly style="background:rgba(0,0,0,0.2) !important; border-color:transparent !important;">
           </div>`).join('')}
         </div>
-        <button class="btn-primary-custom w-100 mt-4" style="background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important;" onclick="showToast('Read-Only', 'Global constants are immutable in this environment.', 'info')">
-          <i class="fas fa-lock me-2"></i>PROTECTED PARAMETERS
+        <button class="btn-primary-custom w-100 mt-4" style="background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important;" onclick="showToast('Read-Only', 'Global settings are immutable in this environment.', 'info')">
+          <i class="fas fa-lock me-2"></i>SYSTEM SETTINGS
         </button>
       </div>
     </div>
     <div class="col-lg-6">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-bell glow-accent" style="color:var(--accent3)"></i>Neural Notification Routing</div>
+        <div class="panel-title"><i class="fas fa-bell glow-accent" style="color:var(--accent3)"></i>Automation Triggers</div>
         <div class="d-flex flex-column gap-2">
-          ${[['Efficiency Threshold < 60%','Dispatch to HR + TL'],['Attendance Anomaly < 75%','Route to HR Audit'],['Attrition Risk Detected','Notify Executive HR'],['Promotion Vector Matched','Signal HR Pipeline'],['Task Deadline Breach','Alert Unit Leader']].map(([trigger,action])=>`
+          ${[['Efficiency Threshold < 60%','Alert HR + TL'],['Attendance Anomaly < 75%','Alert HR Audit'],['Attrition Risk Detected','Notify Executive HR'],['Career Growth Match','Alert HR Team'],['Deadline Breach','Alert Unit Leader']].map(([trigger,action])=>`
           <div class="d-flex justify-content-between align-items-center p-3" style="background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid var(--border);">
             <div style="font-size:0.85rem; font-weight:600;">${trigger}</div>
             <div style="font-size:0.75rem; color:var(--accent3); font-weight:800;">${action}</div>
@@ -703,26 +703,26 @@ function renderConfig() {
         </div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-link glow-accent" style="color:var(--accent4)"></i>External Interface Hub</div>
+        <div class="panel-title"><i class="fas fa-link glow-accent" style="color:var(--accent4)"></i>External Integrations</div>
         <div class="d-flex flex-column gap-3">
           <div class="d-flex justify-content-between align-items-center p-2">
             <div style="font-size:0.9rem; font-weight:700;">SMTP Gateway</div>
             <div class="d-flex align-items-center gap-3">
-              <span class="badge-role ${emailConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${emailConfigured?'SYNCED':'OFFLINE'}</span>
+              <span class="badge-role ${emailConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${emailConfigured?'CONNECTED':'OFFLINE'}</span>
               <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="openEmailCfg()">CONFIG</button>
             </div>
           </div>
           <div class="d-flex justify-content-between align-items-center p-2">
             <div style="font-size:0.9rem; font-weight:700;">Slack Webhook</div>
             <div class="d-flex align-items-center gap-3">
-              <span class="badge-role ${slackConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${slackConfigured?'SYNCED':'OFFLINE'}</span>
+              <span class="badge-role ${slackConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${slackConfigured?'CONNECTED':'OFFLINE'}</span>
               <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="openSlackCfg()">CONFIG</button>
             </div>
           </div>
           <div class="d-flex justify-content-between align-items-center p-2">
-            <div style="font-size:0.9rem; font-weight:700;">Temporal API</div>
+            <div style="font-size:0.9rem; font-weight:700;">Calendar Interface</div>
             <div class="d-flex align-items-center gap-3">
-              <span class="badge-role ${calConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${calConfigured?'SYNCED':'OFFLINE'}</span>
+              <span class="badge-role ${calConfigured?'badge-completed':'badge-high'}" style="font-size:0.65rem;">${calConfigured?'CONNECTED':'OFFLINE'}</span>
               <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="openCalCfg()">CONFIG</button>
             </div>
           </div>
@@ -902,7 +902,7 @@ async function disable2FA() {
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header-custom">
       <span class="modal-title-custom">Two-Factor Auth Setup</span>
-      <button class="modal-close" onclick="hideModal('tfaSetupModal')">✕</button>
+      <button class="modal-close" onclick="hideModal('tfaSetupModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="text-center">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>

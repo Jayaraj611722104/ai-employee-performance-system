@@ -17,6 +17,7 @@
 <a class="nav-item" data-section="learning" onclick="navigate('learning')"><i class="fas fa-graduation-cap"></i>Learning & Skills</a>
 <span class="nav-section">Account Security</span>
 <a class="nav-item" data-section="security" onclick="navigate('security')"><i class="fas fa-shield-alt"></i>Security Settings</a>
+<a class="nav-item" data-section="notifications" onclick="navigate('notifications')"><i class="fas fa-bell"></i>Notifications</a>
 {% endblock %}
 
 {% block content %}
@@ -35,7 +36,8 @@ const SECTIONS = {
   leave: renderLeave,
   weekly: renderWeekly,
   learning: renderLearning,
-  security: renderSecurity
+  security: renderSecurity,
+  notifications: renderNotifications
 };
 window.loadSection = (s) => { if (SECTIONS[s]) SECTIONS[s](); };
 let empData = {}, perfData = {}, tasksData = [], myTeamObj={}, myLeaves=[], attendanceData={}, weeklyData = [];
@@ -95,6 +97,77 @@ async function renderSecurity() {
         `).join('') || '<div class="text-center py-3">No activity logs</div>';
     });
   });
+}
+
+function renderNotifications() {
+  document.getElementById('pageTitle').textContent = 'Notifications';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Contact Management / HR</div>
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem;">Send a direct message to your Team Leader or HR department for any inquiries or support.</p>
+        <div class="mb-3">
+          <label class="form-label-sm">Recipients</label>
+          <select class="form-ctrl" id="empNotifTarget">
+            <option value="teamleader">Team Leader</option>
+            <option value="hr">HR Managers</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label-sm">Message</label>
+          <textarea class="form-ctrl" id="empNotifMsg" rows="4" placeholder="How can we help you?"></textarea>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="sendEmpNotif()">
+          <i class="fas fa-paper-plane me-2"></i>SEND MESSAGE
+        </button>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-history" style="color:var(--accent2)"></i>Message History</div>
+        <div id="empNotifList">
+           <div class="text-center py-5 text-muted">Loading messages...</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  loadEmpNotifs();
+}
+
+async function loadEmpNotifs() {
+  const res = await fetch('/api/notifications');
+  const data = await res.json();
+  const notifs = data.notifications || [];
+  
+  document.getElementById('empNotifList').innerHTML = notifs.map(n => `
+    <div class="mb-3" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:1rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <span style="font-weight:800; font-size:0.7rem; color:var(--accent)">${(n.sender || 'System').toUpperCase()}</span>
+        <small style="color:var(--muted); font-size:0.6rem;">${new Date(n.time).toLocaleString()}</small>
+      </div>
+      <div style="font-size:0.85rem;">${n.message || 'No content available.'}</div>
+    </div>
+  `).join('') || '<div class="text-center py-4 text-muted">No messages found.</div>';
+}
+
+async function sendEmpNotif() {
+  const msg = document.getElementById('empNotifMsg').value.trim();
+  const target = document.getElementById('empNotifTarget').value;
+  if(!msg) return showToast('Error', 'Please enter a message.', 'danger');
+  
+  const res = await fetch('/api/notifications/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg, target: target })
+  });
+  if((await res.json()).success) {
+    showToast('Success', 'Message sent successfully.');
+    document.getElementById('empNotifMsg').value = '';
+    loadEmpNotifs();
+  } else {
+    showToast('Error', 'Failed to send message.', 'danger');
+  }
 }
 
 function open2FASetup() {
@@ -188,7 +261,7 @@ async function init() {
       sectionContent.innerHTML = `
         <div class="panel text-center py-5">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-          <h4>Mobile Load Error</h4>
+          <h4>Dashboard Load Error</h4>
           <p class="text-muted">Data failed to load. Please check your connection.</p>
           <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
         </div>`;
@@ -197,7 +270,7 @@ async function init() {
 }
 
 function renderOverview() {
-  document.getElementById('pageTitle').textContent = 'Personal Command Center';
+  document.getElementById('pageTitle').textContent = 'Dashboard';
   const pending = tasksData.filter(t=>t.status==='Pending').length;
   const inprog = tasksData.filter(t=>t.status==='In Progress').length;
   const done = tasksData.filter(t=>t.status==='Completed').length;
@@ -208,9 +281,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(108,99,255,0.15);color:var(--accent)"><i class="fas fa-tachometer-alt glow-accent"></i></div>
         <div>
-          <div class="label">Efficiency Vector</div>
+          <div class="label">Productivity</div>
           <div class="value">${perfData.productivity_score || 0}%</div>
-          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>3.2% vs last epoch</div>
+          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>3.2% vs last week</div>
         </div>
       </div>
     </div>
@@ -218,9 +291,9 @@ function renderOverview() {
       <div class="stat-card" onclick="navigate('attendance')" style="cursor:pointer">
         <div class="icon" style="background:rgba(67,233,123,0.15);color:var(--accent3)"><i class="fas fa-calendar-check glow-accent"></i></div>
         <div>
-          <div class="label">Consistency</div>
+          <div class="label">Attendance</div>
           <div class="value">${perfData.attendance_pct || 0}%</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Monthly attendance</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Monthly Average</div>
         </div>
       </div>
     </div>
@@ -228,9 +301,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(247,183,49,0.15);color:var(--accent4)"><i class="fas fa-tasks glow-accent"></i></div>
         <div>
-          <div class="label">Active Missions</div>
+          <div class="label">Pending Tasks</div>
           <div class="value">${inprog + pending}</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${done} successful missions</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${done} tasks completed</div>
         </div>
       </div>
     </div>
@@ -238,9 +311,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(255,101,132,0.15);color:var(--accent2)"><i class="fas fa-star glow-accent"></i></div>
         <div>
-          <div class="label">Unit Leader Eval</div>
+          <div class="label">Manager Rating</div>
           <div class="value">${perfData.tl_score || 0}/10</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Strategic impact score</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Leader rating score</div>
         </div>
       </div>
     </div>
@@ -250,11 +323,11 @@ function renderOverview() {
     <div class="col-lg-8">
       <div class="panel mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <div class="panel-title m-0"><i class="fas fa-fingerprint glow-accent" style="color:var(--accent3)"></i>Presence Verification</div>
+          <div class="panel-title m-0"><i class="fas fa-fingerprint glow-accent" style="color:var(--accent3)"></i>Mark Attendance</div>
           <div id="quickAttendAction">
             ${attendanceData.today_marked ? 
-              `<span class="badge-role badge-completed" style="font-size:0.75rem; padding:0.6rem 1rem;"><i class="fas fa-check-circle me-2"></i>SYNCED AT ${attendanceData.history && attendanceData.history.length > 0 ? (attendanceData.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—') : '—'}</span>` :
-              `<button class="btn-primary-custom" style="padding:0.6rem 1.5rem; font-size:0.85rem;" onclick="markPresent()"><i class="fas fa-bolt me-2"></i>AUTHORIZE PRESENCE</button>`
+              `<span class="badge-role badge-completed" style="font-size:0.75rem; padding:0.6rem 1rem;"><i class="fas fa-check-circle me-2"></i>CHECKED IN AT ${attendanceData.history && attendanceData.history.length > 0 ? (attendanceData.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—') : '—'}</span>` :
+              `<button class="btn-primary-custom" style="padding:0.6rem 1.5rem; font-size:0.85rem;" onclick="markPresent()"><i class="fas fa-bolt me-2"></i>MARK PRESENT</button>`
             }
           </div>
         </div>
@@ -262,8 +335,8 @@ function renderOverview() {
             <div style="display:flex; align-items:center; gap:1rem">
                 <div style="width:48px; height:48px; background:rgba(67,233,123,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--accent3); font-size:1.2rem"><i class="fas fa-shield-alt"></i></div>
                 <div>
-                    <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">Neural-Sync Protocol</div>
-                    <p style="margin:0; font-size:0.8rem; color:var(--muted)">Biometric check-in is mandatory for each 24-hour cycle.</p>
+                    <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">Daily Attendance</div>
+                    <p style="margin:0; font-size:0.8rem; color:var(--muted)">Marking your attendance is required every working day.</p>
                 </div>
             </div>
         </div>
@@ -271,15 +344,15 @@ function renderOverview() {
 
       <div class="panel mb-4" onclick="navigate('team')" style="cursor:pointer; position:relative; overflow:hidden;">
         <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent)"></div>
-        <div class="panel-title"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Strategic Unit & Deployment</div>
+        <div class="panel-title"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Team & Active Project</div>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
           <div>
-            <div style="font-weight:800; font-size:1.4rem; color:var(--text); letter-spacing:-0.03em; font-family:'Syne'">${myTeamObj.team_name || 'UNASSIGNED SECTOR'}</div>
-            <div style="color:var(--muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.3rem">Current Objective: <span style="color:var(--accent)">${myTeamObj.project_name || 'Standby Mode'}</span></div>
+            <div style="font-weight:800; font-size:1.4rem; color:var(--text); letter-spacing:-0.03em; font-family:'Syne'">${myTeamObj.team_name || 'NO TEAM ASSIGNED'}</div>
+            <div style="color:var(--muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.3rem">Project Name: <span style="color:var(--accent)">${myTeamObj.project_name || 'No Project'}</span></div>
           </div>
           <div style="text-align:right; min-width:250px">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.1em">Sync Velocity</span>
+              <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.1em">Project Progress</span>
               <strong style="color:var(--accent); font-family:'Syne'; font-size:1.1rem">${myTeamObj.project_completion || 0}%</strong>
             </div>
             <div class="progress-bar-wrap" style="height:10px; background:rgba(255,255,255,0.05); border-radius:20px"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%; background:linear-gradient(90deg,var(--accent),var(--accent3)); border-radius:20px"></div></div>
@@ -288,20 +361,20 @@ function renderOverview() {
       </div>
 
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Performance Velocity</div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Performance Trend</div>
         <div class="chart-wrap" style="height:320px"><canvas id="trendChart"></canvas></div>
       </div>
     </div>
 
     <div class="col-lg-4">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-chart-radar glow-accent" style="color:var(--accent2)"></i>Capability Matrix</div>
+        <div class="panel-title"><i class="fas fa-chart-radar glow-accent" style="color:var(--accent2)"></i>Skill Matrix</div>
         <div class="chart-wrap" style="height:280px"><canvas id="radarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-id-card-clip glow-accent" style="color:var(--accent3)"></i>Identity Metadata</div>
+        <div class="panel-title"><i class="fas fa-id-card-clip glow-accent" style="color:var(--accent3)"></i>Profile Summary</div>
         <div class="d-flex flex-direction-column gap-1">
-          ${[['Subject Name',empData.name||'—','user'],['Role Designation',empData.role||'—','user-shield'],['Assigned Unit',empData.department||'—','layer-group'],['Missions Complete',empData.projects_completed||0,'check-double']].map(([l,v,i])=>`
+          ${[['Full Name',empData.name||'—','user'],['Job Role',empData.role||'—','user-shield'],['Department',empData.department||'—','layer-group'],['Projects Completed',empData.projects_completed||0,'check-double']].map(([l,v,i])=>`
           <div class="d-flex align-items-center p-3 mb-2" style="background:rgba(0,0,0,0.1); border-radius:16px; border:1px solid var(--border)">
             <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--accent3); margin-right:1rem">
                 <i class="fas fa-${i}" style="font-size:0.9rem"></i>
@@ -323,9 +396,9 @@ function renderOverview() {
     new Chart(document.getElementById('radarChart'),{
       type:'radar',
       data:{
-        labels:['Productivity','Attendance','Missions','Quality','Team Eval'],
+        labels:['Productivity','Attendance','Tasks','Quality','Team Rating'],
         datasets:[{
-          label:'Current State',
+          label:'Performance Stats',
           data:[perfData.productivity_score||0,perfData.attendance_pct||0,perfData.task_completion||0,(perfData.quality_rating||0)*10,(perfData.tl_score||0)*10],
           backgroundColor:'rgba(108,99,255,.15)',
           borderColor:'var(--accent)',
@@ -351,7 +424,7 @@ function renderOverview() {
 }
 
 function renderProfile() {
-  document.getElementById('pageTitle').textContent = 'Identity Configuration';
+  document.getElementById('pageTitle').textContent = 'My Profile';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-4">
@@ -364,16 +437,16 @@ function renderProfile() {
         <div class="badge-role badge-inprogress mb-4">${empData.role}</div>
         
         <div class="d-flex flex-column gap-2 mt-2">
-          <button class="btn-primary-custom w-100" onclick="showToast('Read-Only', 'Identity modification restricted to HR.', 'info')"><i class="fas fa-camera me-2"></i>UPDATE AVATAR</button>
-          <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important;" onclick="navigate('security')"><i class="fas fa-shield-alt me-2"></i>SECURITY OPS</button>
+          <button class="btn-primary-custom w-100" onclick="showToast('Read-Only', 'Profile editing is restricted to HR.', 'info')"><i class="fas fa-camera me-2"></i>CHANGE PHOTO</button>
+          <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important;" onclick="navigate('security')"><i class="fas fa-shield-alt me-2"></i>SECURITY SETTINGS</button>
         </div>
       </div>
     </div>
     <div class="col-lg-8">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-database glow-accent" style="color:var(--accent)"></i>Personnel Metadata</div>
+        <div class="panel-title"><i class="fas fa-database glow-accent" style="color:var(--accent)"></i>Personal Information</div>
         <div class="row g-4">
-          ${[['Employee ID',empData.employee_id],['Primary Email',empData.email],['Department',empData.department],['Experience',empData.experience+' Years'],['Join Date',empData.joining_date],['Status','ACTIVE']].map(([l,v])=>`
+          ${[['Employee ID',empData.employee_id],['Email Address',empData.email],['Department',empData.department],['Experience',empData.experience+' Years'],['Join Date',empData.joining_date],['Status','ACTIVE']].map(([l,v])=>`
           <div class="col-md-6">
             <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:18px; padding:1.25rem;">
               <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem; letter-spacing:0.05em;">${l}</div>
@@ -382,9 +455,9 @@ function renderProfile() {
           </div>`).join('')}
           <div class="col-12">
             <div style="background:rgba(108,99,255,0.05); border:1px solid rgba(108,99,255,0.1); border-radius:18px; padding:1.5rem;">
-              <div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:800; margin-bottom:1rem; letter-spacing:0.05em;">Core Skill Matrix</div>
+              <div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:800; margin-bottom:1rem; letter-spacing:0.05em;">Skills</div>
               <div class="d-flex flex-wrap gap-2">
-                ${(empData.skills||"").split(',').map(s=>`<span class="badge-role badge-inprogress" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2);">${s.trim()}</span>`).join('')||'<span class="text-muted">No skills indexed</span>'}
+                ${(empData.skills||"").split(',').map(s=>`<span class="badge-role badge-inprogress" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2);">${s.trim()}</span>`).join('')||'<span class="text-muted">No skills listed</span>'}
               </div>
             </div>
           </div>
@@ -395,10 +468,10 @@ function renderProfile() {
 }
 
 function renderTasks() {
-  document.getElementById('pageTitle').textContent = 'Mission Objectives';
+  document.getElementById('pageTitle').textContent = 'My Tasks';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Deployment Roadmap</div>
+    <div class="panel-title"><i class="fas fa-tasks" style="color:var(--accent4)"></i>Current Task List</div>
     ${tasksData.length === 0 ? '<p style="color:var(--muted);text-align:center;padding:2rem">No tasks assigned yet</p>' : ''}
     ${tasksData.map(t => {
       const ddl = new Date(t.deadline);
@@ -419,7 +492,7 @@ function renderTasks() {
         
         <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1.5rem">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
-            <label class="form-label-sm mb-0">UPDATE DEPLOYMENT STATUS</label>
+            <label class="form-label-sm mb-0">UPDATE PROGRESS</label>
             <span id="task_prog_val_${t.id}" style="color:var(--accent);font-weight:800;font-size:1.1rem;">${t.progress}%</span>
           </div>
           <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
@@ -458,44 +531,44 @@ async function updateTask(taskId, status, progress) {
 }
 
 async function renderAttendance() {
-  document.getElementById('pageTitle').textContent = 'Attendance Telemetry';
+  document.getElementById('pageTitle').textContent = 'Attendance History';
   const res = await fetch('/api/employee/attendance-history');
   const data = await res.json();
   
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-4">
-      <div class="panel h-100 text-center">
-        <div class="panel-title"><i class="fas fa-calendar-check glow-accent" style="color:var(--accent3)"></i>Status Authorization</div>
-        <div id="attendanceAction" class="py-4">
+      <div class="panel h-100 text-center" style="padding: 1.5rem;">
+        <div class="panel-title" style="margin-bottom: 1rem; font-size: 0.9rem;"><i class="fas fa-calendar-check glow-accent" style="color:var(--accent3)"></i>Mark Attendance</div>
+        <div id="attendanceAction" class="py-2">
           ${data.today_marked ? 
             `<div class="animate-float">
-              <div style="width:80px;height:80px;border-radius:24px;background:rgba(67,233,123,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:var(--accent3);font-size:2rem;border:1px solid rgba(67,233,123,0.2);"><i class="fas fa-check-double"></i></div>
-              <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">IDENTITY SYNCED</h4>
-              <p class="text-muted" style="font-size:0.85rem;">Check-in recorded at ${data.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—'}</p>
+              <div style="width:60px;height:60px;border-radius:20px;background:rgba(67,233,123,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;color:var(--accent3);font-size:1.5rem;border:1px solid rgba(67,233,123,0.2);"><i class="fas fa-check-double"></i></div>
+              <h5 style="font-weight:800; color:var(--text); margin-bottom:0.25rem; font-size:1rem;">PRESENT</h5>
+              <p class="text-muted" style="font-size:0.75rem;">Recorded at ${data.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—'}</p>
             </div>` :
             `<div class="animate-float">
-              <div style="width:80px;height:80px;border-radius:24px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:var(--muted);font-size:2rem;border:1px solid var(--border);"><i class="fas fa-power-off"></i></div>
-              <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">AWAITING SYNC</h4>
-              <p class="text-muted mb-4" style="font-size:0.85rem;">Authorize your presence for today's epoch.</p>
-              <button class="btn-primary-custom w-100" onclick="markPresent()"><i class="fas fa-fingerprint me-2"></i>AUTHORIZE NOW</button>
+              <div style="width:60px;height:60px;border-radius:20px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;color:var(--muted);font-size:1.5rem;border:1px solid var(--border);"><i class="fas fa-power-off"></i></div>
+              <h5 style="font-weight:800; color:var(--text); margin-bottom:0.25rem; font-size:1rem;">NOT MARKED</h5>
+              <p class="text-muted mb-3" style="font-size:0.75rem;">Check in for today.</p>
+              <button class="btn-primary-custom w-100" onclick="markPresent()" style="padding: 0.75rem; font-size: 0.8rem;"><i class="fas fa-fingerprint me-2"></i>CHECK IN</button>
             </div>`
           }
         </div>
-        <div class="mt-4 p-3" style="background:rgba(255,255,255,0.02); border-radius:18px; border:1px solid var(--border);">
-          <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem;">MONTHLY CONSISTENCY</div>
-          <div style="font-weight:800; font-size:2rem; color:var(--accent3);">${data.monthly_score}%</div>
-          <div class="progress-bar-wrap mt-3" style="height:6px;"><div class="progress-fill" style="width:${data.monthly_score}%; background:var(--accent3)"></div></div>
+        <div class="mt-3 p-2" style="background:rgba(255,255,255,0.02); border-radius:14px; border:1px solid var(--border);">
+          <div style="font-size:0.6rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.25rem;">MONTHLY SCORE</div>
+          <div style="font-weight:800; font-size:1.5rem; color:var(--accent3);">${data.monthly_score}%</div>
+          <div class="progress-bar-wrap mt-2" style="height:4px;"><div class="progress-fill" style="width:${data.monthly_score}%; background:var(--accent3)"></div></div>
         </div>
       </div>
     </div>
     <div class="col-lg-8">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent)"></i>Temporal History (30 Days)</div>
-        <div class="tbl-wrap" style="max-height:500px; overflow-y:auto;">
-          <table class="tbl">
-            <thead><tr><th>Epoch Date</th><th>Status</th><th>Sync Time</th><th>Work Load</th></tr></thead>
-            <tbody>${data.history.length === 0 ? '<tr><td colspan="4" class="text-center py-5 text-muted">No temporal records found</td></tr>' : 
+        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent)"></i>Attendance Logs (30 Days)</div>
+        <div class="tbl-wrap">
+          <table class="tbl" style="min-width: unset;">
+            <thead><tr><th>Date</th><th>Status</th><th>Check-in Time</th><th>Hours worked</th></tr></thead>
+            <tbody>${data.history.length === 0 ? '<tr><td colspan="4" class="text-center py-5 text-muted">No records found</td></tr>' : 
               data.history.map(h => {
                 const isAbsent = h.status === 'Absent';
                 return `<tr>
@@ -535,26 +608,26 @@ async function markPresent() {
 }
 
 function renderPerformance() {
-  document.getElementById('pageTitle').textContent = 'Intelligence Analytics';
+  document.getElementById('pageTitle').textContent = 'Performance Analytics';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Efficiency Vector Analysis</div>
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Performance Metrics</div>
         <div class="chart-wrap" style="height: 320px"><canvas id="perfBarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent3)"></i>Performance Progression</div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent3)"></i>Progress Over Time</div>
         <div class="chart-wrap" style="height: 320px"><canvas id="perfTrendChart"></canvas></div>
       </div>
     </div>
     <div class="col-lg-4">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent2)"></i>Capability Matrix</div>
+        <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent2)"></i>Skill Matrix</div>
         <div class="chart-wrap" style="height: 300px"><canvas id="perfRadarChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-info-circle glow-accent" style="color:var(--accent4)"></i>Analytic Insights</div>
+        <div class="panel-title"><i class="fas fa-info-circle glow-accent" style="color:var(--accent4)"></i>Score Details</div>
         <div class="row g-3">
           ${[['Productivity', perfData.productivity_score + '%', 'var(--accent)'], 
              ['Consistency', perfData.attendance_pct + '%', 'var(--accent3)'],
@@ -596,7 +669,7 @@ function renderPerformance() {
     });
 
     createChart('perfTrendChart', 'line', ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'], [{
-      label: 'Overall Efficiency',
+      label: 'Performance Trend',
       data: perfData.monthly_trend || [70, 72, 74, 76, 75, 77],
       borderColor: 'var(--accent3)',
       backgroundColor: 'rgba(67,233,123,.1)',
@@ -606,7 +679,7 @@ function renderPerformance() {
     new Chart(document.getElementById('perfRadarChart'), {
       type: 'radar',
       data: {
-        labels: ['Productivity', 'Attendance', 'Tasks', 'Quality', 'Eval'],
+        labels: ['Productivity', 'Attendance', 'Tasks', 'Quality', 'Rating'],
         datasets: [{
           data: [perfData.productivity_score||0, perfData.attendance_pct||0, perfData.task_completion||0, (perfData.quality_rating||0)*10, (perfData.tl_score||0)*10],
           backgroundColor: 'rgba(108,99,255,.15)',
@@ -633,41 +706,41 @@ function renderPerformance() {
 }
 
 function renderWeekly() {
-  document.getElementById('pageTitle').textContent = 'Epoch Performance Log';
+  document.getElementById('pageTitle').textContent = 'Weekly Updates';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-calendar-plus glow-accent" style="color:var(--accent)"></i>New Epoch Submission</div>
+        <div class="panel-title"><i class="fas fa-calendar-plus glow-accent" style="color:var(--accent)"></i>Weekly Update Form</div>
         <div class="mb-3">
-          <label class="form-label-sm">MISSION ACCOMPLISHMENTS</label>
-          <textarea class="form-ctrl" id="proj_work" rows="4" placeholder="Describe objectives met this week..."></textarea>
+          <label class="form-label-sm">KEY ACHIEVEMENTS</label>
+          <textarea class="form-ctrl" id="proj_work" rows="4" placeholder="What did you achieve this week?"></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label-sm">SKILL ACQUISITION</label>
-          <input class="form-ctrl" id="tech_learned" placeholder="e.g. Docker, Neural Networks...">
+          <label class="form-label-sm">SKILLS ACQUIRED</label>
+          <input class="form-ctrl" id="tech_learned" placeholder="e.g. Python, SQL, Project Management...">
         </div>
         <div class="mb-3">
-          <label class="form-label-sm">SYSTEM BLOCKERS</label>
-          <textarea class="form-ctrl" id="problems" rows="2" placeholder="Any impediments faced..."></textarea>
+          <label class="form-label-sm">CHALLENGES / BLOCKERS</label>
+          <textarea class="form-ctrl" id="problems" rows="2" placeholder="Any issues you faced..."></textarea>
         </div>
         <div class="mb-4">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <label class="form-label-sm mb-0">COMPLETION LEVEL</label>
+            <label class="form-label-sm mb-0">WORK COMPLETION (%)</label>
             <span id="compVal" style="color:var(--accent); font-weight:800; font-size:1.1rem;">75%</span>
           </div>
           <input type="range" class="form-range" id="completion" min="0" max="100" value="75" oninput="document.getElementById('compVal').textContent=this.value+'%'">
         </div>
-        <button class="btn-primary-custom w-100" onclick="submitWeekly()"><i class="fas fa-paper-plane me-2"></i>SUBMIT EPOCH LOG</button>
+        <button class="btn-primary-custom w-100" onclick="submitWeekly()"><i class="fas fa-paper-plane me-2"></i>SUBMIT UPDATE</button>
         <div id="weeklyMsg" class="mt-3" style="display:none"></div>
       </div>
     </div>
     <div class="col-lg-7">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent3)"></i>Historical Epochs</div>
-        <div class="tbl-wrap" style="max-height:550px; overflow-y:auto;">
+        <div class="panel-title"><i class="fas fa-history glow-accent" style="color:var(--accent3)"></i>Previous Updates</div>
+        <div class="tbl-wrap">
           <table class="tbl">
-            <thead><tr><th>Epoch End</th><th>Primary Focus</th><th>Efficiency</th><th>Status</th></tr></thead>
+            <thead><tr><th>Week Ending</th><th>Primary Focus</th><th>Progress</th><th>Status</th></tr></thead>
             <tbody>${weeklyData.map(w=>`<tr>
               <td style="font-weight:700; color:var(--text);">${w.week_ending}</td>
               <td><div style="font-weight:600; font-size:0.9rem;">${w.title}</div></td>
@@ -678,7 +751,7 @@ function renderWeekly() {
                 </div>
               </td>
               <td><span class="badge-role ${w.status==='Approved'?'badge-completed':'badge-pending'}">${w.status}</span></td>
-            </tr>`).join('')||'<tr><td colspan="4" class="text-center py-5 text-muted">No historical epochs indexed</td></tr>'}</tbody>
+            </tr>`).join('')||'<tr><td colspan="4" class="text-center py-5 text-muted">No historical records found</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -714,7 +787,7 @@ async function submitWeekly() {
 }
 
 function renderLearning() {
-  document.getElementById('pageTitle').textContent = 'Skill Acquisition Hub';
+  document.getElementById('pageTitle').textContent = 'Learning & Development';
   const _courses = [
     {name:'System Design Fundamentals',provider:'Coursera',duration:'8h',status:'Recommended'},
     {name:'AWS Cloud Practitioner',provider:'AWS',duration:'20h',status:'Recommended'},
@@ -746,36 +819,36 @@ function renderLearning() {
   <div class="row g-4">
     <div class="col-lg-6">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-file-upload glow-accent" style="color:var(--accent)"></i>Credential Ingestion</div>
-        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem">Upload completion metadata to permanently index new skills into your personnel profile.</p>
+        <div class="panel-title"><i class="fas fa-file-upload glow-accent" style="color:var(--accent)"></i>Upload Certificate</div>
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem">Upload your completion certificates to add new skills to your profile.</p>
         
         <div class="mb-3">
-          <label class="form-label-sm">SPECIFICATION</label>
+          <label class="form-label-sm">COURSE NAME</label>
           <select class="form-ctrl" id="certSkill">
-            <option value="" disabled selected>— Select Objective —</option>
+            <option value="" disabled selected>— Select Course —</option>
             ${courseOptions}
           </select>
         </div>
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <label class="form-label-sm mb-0">MASTERY LEVEL</label>
+            <label class="form-label-sm mb-0">COMPLETION (%)</label>
             <span id="certCompVal" style="color:var(--accent); font-weight:800;">100%</span>
           </div>
           <input type="range" class="form-range" id="certCompletion" min="0" max="100" value="100" oninput="document.getElementById('certCompVal').textContent=this.value+'%'">
         </div>
         
         <div class="mb-4">
-          <label class="form-label-sm">EVIDENCE (PDF/IMAGE)</label>
+          <label class="form-label-sm">CERTIFICATE FILE (PDF/IMAGE)</label>
           <input type="file" id="certFile" class="form-ctrl" accept=".pdf,image/*">
-          <div style="font-size:0.7rem; color:var(--muted); margin-top:0.5rem;">Mandatory for 100% mastery verification.</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:0.5rem;">File is required for verification.</div>
         </div>
         
-        <button class="btn-primary-custom w-100" onclick="submitCertificate()"><i class="fas fa-microchip me-2"></i>INGEST CREDENTIAL</button>
+        <button class="btn-primary-custom w-100" onclick="submitCertificate()"><i class="fas fa-upload me-2"></i>UPLOAD CERTIFICATE</button>
         <div id="certMsg" class="mt-3" style="display:none"></div>
       </div>
       
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-graduation-cap glow-accent" style="color:var(--accent3)"></i>Strategic Training Vectors</div>
+        <div class="panel-title"><i class="fas fa-graduation-cap glow-accent" style="color:var(--accent3)"></i>Recommended Courses</div>
         <div class="d-flex flex-column gap-2">
           ${courses.map(c=>`
           <div onclick="selectCourse('${c.name}')" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1rem; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:0.3s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -795,8 +868,8 @@ function renderLearning() {
         <div class="chart-wrap" style="height:250px"><canvas id="skillChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>Indexed Growth Progress</div>
-        ${Object.keys(empData.learning_progress || {}).length === 0 ? '<div class="text-center py-5 text-muted">No growth vectors indexed yet.</div>' : 
+        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>My Learning Progress</div>
+        ${Object.keys(empData.learning_progress || {}).length === 0 ? '<div class="text-center py-5 text-muted">No learning progress found yet.</div>' : 
           Object.entries(empData.learning_progress || {}).map(([c,p], idx)=>`
         <div style="margin-bottom:1.5rem; background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:18px; border:1px solid var(--border)">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem">
@@ -890,7 +963,7 @@ async function updateLearningProgress(skill, progress) {
 
 // ─── My Team (Employee View) ────────────────────────────────────────────────
 async function renderMyTeam() {
-  document.getElementById('pageTitle').textContent = 'My Team Details';
+  document.getElementById('pageTitle').textContent = 'My Team';
   const res = await fetch('/api/employee/my-team');
   const data = await res.json();
   
@@ -967,7 +1040,7 @@ async function renderMyTeam() {
 
 // ─── Leave Permission (Employee View) ───────────────────────────────────────
 function renderLeave() {
-  document.getElementById('pageTitle').textContent = 'Leave Permission Management';
+  document.getElementById('pageTitle').textContent = 'Leave Management';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-3">
     <div class="col-md-4">
@@ -988,7 +1061,7 @@ function renderLeave() {
         <div class="mb-3"><label class="form-label-sm">Reason for Leave <strong>(Required)</strong></label>
           <textarea class="form-ctrl" id="lvReason" rows="3" placeholder="Please provide a clear reason..."></textarea>
         </div>
-        <button class="btn-primary-custom w-100" onclick="submitLeaveRequest()"><i class="fas fa-paper-plane me-2"></i>Submit Application</button>
+        <button class="btn-primary-custom w-100" onclick="submitLeaveRequest()"><i class="fas fa-paper-plane me-2"></i>APPLY NOW</button>
         <div id="lvMsg" style="margin-top:0.75rem;display:none"></div>
       </div>
     </div>
@@ -1053,12 +1126,12 @@ async function submitLeaveRequest() {
 <div class="modal-custom" id="tfaSetupModal">
   <div class="modal-box" style="max-width:440px; border-top: 4px solid var(--accent3);">
     <div class="modal-header-custom mb-4">
-      <span class="modal-title-custom" style="font-family:'Syne'; font-weight:800; font-size:1.4rem">Neural-Sync 2FA Setup</span>
-      <button class="modal-close" onclick="hideModal('tfaSetupModal')">✕</button>
+      <span class="modal-title-custom" style="font-family:'Syne'; font-weight:800; font-size:1.4rem">Two-Factor Authentication Setup</span>
+      <button class="modal-close" onclick="hideModal('tfaSetupModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="text-center">
       <div style="background:rgba(67,233,123,0.1); color:var(--accent3); padding:1rem; border-radius:16px; font-size:0.85rem; font-weight:600; margin-bottom:1.5rem; border:1px solid rgba(67,233,123,0.2)">
-        <i class="fas fa-shield-virus me-2"></i>Scan the biometric seed with your authenticator app.
+        <i class="fas fa-shield-virus me-2"></i>Scan the QR code with your authenticator app.
       </div>
       
       <div style="background:#fff; padding:15px; border-radius:24px; display:inline-block; margin-bottom:1.5rem; box-shadow:0 0 30px rgba(255,255,255,0.1)">
@@ -1066,17 +1139,17 @@ async function submitLeaveRequest() {
       </div>
       
       <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; border:1px solid var(--border); margin-bottom:2rem; text-align:left">
-        <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.4rem">Manual Ingestion Key</div>
+        <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.4rem">Manual Setup Key</div>
         <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center"></div>
       </div>
       
       <div class="mb-4 text-start">
-        <label class="form-label-sm" style="color:var(--muted); font-weight:800; text-transform:uppercase; font-size:0.65rem; margin-bottom:0.75rem; display:block">Verify 6-Digit Neural Code</label>
+        <label class="form-label-sm" style="color:var(--muted); font-weight:800; text-transform:uppercase; font-size:0.65rem; margin-bottom:0.75rem; display:block">Verify 6-Digit Code</label>
         <input class="form-ctrl text-center" id="tfaCode" placeholder="000 000" maxlength="6" style="font-size:1.8rem; letter-spacing:8px; font-family:'Syne'; border-radius:16px; background:rgba(255,255,255,0.05) !important">
       </div>
       
       <button class="btn-primary-custom w-100" onclick="verifyAndEnable2FA()" style="padding:1rem; border-radius:16px; background:linear-gradient(135deg, var(--accent3), #2ecc71) !important">
-        <i class="fas fa-check-circle me-2"></i>AUTHORIZE LINK
+        <i class="fas fa-check-circle me-2"></i>ENABLE 2FA
       </button>
     </div>
   </div>

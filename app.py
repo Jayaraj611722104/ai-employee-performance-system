@@ -446,16 +446,24 @@ def get_notifications():
     
     # Get all notifications for this user
     user_notifs = [
-        n for n in db['notifications']
+        n for n in db.get('notifications', [])
         if n.get('target') in ['all', role, uid]
     ]
+    
+    # Sort by time desc
+    user_notifs.sort(key=lambda x: x.get('time', ''), reverse=True)
     
     # Calculate unread count
     unread_count = sum(1 for n in user_notifs if uid not in n.get('read_by', []))
     
+    # Calculate today's count
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    today_count = sum(1 for n in user_notifs if n.get('time', '').startswith(today_str))
+    
     return jsonify({
-        'notifications': user_notifs[-10:],
-        'unread_count': unread_count
+        'notifications': user_notifs[:20], # Show more in history
+        'unread_count': unread_count,
+        'today_count': today_count
     })
 
 @app.route('/api/notifications/mark-read', methods=['POST'])
@@ -477,6 +485,72 @@ def mark_notifications_read():
     if updated:
         save_db_data(db)
     return jsonify({'success': True})
+
+@app.route('/api/notifications/send', methods=['POST'])
+@login_required()
+def send_notification():
+    """Universal notification/message sending."""
+    data = request.get_json(silent=True) or {}
+    msg = data.get('message', '').strip()
+    target = data.get('target', 'all')
+    ntype = data.get('type', 'info')
+    
+    if not msg:
+        return jsonify({'success': False, 'message': 'Message is required'}), 400
+    
+    role = session.get('role', 'employee')
+    
+    # Restriction logic: Employees can't send 'all' broadcasts
+    if role == 'employee' and target in ['all', 'employee']:
+        return jsonify({'success': False, 'message': 'Employees cannot broadcast messages to everyone.'}), 403
+        
+    db = get_db_data()
+    if 'notifications' not in db:
+        db['notifications'] = []
+        
+    from uuid import uuid4
+    db['notifications'].append({
+        'id': str(uuid4())[:8].upper(),
+        'sender': session['name'],
+        'sender_id': session['user_id'],
+        'sender_role': role,
+        'time': datetime.now().isoformat(),
+        'type': ntype,
+        'message': msg,
+        'target': target,
+        'read_by': []
+    })
+    save_db_data(db)
+    log_system_activity(f"Notification sent by {session['name']} ({role}) to {target}", db)
+    return jsonify({'success': True})
+
+@app.route('/api/profile')
+@login_required()
+def get_user_profile():
+    db = get_db_data()
+    uid = session['user_id']
+    # Try to find in employees first
+    emp = next((e for e in db['employees'] if e['user_id'] == uid), None)
+    
+    # If not found (e.g. HR/Admin without employee record), create a basic one from session/users
+    if not emp:
+        user = next((u for u in db['users'] if u['id'] == uid), {})
+        emp = {
+            'user_id': uid,
+            'name': user.get('name', session.get('name')),
+            'role': user.get('role', session.get('role')),
+            'email': user.get('email', session.get('email')),
+            'department': 'System' if user.get('role') == 'admin' else 'HR',
+            'status': user.get('status', 'Active'),
+            'skills': '',
+            'learning_progress': {}
+        }
+    
+    # Merge with 2FA status from users table
+    user = next((u for u in db['users'] if u['id'] == uid), {})
+    emp['two_factor_enabled'] = user.get('two_factor_enabled', False)
+    
+    return jsonify(emp)
 
 
 # ═══════════════════════════════════════════════════════
@@ -1486,29 +1560,6 @@ def send_manual_email():
     
     return jsonify({'success': success, 'message': msg})
 
-@app.route('/api/hr/send-notification', methods=['POST'])
-@login_required(roles=['hr'])
-def send_notification():
-    data = request.get_json(silent=True) or {}
-    msg  = data.get('message')
-    ntype = data.get('type', 'info')
-    target = data.get('target', 'all')
-    
-    if not msg:
-        return jsonify({'success': False, 'message': 'message is required'}), 400
-    
-    db = get_db_data()
-    from uuid import uuid4
-    db['notifications'].append({
-        'id':      str(uuid4()),
-        'message': msg,
-        'type':    ntype,
-        'target':  target, # could be 'all', 'employee', 'teamleader', or a specific user_id
-        'from':    session.get('name', 'HR'),
-        'time':    datetime.now().isoformat()
-    })
-    save_db_data(db)
-    return jsonify({'success': True})
 
 
 

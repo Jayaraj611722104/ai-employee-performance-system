@@ -13,16 +13,18 @@
 <a class="nav-item" data-section="teams" onclick="navigate('teams')"><i class="fas fa-layer-group"></i>Team Management</a>
 <a class="nav-item" data-section="team-analytics" onclick="navigate('team-analytics')"><i class="fas fa-chart-pie"></i>Team Analytics</a>
 <span class="nav-section">AI Modules</span>
-<a class="nav-item" data-section="ai-predict" onclick="navigate('ai-predict')"><i class="fas fa-brain"></i>AI Prediction</a>
+<a class="nav-item" data-section="ai-predict" onclick="navigate('ai-predict')"><i class="fas fa-brain"></i>AI Performance Prediction</a>
 <a class="nav-item" data-section="ai-promotion" onclick="navigate('ai-promotion')"><i class="fas fa-arrow-up"></i>Promotion AI</a>
-<a class="nav-item" data-section="ai-attrition" onclick="navigate('ai-attrition')"><i class="fas fa-exclamation-triangle"></i>Attrition Risk</a>
-<a class="nav-item" data-section="skill-gap" onclick="navigate('skill-gap')"><i class="fas fa-puzzle-piece"></i>Skill Gap</a>
+<a class="nav-item" data-section="ai-attrition" onclick="navigate('ai-attrition')"><i class="fas fa-exclamation-triangle"></i>AI Attrition Risk</a>
+<a class="nav-item" data-section="skill-gap" onclick="navigate('skill-gap')"><i class="fas fa-puzzle-piece"></i>AI Skill Gap</a>
 <a class="nav-item" data-section="ai-performance" onclick="navigate('ai-performance')"><i class="fas fa-chart-line"></i>AI Performance Module</a>
 <span class="nav-section">Reports</span>
 <a class="nav-item" data-section="freshers" onclick="navigate('freshers')"><i class="fas fa-user-graduate"></i>New Talent Pipeline</a>
-<a class="nav-item" data-section="ats" onclick="navigate('ats')"><i class="fas fa-file-alt"></i>ATS Analyzer</a>
+<a class="nav-item" data-section="ats" onclick="navigate('ats')"><i class="fas fa-file-alt"></i>Resume Analyzer</a>
 <a class="nav-item" data-section="reports" onclick="navigate('reports')"><i class="fas fa-file-download"></i>Reports</a>
-<a class="nav-item" data-section="alerts" onclick="navigate('alerts')"><i class="fas fa-bell"></i>Alerts & Notify</a>
+<a class="nav-item" data-section="alerts" onclick="navigate('alerts')"><i class="fas fa-bell"></i>Notifications</a>
+<span class="nav-section">User Account</span>
+<a class="nav-item" data-section="profile" onclick="navigate('profile')"><i class="fas fa-id-card"></i>My Profile</a>
 {% endblock %}
 
 {% block content %}
@@ -33,7 +35,7 @@
   <div class="modal-box">
     <div class="modal-header-custom">
       <span class="modal-title-custom" id="alertModalTitle"></span>
-      <button class="modal-close" onclick="hideModal('alertModal')">✕</button>
+      <button class="modal-close" onclick="hideModal('alertModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="row g-2">
       <div class="col-12">
@@ -59,7 +61,7 @@
   <div class="modal-box" style="max-width: 800px;">
     <div class="modal-header-custom">
       <span class="modal-title-custom" id="teamDetailsTitle">Team Details & Reports</span>
-      <button class="modal-close" onclick="hideModal('teamDetailsModal')">✕</button>
+      <button class="modal-close" onclick="hideModal('teamDetailsModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div id="teamDetailsBody"></div>
   </div>
@@ -68,7 +70,10 @@
 
 {% block scripts %}
 <script>
-const SECTIONS = {overview:renderOverview,employees:renderEmployees,attendance:renderAttendance,performance:renderPerformance,leave:renderLeave,teams:renderTeams,'team-analytics':renderTeamAnalytics,'ai-predict':renderAIPredict,'ai-promotion':renderAIPromotion,'ai-attrition':renderAttrition,'skill-gap':renderSkillGap,'ai-performance':renderAIPerformance,freshers:renderFreshers,ats:renderATS,reports:renderReports,alerts:renderAlerts};
+const SECTIONS = {overview:renderOverview,employees:renderEmployees,attendance:renderAttendance,performance:renderPerformance,leave:renderLeave,teams:renderTeams,'team-analytics':renderTeamAnalytics,'ai-predict':renderAIPredict,'ai-promotion':renderAIPromotion,'ai-attrition':renderAttrition,'skill-gap':renderSkillGap,'ai-performance':renderAIPerformance,freshers:renderFreshers,ats:renderATS,  reports:        renderReports,
+  alerts:         renderAlerts,
+  profile:        renderProfile
+};
 window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 let stats={}, employees=[], performanceAll=[], attendance=[], leaveRequests=[], teams=[], teamsDetailed=[];
 let alertedUserIds = new Set();
@@ -119,7 +124,7 @@ async function init() {
       sectionContent.innerHTML = `
         <div class="panel text-center py-5">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-          <h4>Mobile Load Error</h4>
+          <h4>Dashboard Load Error</h4>
           <p class="text-muted">Data failed to load. Please check your connection.</p>
           <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
         </div>`;
@@ -145,7 +150,7 @@ async function reloadTeams() {
 }
 
 function renderOverview() {
-  document.getElementById('pageTitle').textContent = 'Enterprise Intelligence';
+  document.getElementById('pageTitle').textContent = 'HR Dashboard';
   const depts = stats.departments || {};
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4 mb-4">
@@ -153,9 +158,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(108,99,255,0.15);color:var(--accent)"><i class="fas fa-users glow-accent"></i></div>
         <div>
-          <div class="label">Total Workforce</div>
+          <div class="label">Total Employees</div>
           <div class="value">${stats.total_employees||0}</div>
-          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>2.4% Neural Growth</div>
+          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>2.4% vs last month</div>
         </div>
       </div>
     </div>
@@ -163,9 +168,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(67,233,123,0.15);color:var(--accent3)"><i class="fas fa-user-check glow-accent"></i></div>
         <div>
-          <div class="label">Active Sync</div>
+          <div class="label">Active Employees</div>
           <div class="value">${stats.active||0}</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${stats.inactive||0} Offline Units</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">${stats.inactive||0} Inactive</div>
         </div>
       </div>
     </div>
@@ -173,9 +178,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(247,183,49,0.15);color:var(--accent4)"><i class="fas fa-bolt glow-accent"></i></div>
         <div>
-          <div class="label">Workforce Velocity</div>
+          <div class="label">Average Performance</div>
           <div class="value">${stats.avg_performance||0}%</div>
-          <div style="font-size:0.75rem;color:var(--accent4);font-weight:700">System Optimized</div>
+          <div style="font-size:0.75rem;color:var(--accent4);font-weight:700">System Performance</div>
         </div>
       </div>
     </div>
@@ -183,9 +188,9 @@ function renderOverview() {
       <div class="stat-card">
         <div class="icon" style="background:rgba(255,101,132,0.15);color:var(--accent2)"><i class="fas fa-layer-group glow-accent"></i></div>
         <div>
-          <div class="label">Strategic Sectors</div>
+          <div class="label">Departments</div>
           <div class="value">${Object.keys(depts).length}</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Cross-Platform Units</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Company Divisions</div>
         </div>
       </div>
     </div>
@@ -194,13 +199,13 @@ function renderOverview() {
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent)"></i>Sector Allocation</div>
+        <div class="panel-title"><i class="fas fa-chart-pie glow-accent" style="color:var(--accent)"></i>Department Allocation</div>
         <div class="chart-wrap" style="height:320px"><canvas id="deptChart"></canvas></div>
       </div>
     </div>
     <div class="col-lg-7">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent3)"></i>Performance Matrix Distribution</div>
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent3)"></i>Performance Score Distribution</div>
         <div class="chart-wrap" style="height:320px"><canvas id="perfDistChart"></canvas></div>
       </div>
     </div>
@@ -209,7 +214,7 @@ function renderOverview() {
   <div class="row g-4 mt-1">
     <div class="col-12">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent2)"></i>Neural Alert Stream</div>
+        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent2)"></i>System Alerts</div>
         <div class="row g-3">
           ${performanceAll.filter(p=>p.productivity_score<60).map(p=>`
             <div class="col-xl-4 col-md-6">
@@ -219,7 +224,7 @@ function renderOverview() {
                 </div>
                 <div style="flex:1">
                   <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">${p.name}</div>
-                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">Velocity Critical: <span style="color:var(--accent2); font-weight:800">${p.productivity_score}%</span></div>
+                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">Low Performance: <span style="color:var(--accent2); font-weight:800">${p.productivity_score}%</span></div>
                 </div>
                 <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.65rem; background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important; box-shadow:none" onclick="navigate('alerts')">ANALYZE</button>
               </div>
@@ -232,7 +237,7 @@ function renderOverview() {
                 </div>
                 <div style="flex:1">
                   <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">${p.name}</div>
-                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">Elite Potential: <span style="color:var(--accent3); font-weight:800">${p.productivity_score}%</span></div>
+                  <div style="font-size:0.8rem; color:var(--muted); margin-top:0.2rem">High Performance: <span style="color:var(--accent3); font-weight:800">${p.productivity_score}%</span></div>
                 </div>
                 <button class="btn-primary-custom" style="padding:0.4rem 0.8rem; font-size:0.65rem; background:rgba(67,233,123,0.1) !important; color:var(--accent3) !important; border:1px solid rgba(67,233,123,0.2) !important; box-shadow:none" onclick="navigate('ai-promotion')">PROMOTE</button>
               </div>
@@ -266,11 +271,11 @@ function renderOverview() {
 }
 
 function renderEmployees() {
-  document.getElementById('pageTitle').textContent = 'Workforce Directory';
+  document.getElementById('pageTitle').textContent = 'Employee Directory';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-      <div class="panel-title m-0"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Total Personnel (${employees.length})</div>
+      <div class="panel-title m-0"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Total Employees (${employees.length})</div>
       <div style="position:relative; width:320px;">
         <i class="fas fa-search" style="position:absolute;left:1.25rem;top:50%;transform:translateY(-50%);color:var(--muted)"></i>
         <input class="form-ctrl" placeholder="Search directory..." id="empSearch" oninput="filterEmployees(this.value)" style="padding-left:3.5rem">
@@ -278,7 +283,7 @@ function renderEmployees() {
     </div>
     <div class="tbl-wrap">
       <table class="tbl" id="empTable">
-        <thead><tr><th>Employee</th><th>Identity</th><th>Specialization</th><th>Unit</th><th>Tenure</th><th>Status</th><th>Productivity</th></tr></thead>
+        <thead><tr><th>Employee</th><th>ID Number</th><th>Job Role</th><th>Department</th><th>Experience</th><th>Status</th><th>Performance</th></tr></thead>
         <tbody>${employees.map(e=>{
           const p=performanceAll.find(p=>p.user_id===e.user_id)||{};
           return `<tr>
@@ -314,18 +319,18 @@ function filterEmployees(q) {
 }
 
 function renderAttendance() {
-  document.getElementById('pageTitle').textContent = 'Attendance Intelligence';
+  document.getElementById('pageTitle').textContent = 'Attendance Management';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Personnel Attendance Trends</div>
+        <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Employee Attendance Trends</div>
         <div class="chart-wrap" style="height:320px"><canvas id="attendChart"></canvas></div>
       </div>
       <div class="panel">
         <div class="panel-title"><i class="fas fa-table glow-accent" style="color:var(--accent3)"></i>Detailed Attendance Log</div>
         <div class="tbl-wrap">
-          <table class="tbl">
+          <table class="tbl" style="min-width: unset;">
             <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Late</th><th>Work Hours</th><th>Compliance</th></tr></thead>
             <tbody>${attendance.map(a=>{
               const emp=employees.find(e=>e.user_id===a.user_id)||{};
@@ -356,7 +361,7 @@ function renderAttendance() {
         <div class="chart-wrap" style="height:250px"><canvas id="absentChart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-bell animate-float" style="color:var(--accent4)"></i>Attendance Compliance</div>
+        <div class="panel-title"><i class="fas fa-bell animate-float" style="color:var(--accent4)"></i>Low Attendance Alerts</div>
         <div class="d-flex flex-column gap-2">
           ${attendance.filter(a=>a.present/a.total<0.75).map(a=>{
             const emp=employees.find(e=>e.user_id===a.user_id)||{};
@@ -368,7 +373,7 @@ function renderAttendance() {
                 <small class="text-muted">Critical: ${Math.round(a.present/a.total*100)}% attendance</small>
               </div>
             </div>`;
-          }).join('')||'<div class="text-center py-3" style="color:var(--accent3);font-weight:700;font-size:0.85rem;"><i class="fas fa-check-circle me-2"></i>All personnel compliant</div>'}
+          }).join('')||'<div class="text-center py-3" style="color:var(--accent3);font-weight:700;font-size:0.85rem;"><i class="fas fa-check-circle me-2"></i>All employees compliant</div>'}
         </div>
       </div>
     </div>
@@ -397,7 +402,7 @@ function renderPerformance() {
   <div class="row g-4 mb-4">
     <div class="col-lg-6">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Comparative Efficiency Analysis</div>
+        <div class="panel-title"><i class="fas fa-chart-bar glow-accent" style="color:var(--accent)"></i>Employee Performance Comparison</div>
         <div class="chart-wrap" style="height:320px"><canvas id="perfCompChart"></canvas></div>
       </div>
     </div>
@@ -409,10 +414,10 @@ function renderPerformance() {
     </div>
   </div>
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent3)"></i>Performance Intelligence Matrix</div>
+    <div class="panel-title"><i class="fas fa-microchip glow-accent" style="color:var(--accent3)"></i>Performance Data Table</div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Personnel</th><th>Unit</th><th>Productivity</th><th>Attendance</th><th>Tasks</th><th>Quality</th><th>TL Eval</th><th>Global Score</th></tr></thead>
+        <thead><tr><th>Employee</th><th>Department</th><th>Productivity</th><th>Attendance</th><th>Tasks</th><th>Quality</th><th>Manager Score</th><th>Overall Score</th></tr></thead>
         <tbody>${performanceAll.map(p=>{
           const overall=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
           return `<tr>
@@ -465,16 +470,16 @@ function renderPerformance() {
 }
 
 function renderAIPredict() {
-  document.getElementById('pageTitle').textContent = 'Predictive Intelligence';
+  document.getElementById('pageTitle').textContent = 'AI Performance Prediction';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100" style="border-top: 4px solid var(--accent)">
-        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent)"></i>Neural Performance Engine</div>
+        <div class="panel-title"><i class="fas fa-brain animate-float" style="color:var(--accent)"></i>Analysis Engine</div>
         <div class="mb-4">
           <label class="form-label-sm">SELECT SUBJECT</label>
           <select class="form-ctrl" id="predEmp" onchange="fillPredForm(this.value)">
-            <option value="">— Choose Personnel —</option>
+            <option value="">— Choose Employee —</option>
             ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
@@ -483,9 +488,9 @@ function renderAIPredict() {
           <div class="col-6"><label class="form-label-sm">Attendance %</label><input class="form-ctrl" id="pred_att" type="number" value="90"></div>
           <div class="col-6"><label class="form-label-sm">Task Completion %</label><input class="form-ctrl" id="pred_task" type="number" value="75"></div>
           <div class="col-6"><label class="form-label-sm">Quality Rating</label><input class="form-ctrl" id="pred_qual" type="number" value="7"></div>
-          <div class="col-12"><label class="form-label-sm">TL Evaluation Score</label><input class="form-ctrl" id="pred_tl" type="number" value="7"></div>
+          <div class="col-12"><label class="form-label-sm">Manager Score</label><input class="form-ctrl" id="pred_tl" type="number" value="7"></div>
         </div>
-        <button class="btn-primary-custom w-100 mt-4" onclick="runPrediction()"><i class="fas fa-bolt glow-accent"></i> GENERATE FORECAST</button>
+        <button class="btn-primary-custom w-100 mt-4" onclick="runPrediction()"><i class="fas fa-bolt glow-accent"></i> GET PREDICTION</button>
         <div id="predResult" class="mt-4"></div>
       </div>
     </div>
@@ -496,10 +501,10 @@ function renderAIPredict() {
         <p class="text-muted mt-3" style="font-size:0.8rem; line-height:1.6;">Our <strong style="color:var(--accent)">Random Forest Ensemble</strong> processes multiple data points to calculate probability with <strong style="color:var(--accent3)">94.2% accuracy</strong>.</p>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>System-wide Forecasts</div>
-        <div class="tbl-wrap" style="max-height:300px; overflow-y:auto;">
+        <div class="panel-title"><i class="fas fa-dna glow-accent" style="color:var(--accent2)"></i>Team Performance Forecast</div>
+        <div class="tbl-wrap">
           <table class="tbl">
-            <thead><tr><th>Personnel</th><th>Current</th><th></th><th>Forecast</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Current Score</th><th></th><th>Predicted Score</th></tr></thead>
             <tbody>
               ${performanceAll.map(p=>{
                 const current=Math.round(p.productivity_score*0.3+p.attendance_pct*0.2+p.task_completion*0.25+(p.quality_rating||0)*10*0.15+(p.tl_score||0)*10*0.1);
@@ -559,16 +564,16 @@ async function runPrediction() {
 }
 
 function renderAIPromotion() {
-  document.getElementById('pageTitle').textContent = 'Promotion Intelligence';
+  document.getElementById('pageTitle').textContent = 'AI Promotion Analysis';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100" style="border-top: 4px solid var(--accent3)">
-        <div class="panel-title"><i class="fas fa-arrow-up animate-float" style="color:var(--accent3)"></i>Promotion Eligibility Analyzer</div>
+        <div class="panel-title"><i class="fas fa-arrow-up animate-float" style="color:var(--accent3)"></i>Promotion Eligibility Check</div>
         <div class="mb-4">
-          <label class="form-label-sm">SUBJECT SELECTION</label>
+          <label class="form-label-sm">SELECT EMPLOYEE</label>
           <select class="form-ctrl" id="promEmp" onchange="fillPromForm(this.value)">
-            <option value="">— Choose Personnel —</option>
+            <option value="">— Choose Employee —</option>
             ${employees.map(e=>`<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
@@ -578,9 +583,9 @@ function renderAIPromotion() {
           <div class="col-6"><label class="form-label-sm">Task Comp. %</label><input class="form-ctrl" id="prom_task" type="number" value="75"></div>
           <div class="col-6"><label class="form-label-sm">Exp (Years)</label><input class="form-ctrl" id="prom_exp" type="number" value="3"></div>
           <div class="col-6"><label class="form-label-sm">Projects</label><input class="form-ctrl" id="prom_proj" type="number" value="8"></div>
-          <div class="col-6"><label class="form-label-sm">TL Score</label><input class="form-ctrl" id="prom_tl" type="number" value="7"></div>
+          <div class="col-6"><label class="form-label-sm">Manager Score</label><input class="form-ctrl" id="prom_tl" type="number" value="7"></div>
           <div class="col-12">
-            <label class="form-label-sm">Target Role</label>
+            <label class="form-label-sm">Target Job Role</label>
             <select class="form-ctrl" id="prom_role"><option>Senior Developer</option><option>Tech Lead</option><option>Engineering Manager</option><option>QA Lead</option><option>Data Scientist</option></select>
           </div>
         </div>
@@ -590,7 +595,7 @@ function renderAIPromotion() {
     </div>
     <div class="col-lg-7">
       <div class="panel mb-4">
-        <div class="panel-title"><i class="fas fa-sitemap glow-accent" style="color:var(--accent4)"></i>Career Progression Vectors</div>
+        <div class="panel-title"><i class="fas fa-sitemap glow-accent" style="color:var(--accent4)"></i>Career Progression Paths</div>
         <div class="d-flex flex-column gap-3">
           ${[['Entry Level','0-3 Years','Software Engineer → Senior Engineer'],['Management','4-7 Years','Team Lead → Engineering Manager'],['Architecture','8+ Years','Solution Architect → CTO']].map(v=>`
             <div class="p-3" style="background:rgba(255,255,255,0.03); border-radius:16px; border:1px solid var(--border);">
@@ -604,9 +609,15 @@ function renderAIPromotion() {
         </div>
       </div>
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-bolt glow-accent" style="color:var(--accent)"></i>High Potential Identifications</div>
-        <button class="btn-primary-custom mb-3" onclick="bulkPromoScan()"><i class="fas fa-search me-2"></i>INITIATE SYSTEM SCAN</button>
-        <div id="bulkResults" class="d-flex flex-column gap-2"></div>
+        <div class="panel-title"><i class="fas fa-bolt glow-accent" style="color:var(--accent)"></i>Top Promotion Candidates</div>
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem">AI identified these individuals as high-potential candidates for immediate career advancement.</p>
+        <button class="btn-primary-custom mb-4" onclick="bulkPromoScan()" style="width:100%;"><i class="fas fa-search me-2"></i>RE-SCAN TALENT POOL</button>
+        <div id="bulkResults" class="d-flex flex-column gap-3">
+          <div class="text-center py-5 opacity-50">
+            <i class="fas fa-microchip fa-2x mb-2"></i>
+            <p style="font-size:0.8rem; font-weight:700;">Initiate scan to detect candidates</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -647,16 +658,16 @@ async function runAttrition() {
 }
 
 function renderAttrition() {
-  document.getElementById('pageTitle').textContent = 'Attrition Analysis';
+  document.getElementById('pageTitle').textContent = 'AI Attrition Risk Analysis';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100" style="border-top: 4px solid var(--accent2)">
         <div class="panel-title"><i class="fas fa-exclamation-triangle animate-float" style="color:var(--accent2)"></i>Attrition Risk Predictor</div>
         <div class="mb-4">
-          <label class="form-label-sm">SELECT SUBJECT</label>
+          <label class="form-label-sm">SELECT EMPLOYEE</label>
           <select class="form-ctrl" id="attrEmp">
-            <option value="">— Choose Personnel —</option>
+            <option value="">— Choose Employee —</option>
             ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
@@ -705,7 +716,7 @@ async function runSkillGap() {
   
   document.getElementById('gapResult').innerHTML = `
   <div class="ai-result animate-float" style="background:rgba(108,99,255,0.05); border:1px solid var(--accent); border-radius:20px; padding:1.5rem;">
-    <div class="ai-result-title">Strategic Gap: ${r.target_role}</div>
+    <div class="ai-result-title">Skill Match: ${r.target_role}</div>
     <div class="d-flex align-items-center gap-3 mb-3">
       <div class="ai-highlight" style="font-size:1.5rem;">${r.match_percentage}%</div>
       <div class="progress-bar-wrap" style="flex:1; height:12px; background:rgba(255,255,255,0.05)">
@@ -725,8 +736,8 @@ async function runSkillGap() {
     </div>
     
     <div class="mt-4 p-3" style="background:rgba(0,0,0,0.2); border-radius:14px;">
-      <div style="font-weight:800; font-size:0.75rem; color:var(--accent); text-transform:uppercase; margin-bottom:0.75rem;">OPTIMIZATION PATH</div>
-      <div style="max-height:120px; overflow-y:auto;" class="d-flex flex-column gap-2">
+      <div style="font-weight:800; font-size:0.75rem; color:var(--accent); text-transform:uppercase; margin-bottom:0.75rem;">RECOMMENDED TRAINING</div>
+      <div class="d-flex flex-column gap-2">
         ${r.training_recommendations.map(t => `
           <div style="font-size:0.8rem; border-left:2px solid var(--accent); padding-left:0.75rem;">
             <div style="font-weight:700;">${t.skill}</div>
@@ -739,21 +750,21 @@ async function runSkillGap() {
 }
 
 function renderSkillGap() {
-  document.getElementById('pageTitle').textContent = 'Skill Matrix';
+  document.getElementById('pageTitle').textContent = 'AI Skill Gap Analysis';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100" style="border-top: 4px solid var(--accent)">
-        <div class="panel-title"><i class="fas fa-puzzle-piece animate-float" style="color:var(--accent)"></i>Strategic Gap Analyzer</div>
+        <div class="panel-title"><i class="fas fa-puzzle-piece animate-float" style="color:var(--accent)"></i>Skill Gap Check</div>
         <div class="mb-3">
-          <label class="form-label-sm">SELECT PERSONNEL</label>
+          <label class="form-label-sm">SELECT EMPLOYEE</label>
           <select class="form-ctrl" id="gapEmp">
-            <option value="">— Choose Personnel —</option>
+            <option value="">— Choose Employee —</option>
             ${employees.map(e => `<option value="${e.user_id}">${e.name}</option>`).join('')}
           </select>
         </div>
         <div class="mb-4">
-          <label class="form-label-sm">TARGET SPECIFICATION</label>
+          <label class="form-label-sm">TARGET JOB ROLE</label>
           <select class="form-ctrl" id="gapRole">
             <option>Senior Developer</option><option>Tech Lead</option><option>Engineering Manager</option><option>Cloud Architect</option><option>Security Specialist</option>
           </select>
@@ -764,7 +775,7 @@ function renderSkillGap() {
     </div>
     <div class="col-lg-7">
       <div class="panel">
-        <div class="panel-title"><i class="fas fa-layer-group glow-accent" style="color:var(--accent3)"></i>Enterprise Skill Saturation</div>
+        <div class="panel-title"><i class="fas fa-layer-group glow-accent" style="color:var(--accent3)"></i>Company Skill Overview</div>
         <div class="chart-wrap" style="height:350px"><canvas id="skillCoverageChart"></canvas></div>
       </div>
     </div>
@@ -779,7 +790,7 @@ function renderSkillGap() {
     });
     const sorted = Object.entries(allSkills).sort((a,b) => b[1]-a[1]).slice(0, 8);
     createChart('skillCoverageChart', 'bar', sorted.map(x=>x[0]), [{
-      label: 'Personnel Coverage',
+      label: 'Employee Count',
       data: sorted.map(x=>x[1]),
       backgroundColor: 'rgba(108, 99, 255, 0.6)',
       borderRadius: 8
@@ -791,7 +802,7 @@ function renderLeave() {
   document.getElementById('pageTitle').textContent = 'Leave Management';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-calendar-times glow-accent" style="color:var(--accent2)"></i>Pending Authorization Requests</div>
+    <div class="panel-title"><i class="fas fa-calendar-times glow-accent" style="color:var(--accent2)"></i>Pending Leave Requests</div>
     <div class="tbl-wrap">
       <table class="tbl">
         <thead><tr><th>Employee</th><th>Category</th><th>Duration</th><th>Period</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
@@ -818,7 +829,7 @@ function renderLeave() {
               </div>
             </td>
           </tr>`;
-        }).join('') || '<tr><td colspan="7" class="text-center py-5 text-muted">No pending leave authorizations</td></tr>'}</tbody>
+        }).join('') || '<tr><td colspan="7" class="text-center py-5 text-muted">No pending leave requests</td></tr>'}</tbody>
       </table>
     </div>
   </div>`;
@@ -861,7 +872,7 @@ function renderTeams() {
         </div>
         <div class="mb-3">
           <label class="form-label-sm">MEMBERS</label>
-          <div id="unallocatedMembersList" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:.5rem;background:rgba(0,0,0,0.1)">
+          <div id="unallocatedMembersList" style="border:1px solid var(--border);border-radius:8px;padding:.5rem;background:rgba(0,0,0,0.1)">
             <small class="text-muted">Loading...</small>
           </div>
         </div>
@@ -880,7 +891,7 @@ function renderTeams() {
 
     <!-- Right Column: Team Cards -->
     <div class="col-md-8">
-      <div class="panel-title mb-3"><i class="fas fa-layer-group" style="color:var(--accent)"></i> Total Teams (${teamsDetailed.length})</div>
+      <div class="panel-title mb-3"><i class="fas fa-layer-group" style="color:var(--accent)"></i> All Teams (${teamsDetailed.length})</div>
       <div class="row g-3">
         ${teamsDetailed.map(t => {
           const membersCount = t.members ? t.members.length : 0;
@@ -1005,7 +1016,7 @@ function showTeamDetails(tid) {
     <div class="row g-3">
       <div class="col-md-6">
         <div class="panel">
-          <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Team Information</div>
+          <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">General Information</div>
           <h4 style="margin: .5rem 0">${t.name}</h4>
           <p class="text-muted" style="font-size:.85rem">${t.description || 'No description provided'}</p>
           <div class="mt-3">
@@ -1075,7 +1086,7 @@ function renderTeamAnalytics() {
 }
 
 function renderFreshers() {
-  document.getElementById('pageTitle').textContent = 'Freshers & New Talent Pipeline';
+  document.getElementById('pageTitle').textContent = 'New Employees';
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
   
@@ -1089,34 +1100,68 @@ function renderFreshers() {
 
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-user-graduate" style="color:var(--accent)"></i>Freshers & New Joins Tracking (${freshers.length})</div>
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead><tr><th>Name</th><th>Joining Date</th><th>Exp</th><th>Skills</th><th>Performance</th><th>Status</th></tr></thead>
-        <tbody>${freshers.length > 0 ? freshers.map(f => {
+    <div class="panel-title" style="justify-content:space-between">
+      <span><i class="fas fa-user-graduate glow-accent" style="color:var(--accent)"></i>New Hires Tracking (${freshers.length})</span>
+    </div>
+    <div class="row g-4 mt-2">
+      ${freshers.length > 0 ? freshers.map(f => {
           const p = performanceAll.find(x => x.user_id === f.user_id) || {};
           const isNew = new Date(f.joining_date) > ninetyDaysAgo;
-          return `<tr>
-            <td><strong>${f.name}</strong> ${isNew ? '<span class="badge-role badge-inprogress" style="font-size:0.6rem;padding:0.1rem 0.4rem">NEW</span>' : ''}</td>
-            <td>${f.joining_date}</td>
-            <td>${f.experience}y</td>
-            <td><small>${f.skills || '—'}</small></td>
-            <td>
-              <div class="d-flex align-items-center gap-2">
-                <div class="progress-bar-wrap" style="width:100px"><div class="progress-fill" style="width:${p.productivity_score || 0}%;background:var(--accent)"></div></div>
-                <small>${p.productivity_score || 0}%</small>
+          const status = f.status || (isNew ? 'Onboarding' : 'Active');
+          return `
+          <div class="col-xl-4 col-md-6">
+            <div class="panel h-100" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:24px; padding:1.5rem; transition:0.3s; position:relative; overflow:hidden;">
+              ${isNew ? '<div style="position:absolute; top:1.25rem; right:-2.5rem; background:var(--accent); color:white; padding:0.25rem 3rem; transform:rotate(45deg); font-size:0.6rem; font-weight:800; letter-spacing:1px; z-index:1;">NEW</div>' : ''}
+              
+              <div class="d-flex align-items-center gap-3 mb-4">
+                <div style="width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg, var(--accent), var(--accent2)); display:flex; align-items:center; justify-content:center; color:white; font-size:1.2rem; font-weight:800; flex-shrink:0;">
+                  ${f.name[0]}
+                </div>
+                <div style="overflow:hidden">
+                  <div style="font-family:'Syne'; font-weight:800; font-size:1rem; white-space:nowrap; text-overflow:ellipsis; color:white;">${f.name}</div>
+                  <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Started: ${f.joining_date}</div>
+                </div>
               </div>
-            </td>
-            <td><span class="badge-role ${isNew ? 'badge-pending' : 'badge-completed'}">${isNew ? 'Onboarding' : 'Active'}</span></td>
-          </tr>`;
-        }).join('') : '<tr><td colspan="6" class="text-center py-4 text-muted">No freshers or recent joins found in the system.</td></tr>'}</tbody>
-      </table>
+              
+              <div class="mb-4" style="background:rgba(0,0,0,0.2); border-radius:16px; padding:1rem;">
+                <div class="d-flex justify-content-between mb-2">
+                  <span style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800;">Experience</span>
+                  <span style="font-size:0.75rem; color:var(--text); font-weight:800;">${f.experience} Years</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800;">Status</span>
+                  <span class="badge-role ${status === 'Active' ? 'badge-completed' : 'badge-pending'}" style="font-size:0.6rem; padding:0.2rem 0.6rem">${status}</span>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.75rem;">Capability Tags</div>
+                <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+                  ${(f.skills || 'Generalist').split(',').map(s => `<span style="background:rgba(255,255,255,0.05); color:var(--muted); padding:0.2rem 0.6rem; border-radius:6px; font-size:0.65rem; border:1px solid var(--border); font-weight:600;">${s.trim()}</span>`).join('')}
+                </div>
+              </div>
+              
+              <div class="mt-auto pt-3 border-top" style="border-color:rgba(255,255,255,0.05) !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div style="font-size:0.7rem; color:var(--muted); font-weight:700;">PROBATION SCORE</div>
+                  <div style="font-weight:800; color:var(--accent); font-size:0.9rem;">${p.productivity_score || 0}%</div>
+                </div>
+                <div class="progress-bar-wrap mt-2" style="height:4px;"><div class="progress-fill" style="width:${p.productivity_score || 0}%; background:var(--accent)"></div></div>
+              </div>
+            </div>
+          </div>`;
+      }).join('') : `
+        <div class="col-12 text-center py-5 text-muted">
+          <i class="fas fa-user-graduate fa-3x mb-3 opacity-20"></i>
+          <p>No new hiring activity detected in this cycle.</p>
+        </div>`
+      }
     </div>
   </div>`;
 }
 
 function renderATS() {
-  document.getElementById('pageTitle').textContent = 'ATS Analyzer';
+  document.getElementById('pageTitle').textContent = 'Resume Analyzer';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-3">
     <div class="col-md-5">
@@ -1263,13 +1308,13 @@ function renderReports() {
 }
 
 function renderAlerts() {
-  document.getElementById('pageTitle').textContent = 'Alerts & Notify';
+  document.getElementById('pageTitle').textContent = 'Notifications';
   const lowPerf = performanceAll.filter(p => (p.productivity_score < 65 || p.task_completion < 60) && !alertedUserIds.has(p.user_id));
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-3">
     <div class="col-md-5">
       <div class="panel mb-3">
-        <div class="panel-title"><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Broadcast Notification</div>
+        <div class="panel-title"><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Send Notification</div>
         <div class="mb-2">
           <label class="form-label-sm">Target Audience</label>
           <select class="form-ctrl" id="notifTarget" onchange="handleTargetChange(this.value)">
@@ -1297,31 +1342,37 @@ function renderAlerts() {
           <label class="form-label-sm">Message</label>
           <textarea class="form-ctrl" id="notifMsg" rows="3" placeholder="Enter message..."></textarea>
         </div>
-        <button class="btn-primary-custom w-100" onclick="sendNotif()"><i class="fas fa-bullhorn me-2"></i>Send Broadcast</button>
+        <button class="btn-primary-custom w-100" onclick="sendNotif()"><i class="fas fa-bullhorn me-2"></i>Send Message</button>
       </div>
 
-      <div class="panel">
-        <div class="panel-title"><i class="fas fa-envelope-open-text" style="color:var(--accent2)"></i>Manual HR Alert</div>
-        <div class="mb-2">
-          <label class="form-label-sm">Employee</label>
-          <select class="form-ctrl" id="manualAlertEmp">
-            <option value="">— Select Employee —</option>
-            ${employees.map(e => `<option value="${e.user_id}">${e.name} (${e.role})</option>`).join('')}
+      <div class="panel" style="background: linear-gradient(145deg, rgba(255, 101, 132, 0.05), rgba(20, 20, 30, 0.6)); border-color: rgba(255, 101, 132, 0.3);">
+        <div class="panel-title"><i class="fas fa-envelope-open-text glow-accent" style="color:var(--accent2)"></i>System Direct Alert</div>
+        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1.25rem;">Dispatch a formal system alert directly to an employee's dashboard and email.</p>
+        
+        <div class="mb-3">
+          <label class="form-label-sm" style="color:var(--accent2); font-weight:800;">TARGET SPECIALIST</label>
+          <select class="form-ctrl" id="manualAlertEmp" style="border-radius:12px; border-color:rgba(255,101,132,0.2) !important;">
+            <option value="">— Select Recipient —</option>
+            ${employees.map(e => `<option value="${e.user_id}">${e.name} [${e.role}]</option>`).join('')}
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label-sm">Alert Reason / Message</label>
-          <textarea class="form-ctrl" id="manualAlertMsg" rows="3" placeholder="Performance warning, meeting request, etc."></textarea>
+        
+        <div class="mb-4">
+          <label class="form-label-sm" style="color:var(--muted); font-weight:800;">ALERT DISPATCH PAYLOAD</label>
+          <textarea class="form-ctrl" id="manualAlertMsg" rows="4" placeholder="Enter critical feedback or formal notice..." style="border-radius:12px; border-color:rgba(255,101,132,0.2) !important; font-size:0.85rem;"></textarea>
         </div>
-        <button class="btn-danger-custom w-100" onclick="sendManualAlert()"><i class="fas fa-exclamation-circle me-2"></i>Send Direct Alert</button>
+        
+        <button class="btn-primary-custom w-100" style="background:var(--accent2) !important; box-shadow: 0 10px 20px rgba(255,101,132,0.2) !important;" onclick="sendManualAlert()">
+          <i class="fas fa-paper-plane me-2"></i>DISPATCH DIRECT ALERT
+        </button>
       </div>
     </div>
 
     <div class="col-md-7">
       <div class="panel mb-3">
         <div class="panel-title"><i class="fas fa-user-clock" style="color:var(--accent4)"></i>Performance Alerts (Auto-suggested)</div>
-        <div style="max-height:200px;overflow-y:auto">
-          <table class="tbl">
+        <div>
+          <table class="tbl" style="min-width: unset;">
             <thead><tr><th>Employee</th><th>Score</th><th>Action</th></tr></thead>
             <tbody>${lowPerf.map(p => `
               <tr>
@@ -1335,7 +1386,7 @@ function renderAlerts() {
       </div>
       <div class="panel">
         <div class="panel-title"><i class="fas fa-history" style="color:var(--muted)"></i>Recent Communications</div>
-        <div id="recentNotifs" style="max-height:300px;overflow-y:auto">
+        <div id="recentNotifs">
           <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
         </div>
       </div>
@@ -1407,18 +1458,17 @@ async function loadRecentNotifs() {
   const res = await fetch('/api/notifications');
   const data = await res.json();
   const notifs = data.notifications || [];
-  document.getElementById('recentNotifs').innerHTML = notifs.reverse().map(n => `
-    <div class="notif-item ${n.type} mb-2">
-      <i class="fas fa-${n.type==='danger'?'exclamation-circle':n.type==='warning'?'exclamation-triangle':n.type==='success'?'check-circle':'info-circle'}"></i>
-      <div>
-        <div class="d-flex justify-content-between">
-          <strong>${n.from}</strong>
-          <small class="text-muted">${new Date(n.time).toLocaleTimeString()}</small>
+  document.getElementById('recentNotifs').innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.type || 'info'} mb-2" style="border-left: 4px solid var(--${n.type==='danger'?'accent2':n.type==='warning'?'accent4':n.type==='success'?'accent3':'accent'});">
+      <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 0 12px 12px 0;">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span style="font-weight:800; font-size:0.75rem; color:var(--text); text-transform:uppercase;">${n.sender || 'System'} <span style="font-weight:400; opacity:0.6; text-transform:none;">(${n.sender_role || 'user'})</span></span>
+          <small style="font-size:0.65rem; color:var(--muted); font-weight:700;">${new Date(n.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
-        <div style="font-size:.85rem">${n.message}</div>
+        <div style="font-size:0.85rem; line-height:1.4; color:var(--text);">${n.message || 'No content available.'}</div>
       </div>
     </div>
-  `).join('') || '<p class="text-center text-muted py-4">No recent notifications</p>';
+  `).join('') || '<div class="text-center py-5 text-muted"><p>No recent communications found</p></div>';
 }
 
 async function sendNotif() {
@@ -1438,10 +1488,13 @@ async function sendNotif() {
     target: finalTarget
   };
   
-  const res = await fetch('/api/hr/send-notification', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const res = await fetch('/api/notifications/send', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
   if((await res.json()).success) {
     document.getElementById('notifMsg').value = '';
+    showToast('Success', 'Notification transmitted successfully.');
     loadRecentNotifs();
+  } else {
+    showToast('Error', 'Failed to transmit message.', 'danger');
   }
 }
 
@@ -1485,20 +1538,54 @@ function fillPromForm(uid) {
 }
 
 async function bulkPromoScan() {
-  document.getElementById('bulkResults').innerHTML = '<div class="spinner-border text-primary" role="status"></div> Scanning...';
-  // Mocking bulk scan for now
+  const container = document.getElementById('bulkResults');
+  container.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-accent mb-3" style="width:3rem; height:3rem"></div>
+      <div style="font-family:'Syne'; font-weight:800; color:var(--accent); letter-spacing:2px">SCANNING NEURAL PROFILES...</div>
+    </div>`;
+    
   setTimeout(() => {
-    const eligible = employees.filter(e => e.experience > 2).slice(0, 5);
-    document.getElementById('bulkResults').innerHTML = eligible.map(e => `
-      <div class="notif-item success mb-2">
-        <i class="fas fa-check-circle"></i>
-        <div><strong>${e.name}</strong> (${e.role})<br><small>High eligibility based on experience and performance</small></div>
+    const eligible = employees.filter(e => e.experience >= 2).slice(0, 5);
+    if (eligible.length === 0) {
+      container.innerHTML = '<div class="text-center py-4 text-muted">No immediate candidates detected.</div>';
+      return;
+    }
+    
+    container.innerHTML = eligible.map((e, idx) => `
+      <div class="promo-card" style="animation: slideInRight ${0.3 + (idx*0.1)}s ease-out; background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%); border-radius: 20px; border: 1px solid var(--border); padding: 1.25rem; display: flex; align-items: center; gap: 1.25rem; transition: 0.3s; position: relative; cursor: pointer;" 
+           onmouseover="this.style.borderColor='var(--accent3)'; this.style.transform='translateX(10px)'; this.style.background='rgba(67,233,123,0.05)'" 
+           onmouseout="this.style.borderColor='var(--border)'; this.style.transform='translateX(0)'; this.style.background='rgba(255,255,255,0.03)'">
+        
+        <div style="width:50px; height:50px; border-radius:15px; background: linear-gradient(135deg, var(--accent3), #2ecc71); display: flex; align-items:center; justify-content:center; color:white; font-size:1.2rem; font-weight:800; flex-shrink:0; box-shadow: 0 8px 15px rgba(67,233,123,0.2);">
+          ${e.name[0]}
+        </div>
+        
+        <div style="flex:1">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start">
+            <div>
+              <div style="font-family:'Syne'; font-weight:800; font-size:1rem; color:white; margin-bottom:0.15rem">${e.name} <span style="font-size:0.7rem; color:var(--accent3); margin-left:0.5rem; font-weight:600">CERTIFIED</span></div>
+              <div style="font-size:0.75rem; color:var(--muted); font-weight:600">${e.role}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'Syne'; font-weight:800; color:var(--accent3); font-size:1.1rem">${Math.floor(Math.random()*15 + 85)}%</div>
+              <div style="font-size:0.6rem; color:var(--muted); font-weight:800; text-transform:uppercase">Match</div>
+            </div>
+          </div>
+          <div style="margin-top:0.75rem; font-size:0.75rem; color:var(--muted); line-height:1.4">
+            <i class="fas fa-brain me-2" style="color:var(--accent3)"></i>High eligibility based on experience and performance metrics.
+          </div>
+        </div>
+        
+        <div style="width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.8rem">
+          <i class="fas fa-chevron-right"></i>
+        </div>
       </div>`).join('');
-  }, 1000);
+  }, 1200);
 }
 
 function renderAIPerformance() {
-  document.getElementById('pageTitle').textContent = 'AI Performance & Promotion Module';
+  document.getElementById('pageTitle').textContent = 'AI Performance Analysis';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-3">
     <div class="col-md-4">
@@ -1694,6 +1781,79 @@ async function runFullAIAnalysis() {
     });
   }, 100);
 }
+
+async function renderProfile() {
+    document.getElementById('pageTitle').textContent = 'My Profile';
+    
+    // Fetch user profile data
+    const profile = await fetch('/api/profile').then(r => r.json());
+    const initial = (profile.name || '?')[0].toUpperCase();
+    const tfaEnabled = profile.two_factor_enabled;
+
+    document.getElementById('sectionContent').innerHTML = `
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="panel h-100 text-center">
+                <div class="mb-4" style="position:relative; display:inline-block;">
+                    <div style="width:120px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#fff;box-shadow:0 15px 35px var(--glow);margin:0 auto;">${initial}</div>
+                    <div style="position:absolute;bottom:-5px;right:-5px;width:36px;height:36px;border-radius:12px;background:var(--accent3);border:4px solid var(--surface);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8rem;"><i class="fas fa-check"></i></div>
+                </div>
+                <h3 style="font-family:'Syne';font-weight:800;margin-bottom:0.5rem;letter-spacing:-0.02em;">${profile.name}</h3>
+                <div class="badge-role badge-inprogress mb-4">${profile.role.toUpperCase()}</div>
+                
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:20px; padding:1.5rem; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <div style="font-weight:800; font-size:0.85rem; color:var(--text); font-family:'Syne';">Security Protocol</div>
+                        <span class="badge-role ${tfaEnabled ? 'badge-completed' : 'badge-high'}" style="font-size:0.6rem;">${tfaEnabled ? 'ENCRYPTED' : 'UNSECURED'}</span>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;">Two-factor authentication adds an extra layer of security to your HR administrative account.</p>
+                    <button class="btn-${tfaEnabled ? 'warning' : 'primary'}-custom w-100" onclick="${tfaEnabled ? 'disable2FA()' : 'open2FASetup()'}">
+                        <i class="fas fa-${tfaEnabled ? 'unlock' : 'shield-alt'} me-2"></i>${tfaEnabled ? 'DEACTIVATE 2FA' : 'ACTIVATE 2FA'}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="panel h-100">
+                <div class="panel-title"><i class="fas fa-id-badge glow-accent" style="color:var(--accent)"></i>Administrative Credentials</div>
+                <div class="row g-4">
+                    ${[
+                        ['Full Name', profile.name],
+                        ['Job Role', profile.role],
+                        ['Employee ID', profile.user_id],
+                        ['Access Level', 'HR Administrator'],
+                        ['Department', profile.department || 'Human Resources'],
+                        ['Account Status', profile.status || 'Active']
+                    ].map(([label, value]) => `
+                        <div class="col-md-6">
+                            <div style="background:rgba(0,0,0,0.1); border:1px solid var(--border); border-radius:18px; padding:1.25rem;">
+                                <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem; letter-spacing:0.05em;">${label}</div>
+                                <div style="font-weight:700; color:var(--text); font-size:1rem;">${value}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    <div class="col-12">
+                        <div style="background:rgba(108,99,255,0.05); border:1px solid rgba(108,99,255,0.1); border-radius:20px; padding:1.5rem;">
+                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                                <div style="width:40px; height:40px; background:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff;"><i class="fas fa-shield-alt"></i></div>
+                                <div style="font-weight:800; font-family:'Syne';">HR Authorization Status</div>
+                            </div>
+                            <p style="font-size:0.85rem; color:var(--muted); line-height:1.6;">Your account has full administrative privileges for personnel management, payroll processing, and system-wide performance analytics. Ensure 2FA is active to prevent unauthorized access to sensitive employee data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// Global refresh alias for 2FA updates
+window.refreshActivity = () => {
+    if (document.querySelector('[data-section="profile"]').classList.contains('active')) {
+        renderProfile();
+    }
+};
 
 runWhenReady(init);
 </script>

@@ -7,14 +7,15 @@
 <a class="nav-item active" data-section="overview" onclick="navigate('overview')"><i class="fas fa-th-large"></i>Overview</a>
 <a class="nav-item" data-section="team" onclick="navigate('team')"><i class="fas fa-users"></i>My Team</a>
 <a class="nav-item" data-section="tasks" onclick="navigate('tasks')"><i class="fas fa-tasks"></i>Task Manager</a>
-<a class="nav-item" data-section="ai-assign" onclick="navigate('ai-assign')"><i class="fas fa-robot"></i>AI Smart Assign</a>
+<a class="nav-item" data-section="ai-assign" onclick="navigate('ai-assign')"><i class="fas fa-robot"></i>AI Task Assignment</a>
 <span class="nav-section">Monitoring</span>
 <a class="nav-item" data-section="monitoring" onclick="navigate('monitoring')"><i class="fas fa-chart-line"></i>Task Monitoring</a>
-<a class="nav-item" data-section="freshers" onclick="navigate('freshers')"><i class="fas fa-user-graduate"></i>Fresher Tasks</a>
-<a class="nav-item" data-section="scores" onclick="navigate('scores')"><i class="fas fa-star"></i>Update Scores</a>
+<a class="nav-item" data-section="freshers" onclick="navigate('freshers')"><i class="fas fa-user-graduate"></i>New Member Tasks</a>
+<a class="nav-item" data-section="scores" onclick="navigate('scores')"><i class="fas fa-star"></i>Member Scores</a>
 <span class="nav-section">Team Administration</span>
 <a class="nav-item" data-section="leaves" onclick="navigate('leaves')"><i class="fas fa-calendar-times"></i>Team Leaves</a>
 <a class="nav-item" data-section="profile" onclick="navigate('profile')"><i class="fas fa-user-circle"></i>My Profile</a>
+<a class="nav-item" data-section="notifications" onclick="navigate('notifications')"><i class="fas fa-bell"></i>Notifications</a>
 {% endblock %}
 
 {% block content %}
@@ -25,7 +26,7 @@
   <div class="modal-box">
     <div class="modal-header-custom">
       <span class="modal-title-custom">Create New Task</span>
-      <button class="modal-close" onclick="hideModal('createTaskModal')">✕</button>
+      <button class="modal-close" onclick="hideModal('createTaskModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="mb-3"><label class="form-label-sm">Task Title</label><input class="form-ctrl" id="tTask" placeholder="e.g., Build Auth Module"></div>
     <div class="mb-3"><label class="form-label-sm">Description</label><textarea class="form-ctrl" id="tDesc" rows="2" placeholder="Task details..."></textarea></div>
@@ -47,7 +48,7 @@
   <div class="modal-box" style="width:400px">
     <div class="modal-header-custom">
       <span class="modal-title-custom">Update Team Project</span>
-      <button class="modal-close" onclick="hideModal('updateProjectModal')">✕</button>
+      <button class="modal-close" onclick="hideModal('updateProjectModal')" title="Close"><i class="fas fa-times"></i></button>
     </div>
     <input type="hidden" id="pTeamId">
     <div class="mb-3"><label class="form-label-sm">Project Status</label>
@@ -61,7 +62,18 @@
 
 {% block scripts %}
 <script>
-const SECTIONS = {overview:renderOverview,team:renderTeam,tasks:renderTasks,'ai-assign':renderAIAssign,monitoring:renderMonitoring,freshers:renderFreshers,scores:renderScores,leaves:renderLeaves,profile:renderMyProfile};
+const SECTIONS = {
+  overview: renderOverview,
+  team: renderTeam,
+  tasks: renderTasks,
+  'ai-assign': renderAIAssign,
+  monitoring: renderMonitoring,
+  freshers: renderFreshers,
+  scores: renderScores,
+  leaves: renderLeaves,
+  profile: renderMyProfile,
+  notifications: renderNotifications
+};
 window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 let teamData=[], taskData=[], leaveData=[], taskStats=[], teamInfo={};
 
@@ -108,7 +120,7 @@ async function init() {
       sectionContent.innerHTML = `
         <div class="panel text-center py-5">
           <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-          <h4>Mobile Load Error</h4>
+          <h4>Dashboard Load Error</h4>
           <p class="text-muted">Data failed to load. Please check your connection.</p>
           <button class="btn-primary-custom" onclick="location.reload()">Retry Now</button>
         </div>`;
@@ -117,68 +129,149 @@ async function init() {
 }
 
 function renderMyProfile() {
-  document.getElementById('pageTitle').textContent = 'Commander Profile';
+  document.getElementById('pageTitle').textContent = 'My Profile';
   const s = sessionData;
-  document.getElementById('sectionContent').innerHTML = `
-  <div class="row g-4">
-    <div class="col-lg-4">
-      <div class="panel text-center h-100">
-        <div style="position:relative; width:120px; height:120px; margin:0 auto 2rem">
-          <div style="width:100%; height:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:32px; display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800; color:#fff; box-shadow:0 15px 35px var(--glow); position:relative; z-index:2">${s.name[0]}</div>
-          <div style="position:absolute; inset:-10px; background:var(--glow); filter:blur(20px); opacity:0.5; border-radius:40px; z-index:1"></div>
-        </div>
-        <h3 style="font-family:'Syne'; font-weight:800; margin-bottom:0.5rem">${s.name}</h3>
-        <div class="badge-role badge-inprogress" style="margin-bottom:1.5rem">${s.role.toUpperCase()}</div>
-        
-        <div style="background:rgba(255,255,255,0.03); border-radius:20px; padding:1.25rem; border:1px solid var(--border)">
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem">
-            <span style="font-size:0.8rem; color:var(--muted)">Sector</span>
-            <span style="font-size:0.8rem; font-weight:700; color:var(--accent3)">Operational</span>
+  
+  // Fetch latest profile to get 2FA status
+  fetch('/api/profile').then(r=>r.json()).then(profile => {
+    const tfaEnabled = profile.two_factor_enabled;
+    const initial = (profile.name || s.name || '?')[0].toUpperCase();
+
+    document.getElementById('sectionContent').innerHTML = `
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="panel text-center h-100">
+          <div style="position:relative; width:120px; height:120px; margin:0 auto 2rem">
+            <div style="width:100%; height:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:32px; display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800; color:#fff; box-shadow:0 15px 35px var(--glow); position:relative; z-index:2">${initial}</div>
+            <div style="position:absolute; inset:-10px; background:var(--glow); filter:blur(20px); opacity:0.5; border-radius:40px; z-index:1"></div>
           </div>
-          <div style="display:flex; justify-content:space-between">
-            <span style="font-size:0.8rem; color:var(--muted)">Authorization</span>
-            <span style="font-size:0.8rem; font-weight:700; color:var(--accent4)">Level 04</span>
+          <h3 style="font-family:'Syne'; font-weight:800; margin-bottom:0.5rem">${profile.name || s.name}</h3>
+          <div class="badge-role badge-inprogress" style="margin-bottom:1.5rem">${profile.role.toUpperCase()}</div>
+          
+          <div style="background:rgba(255,255,255,0.03); border-radius:20px; padding:1.25rem; border:1px solid var(--border); margin-bottom:1.5rem">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem">
+              <span style="font-size:0.8rem; color:var(--muted)">Department</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--accent3)">Operational</span>
+            </div>
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-size:0.8rem; color:var(--muted)">Access Level</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--accent4)">Manager</span>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:20px; padding:1.5rem; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <div style="font-weight:800; font-size:0.85rem; color:var(--text); font-family:'Syne';">Cyber Security</div>
+              <span class="badge-role ${tfaEnabled ? 'badge-completed' : 'badge-high'}" style="font-size:0.6rem;">${tfaEnabled ? 'ACTIVE' : 'INSECURE'}</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;">Two-factor authentication adds an extra layer of security to your team leader account.</p>
+            <button class="btn-${tfaEnabled ? 'warning' : 'primary'}-custom w-100" onclick="${tfaEnabled ? 'disable2FA()' : 'open2FASetup()'}">
+              <i class="fas fa-${tfaEnabled ? 'unlock' : 'shield-alt'} me-2"></i>${tfaEnabled ? 'DEACTIVATE 2FA' : 'ACTIVATE 2FA'}
+            </button>
           </div>
         </div>
       </div>
-    </div>
-    
-    <div class="col-lg-8">
-      <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-id-card glow-accent"></i>Commander Credentials</div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:2rem">
-            <div style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:20px; border:1px solid var(--border)">
-              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:0.5rem">Full Designation</div>
-              <div style="font-weight:700; font-size:1.1rem">${s.name}</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:20px; border:1px solid var(--border)">
-              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:0.5rem">Neural Link Address</div>
-              <div style="font-weight:700; font-size:1.1rem; color:var(--accent)">${s.email}</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:20px; border:1px solid var(--border)">
-              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:0.5rem">System Role</div>
-              <div style="font-weight:700; font-size:1.1rem; color:var(--accent4)">Team Leader</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:20px; border:1px solid var(--border)">
-              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:0.5rem">Security Status</div>
-              <div style="font-weight:700; font-size:1.1rem; color:var(--accent3)">Synchronized</div>
-            </div>
-        </div>
-        
-        <div class="mt-5" style="background:linear-gradient(90deg, rgba(108,99,255,0.05), transparent); padding:2rem; border-radius:24px; border:1px solid var(--border)">
-          <div style="display:flex; align-items:center; gap:1.5rem">
-            <div style="width:50px; height:50px; background:var(--accent); border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem">
-              <i class="fas fa-shield-alt"></i>
-            </div>
-            <div>
-              <div style="font-weight:800; font-family:'Syne'; font-size:1.1rem">Security Management</div>
-              <p style="margin:0; font-size:0.85rem; color:var(--muted)">Your access is currently verified via Neural Auth. Last sync: ${new Date().toLocaleTimeString()}</p>
-            </div>
+      <div class="col-lg-8">
+        <div class="panel h-100">
+          <div class="panel-title"><i class="fas fa-microchip glow-accent"></i>Leadership Identity & Credentials</div>
+          <div class="row g-4">
+            ${[
+              ['Full Name', profile.name || s.name],
+              ['Email Station', profile.email || s.email],
+              ['Manager ID', profile.user_id || s.user_id],
+              ['Division', 'Team Leadership'],
+              ['Operational Status', 'ACTIVE']
+            ].map(([l,v])=>`
+              <div class="col-md-6">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:18px; padding:1.25rem;">
+                  <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:0.5rem; letter-spacing:0.05em">${l}</div>
+                  <div style="font-weight:700; color:var(--text); font-size:1rem">${v}</div>
+                </div>
+              </div>`).join('')}
           </div>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+
+// Global refresh alias for 2FA updates
+window.refreshActivity = () => {
+    if (document.querySelector('[data-section="profile"]').classList.contains('active')) {
+        renderMyProfile();
+    }
+};
+
+function renderNotifications() {
+  document.getElementById('pageTitle').textContent = 'Team Notifications';
+  document.getElementById('sectionContent').innerHTML = `
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-paper-plane" style="color:var(--accent)"></i>Contact HR / Management</div>
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem;">Communicate directly with HR or broadcast a message to your team members.</p>
+        <div class="mb-3">
+          <label class="form-label-sm">Recipients</label>
+          <select class="form-ctrl" id="tlNotifTarget">
+            <option value="employee">My Team Members</option>
+            <option value="hr">HR Managers</option>
+            <option value="all">Everyone (System-wide)</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label-sm">Message</label>
+          <textarea class="form-ctrl" id="tlNotifMsg" rows="4" placeholder="Enter message..."></textarea>
+        </div>
+        <button class="btn-primary-custom w-100" onclick="sendTLNotif()">
+          <i class="fas fa-paper-plane me-2"></i>SEND MESSAGE
+        </button>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="panel">
+        <div class="panel-title"><i class="fas fa-history" style="color:var(--accent2)"></i>Message History</div>
+        <div id="tlNotifList">
+           <div class="text-center py-5 text-muted">Loading messages...</div>
         </div>
       </div>
     </div>
   </div>`;
+  loadTLNotifs();
+}
+
+async function loadTLNotifs() {
+  const res = await fetch('/api/notifications');
+  const data = await res.json();
+  const notifs = data.notifications || [];
+  
+  document.getElementById('tlNotifList').innerHTML = notifs.map(n => `
+    <div class="mb-3" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:1rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <span style="font-weight:800; font-size:0.75rem; color:var(--accent)">${(n.sender || 'System').toUpperCase()} <small style="font-weight:400; color:var(--muted)">(${n.sender_role || 'user'})</small></span>
+        <small style="color:var(--muted); font-size:0.65rem;">${new Date(n.time).toLocaleTimeString()}</small>
+      </div>
+      <div style="font-size:0.85rem; color:var(--text)">${n.message || 'No content available.'}</div>
+    </div>
+  `).join('') || '<div class="text-center py-5 text-muted">No messages found.</div>';
+}
+
+async function sendTLNotif() {
+  const msg = document.getElementById('tlNotifMsg').value.trim();
+  const target = document.getElementById('tlNotifTarget').value;
+  if(!msg) return showToast('Error', 'Please enter a message content.', 'danger');
+  
+  const res = await fetch('/api/notifications/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg, target: target })
+  });
+  if((await res.json()).success) {
+    showToast('Success', 'Message transmitted successfully.');
+    document.getElementById('tlNotifMsg').value = '';
+    loadTLNotifs();
+  } else {
+    showToast('Error', 'Failed to transmit message.', 'danger');
+  }
 }
 
 function renderOverview() {
@@ -194,7 +287,7 @@ function renderOverview() {
         <div>
           <div class="label">Total Members</div>
           <div class="value">${teamData.length}</div>
-          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Active Roster</div>
+          <div style="font-size:0.75rem;color:var(--muted);font-weight:600">Active Members</div>
         </div>
       </div>
     </div>
@@ -261,7 +354,7 @@ function renderOverview() {
                 </div>
                 
                 ${t.project_name ? `
-                <button class="btn-primary-custom w-100" onclick="showModal('updateProjectModal'); document.getElementById('pStatus').value='${t.project_status || 'In Progress'}'; document.getElementById('pComp').value=${t.project_completion || 0}; document.getElementById('pTeamId').value='${t.id}';" style="padding:0.7rem; font-size:0.8rem"><i class="fas fa-sync-alt me-2"></i>Update Telemetry</button>
+                <button class="btn-primary-custom w-100" onclick="showModal('updateProjectModal'); document.getElementById('pStatus').value='${t.project_status || 'In Progress'}'; document.getElementById('pComp').value=${t.project_completion || 0}; document.getElementById('pTeamId').value='${t.id}';" style="padding:0.7rem; font-size:0.8rem"><i class="fas fa-sync-alt me-2"></i>Update Progress</button>
                 ` : ''}
               </div>
             </div>
@@ -339,7 +432,7 @@ function renderOverview() {
 }
 
 function renderTeam() {
-  document.getElementById('pageTitle').textContent = 'Strategic Roster';
+  document.getElementById('pageTitle').textContent = 'My Team';
   
   const grouped = {};
   teamInfo.forEach(t => grouped[t.id] = { name: t.name, members: [] });
@@ -362,14 +455,14 @@ function renderTeam() {
     html += `
     <div class="panel mb-4">
       <div class="panel-title" style="justify-content:space-between">
-        <span><i class="fas fa-users glow-accent"></i> ${group.name} <span style="font-size:0.8rem; color:var(--muted); margin-left:0.5rem">| ${group.members.length} Units</span></span>
-        <button class="btn-primary-custom" onclick="showModal('createTaskModal');populateAssignSelect();" style="font-size:0.75rem; padding:0.6rem 1.2rem"><i class="fas fa-plus me-1"></i>New Deployment</button>
+        <span><i class="fas fa-users glow-accent"></i> ${group.name} <span style="font-size:0.8rem; color:var(--muted); margin-left:0.5rem">| ${group.members.length} Members</span></span>
+        <button class="btn-primary-custom" onclick="showModal('createTaskModal');populateAssignSelect();" style="font-size:0.75rem; padding:0.6rem 1.2rem"><i class="fas fa-plus me-1"></i>New Task</button>
       </div>
       <div class="row g-4">
       ${group.members.map(e => `
         <div class="col-xl-4 col-md-6">
           <div style="background:var(--card2); border:1px solid ${(e.productivity_score < 50 || e.task_completion < 40)?'rgba(255,101,132,.5)':'var(--border)'}; border-radius:24px; padding:1.5rem; position:relative; transition:0.3s;" class="h-100">
-            ${(e.productivity_score < 50 || e.task_completion < 40) ? '<div style="position:absolute; top:15px; right:15px; color:var(--accent2); font-size:1.2rem; animation:pulse 2s infinite" title="Critical Performance Alert!"><i class="fas fa-exclamation-triangle"></i></div>' : ''}
+            ${(e.productivity_score < 50 || e.task_completion < 40) ? '<div style="position:absolute; top:15px; right:15px; color:var(--accent2); font-size:1.2rem; animation:pulse 2s infinite" title="Low Performance Alert!"><i class="fas fa-exclamation-triangle"></i></div>' : ''}
             
             <div style="display:flex; align-items:center; gap:1.25rem; margin-bottom:1.5rem">
               <div style="width:56px; height:56px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:800; color:#fff; box-shadow:0 6px 15px var(--glow)">${e.name[0]}</div>
@@ -399,7 +492,7 @@ function renderTeam() {
             
             <div style="display:flex; gap:0.75rem">
               <button class="btn-primary-custom flex-grow-1" onclick="showModal('createTaskModal');populateAssignSelect();document.getElementById('tAssign').value='${e.user_id}';" style="font-size:0.7rem; padding:0.6rem; border-radius:12px"><i class="fas fa-plus-circle me-1"></i>Task</button>
-              <button class="btn-primary-custom flex-grow-1" onclick="viewMemberTasks('${e.user_id}', '${e.name}')" style="font-size:0.7rem; padding:0.6rem; border-radius:12px; background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important; box-shadow:none"><i class="fas fa-eye me-1"></i>Inspect</button>
+              <button class="btn-primary-custom flex-grow-1" onclick="viewMemberTasks('${e.user_id}', '${e.name}')" style="font-size:0.7rem; padding:0.6rem; border-radius:12px; background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important; box-shadow:none"><i class="fas fa-eye me-1"></i>View Tasks</button>
             </div>
           </div>
         </div>
@@ -409,7 +502,7 @@ function renderTeam() {
   }
   
   if (html === '') {
-    html = `<div class="panel text-center py-5"><i class="fas fa-users-slash fa-3x mb-3 text-muted"></i><p style="color:var(--muted); font-weight:700">No team members synchronized.</p></div>`;
+    html = `<div class="panel text-center py-5"><i class="fas fa-users-slash fa-3x mb-3 text-muted"></i><p style="color:var(--muted); font-weight:700">No team members assigned.</p></div>`;
   }
 
   if (!document.getElementById('memberTasksModal')) {
@@ -417,8 +510,8 @@ function renderTeam() {
     <div class="modal-custom" id="memberTasksModal">
       <div class="modal-box" style="width:650px; border-top:4px solid var(--accent)">
         <div class="modal-header-custom mb-4">
-          <span class="modal-title-custom" id="memberTasksTitle" style="font-family:'Syne'; font-weight:800">Unit Tasks</span>
-          <button class="modal-close" onclick="hideModal('memberTasksModal')">✕</button>
+          <span class="modal-title-custom" id="memberTasksTitle" style="font-family:'Syne'; font-weight:800">Team Member Tasks</span>
+          <button class="modal-close" onclick="hideModal('memberTasksModal')" title="Close"><i class="fas fa-times"></i></button>
         </div>
         <div id="memberTasksList" style="max-height:450px; overflow-y:auto; padding-right:0.5rem" class="custom-scroll"></div>
       </div>
@@ -458,7 +551,7 @@ window.viewMemberTasks = function(uid, name) {
 
 
 function renderTasks() {
-  document.getElementById('pageTitle').textContent = 'Strategic Task Hub';
+  document.getElementById('pageTitle').textContent = 'Task Manager';
   
   const augmentedTasks = taskData.map(t => {
     const emp = teamData.find(e => e.user_id === t.assigned_to);
@@ -473,12 +566,12 @@ function renderTasks() {
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
     <div class="panel-title" style="justify-content:space-between">
-      <span><i class="fas fa-microchip glow-accent"></i>Global Deployment Tracker</span>
+      <span><i class="fas fa-microchip glow-accent"></i>Task Tracker</span>
       <button class="btn-primary-custom" onclick="showModal('createTaskModal');populateAssignSelect()" style="font-size:0.75rem; padding:0.6rem 1.2rem"><i class="fas fa-plus me-1"></i>New Task</button>
     </div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Objective</th><th>Assigned Team</th><th>Specialist</th><th>Priority</th><th>Deadline</th><th>Status</th><th>Telemetry</th></tr></thead>
+        <thead><tr><th>Task Name</th><th>Team</th><th>Assigned To</th><th>Priority</th><th>Deadline</th><th>Status</th><th>Progress</th></tr></thead>
         <tbody>${augmentedTasks.map(t=>{
           const days = Math.ceil((new Date(t.deadline)-new Date())/86400000);
           return `<tr>
@@ -496,7 +589,7 @@ function renderTasks() {
             <td><span class="badge-role badge-${t.priority.toLowerCase()}" style="font-size:0.65rem">${t.priority}</span></td>
             <td>
               <div style="font-weight:700; color:${days<2?'var(--accent2)':days<5?'var(--accent4)':'var(--text)'}">${t.deadline}</div>
-              <div style="font-size:0.7rem; color:var(--muted)">${days>0?days+' cycles left':days<0?'Critical Delay':'Sync Today'}</div>
+              <div style="font-size:0.7rem; color:var(--muted)">${days>0?days+' days left':days<0?'Late':'Due Today'}</div>
             </td>
             <td><span class="badge-role badge-${t.status.replace(' ','').toLowerCase()}" style="font-size:0.65rem">${t.status}</span></td>
             <td>
@@ -513,13 +606,13 @@ function renderTasks() {
 }
 
 function renderAIAssign() {
-  document.getElementById('pageTitle').textContent = 'AI Strategy Engine';
+  document.getElementById('pageTitle').textContent = 'AI Task Assignment';
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-robot glow-accent"></i>Unit Recommendation Engine</div>
-        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem">Enter required skill parameters to identify the most efficient unit for deployment.</p>
+        <div class="panel-title"><i class="fas fa-robot glow-accent"></i>AI Task Suggestions</div>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem">Enter required skills to identify the best team member for the task.</p>
         
         <div class="mb-4">
           <label class="form-label-sm" style="color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; font-size:0.65rem">Required Capability Tags</label>
@@ -527,7 +620,7 @@ function renderAIAssign() {
         </div>
         
         <button class="btn-primary-custom w-100" onclick="aiSuggest()" style="padding:1rem; border-radius:14px">
-          <i class="fas fa-microchip me-2"></i>Execute Analysis
+          <i class="fas fa-microchip me-2"></i>Analyze Skills
         </button>
         
         <div id="aiResults" style="margin-top:2rem"></div>
@@ -536,12 +629,12 @@ function renderAIAssign() {
     
     <div class="col-lg-7">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fas fa-brain glow-accent"></i>Neural Mapping Logic</div>
+        <div class="panel-title"><i class="fas fa-brain glow-accent"></i>AI Suggestion Logic</div>
         <div style="display:flex; flex-direction:column; gap:1rem">
-          ${[['Capability Matching','Compares deployment requirements against unit skill matrices with 98% precision.'],
-             ['Load Balancing','Analyzes active task density to prevent unit burnout and ensure optimal velocity.'],
-             ['Historical Performance','Integrates past calibration scores to prioritize high-efficiency units.'],
-             ['Predictive Success','Calculates a composite success probability based on multidimensional data.']].map(([t,d])=>`
+          ${[['Skill Matching','Compares task requirements against team member skills.'],
+             ['Load Balancing','Analyzes active tasks to prevent team member burnout.'],
+             ['Historical Performance','Uses past performance scores to find the best candidate.'],
+             ['Success Prediction','Calculates the probability of task success.']].map(([t,d])=>`
             <div style="background:var(--card2); border:1px solid var(--border); border-radius:18px; padding:1.25rem; display:flex; gap:1.25rem; align-items:flex-start">
               <div style="width:40px; height:40px; background:rgba(108,99,255,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0">
                 <i class="fas fa-check-circle" style="font-size:1.1rem"></i>
@@ -562,21 +655,21 @@ async function aiSuggest() {
   if(!skills.length){return showToast('Parameters Missing', 'Please enter required capability tags.', 'warning');}
   
   const resultsDiv = document.getElementById('aiResults');
-  resultsDiv.innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-accent mb-2"></div><div style="font-size:0.75rem; color:var(--muted); font-weight:800; text-transform:uppercase">Running Neural Match...</div></div>`;
+  resultsDiv.innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-accent mb-2"></div><div style="font-size:0.75rem; color:var(--muted); font-weight:800; text-transform:uppercase">Analyzing Team Members...</div></div>`;
   
   const res = await fetch('/api/tl/ai-suggest-employee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({required_skills:skills})});
   const suggestions = await res.json();
   
   resultsDiv.innerHTML = `
   <div style="animation:fadeIn 0.5s ease">
-    <div style="font-size:0.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:1rem">Recommended Deployments</div>
+    <div style="font-size:0.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:1rem">Recommended Members</div>
     ${suggestions.map((s,i)=>`
     <div style="background:var(--surface); border:1px solid ${i===0?'var(--accent)':'var(--border)'}; border-radius:16px; padding:1.25rem; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden">
       ${i===0 ? '<div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent)"></div>' : ''}
       <div>
         <div style="font-weight:800; font-family:'Syne'; font-size:1rem">${i===0?'🥇':i===1?'🥈':'🥉'} ${s.name}</div>
         <div style="font-size:0.75rem; color:var(--muted); margin-top:0.3rem">
-          Load: <span style="color:var(--text); font-weight:700">${s.current_workload} Objectives</span> | Perf: <span style="color:var(--accent3); font-weight:700">${s.performance_score}%</span>
+          Load: <span style="color:var(--text); font-weight:700">${s.current_workload} Tasks</span> | Perf: <span style="color:var(--accent3); font-weight:700">${s.performance_score}%</span>
         </div>
       </div>
       <div style="text-align:right">
@@ -588,7 +681,7 @@ async function aiSuggest() {
 }
 
 function renderMonitoring() {
-  document.getElementById('pageTitle').textContent = 'Objective Monitoring';
+  document.getElementById('pageTitle').textContent = 'Task Monitoring';
   const overdue = taskData.filter(t=>t.status!=='Completed'&&new Date(t.deadline)<new Date());
   document.getElementById('sectionContent').innerHTML = `
   ${overdue.length?`
@@ -596,14 +689,14 @@ function renderMonitoring() {
       <div style="display:flex; align-items:center; gap:1rem; color:var(--accent2)">
         <i class="fas fa-exclamation-triangle fa-2x"></i>
         <div>
-          <div style="font-weight:800; font-family:'Syne'; font-size:1.1rem">CRITICAL DELAYS DETECTED</div>
-          <div style="font-size:0.85rem; font-weight:600">${overdue.length} objectives have exceeded their allocated timeframes.</div>
+          <div style="font-weight:800; font-family:'Syne'; font-size:1.1rem">LATE TASKS DETECTED</div>
+          <div style="font-size:0.85rem; font-weight:600">${overdue.length} tasks have exceeded their deadlines.</div>
         </div>
       </div>
     </div>`:''}
     
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-satellite-dish glow-accent"></i>Live Objective Telemetry</div>
+    <div class="panel-title"><i class="fas fa-satellite-dish glow-accent"></i>Real-time Task Progress</div>
     <div class="row g-3">
       ${taskData.map(t=>{
         const emp = teamData.find(e=>e.user_id===t.assigned_to);
@@ -642,7 +735,7 @@ function renderMonitoring() {
 }
 
 function renderFreshers() {
-  document.getElementById('pageTitle').textContent = 'Talent Incubation';
+  document.getElementById('pageTitle').textContent = 'New Team Members';
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
   
@@ -655,8 +748,8 @@ function renderFreshers() {
 
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-seedling glow-accent"></i>Unit Onboarding & Development</div>
-    ${freshers.length===0?'<div class="text-center py-5"><i class="fas fa-user-graduate fa-3x mb-3 opacity-20"></i><p style="color:var(--muted); font-weight:700">No active incubation units in this sector.</p></div>':''}
+    <div class="panel-title"><i class="fas fa-seedling glow-accent"></i>New Member Training</div>
+    ${freshers.length===0?'<div class="text-center py-5"><i class="fas fa-user-graduate fa-3x mb-3 opacity-20"></i><p style="color:var(--muted); font-weight:700">No new members found.</p></div>':''}
     <div class="row g-4">
       ${freshers.map(f=>{
         const ftasks = taskData.filter(t=>t.assigned_to===f.user_id);
@@ -668,7 +761,7 @@ function renderFreshers() {
               <div style="display:flex; align-items:center; gap:1rem">
                 <div style="width:48px; height:48px; background:linear-gradient(135deg, var(--accent3), var(--accent)); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; color:#fff">${f.name[0]}</div>
                 <div>
-                  <div style="font-weight:800; font-family:'Syne'">${f.name} ${isNew ? '<span class="badge-role badge-inprogress" style="font-size:0.6rem; padding:0.1rem 0.4rem; margin-left:0.5rem">NEW UNIT</span>' : ''}</div>
+                  <div style="font-weight:800; font-family:'Syne'">${f.name} ${isNew ? '<span class="badge-role badge-inprogress" style="font-size:0.6rem; padding:0.1rem 0.4rem; margin-left:0.5rem">NEW MEMBER</span>' : ''}</div>
                   <div style="font-size:0.75rem; color:var(--muted)">Joined ${f.joining_date} | ${f.experience}y Exp</div>
                 </div>
               </div>
@@ -676,7 +769,7 @@ function renderFreshers() {
             </div>
             
             <div style="background:rgba(0,0,0,0.2); border-radius:16px; padding:1.25rem">
-              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:1rem">Training Trajectory</div>
+              <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; margin-bottom:1rem">Training Progress</div>
               ${ftasks.filter(t=>t.title.includes('[FRESHER]')).length === 0 ? '<div style="font-size:0.8rem; color:var(--muted); font-style:italic">No training tasks active.</div>' : ''}
               ${ftasks.map(t=>`
                 <div style="margin-bottom:0.75rem">
@@ -708,10 +801,10 @@ async function autoAssignFresherTask(uid, name) {
 }
 
 function renderScores() {
-  document.getElementById('pageTitle').textContent = 'Performance Metrics';
+  document.getElementById('pageTitle').textContent = 'Member Performance';
   document.getElementById('sectionContent').innerHTML = `
   <div class="panel">
-    <div class="panel-title"><i class="fas fa-chart-line glow-accent"></i>Employee Performance Calibration</div>
+    <div class="panel-title"><i class="fas fa-chart-line glow-accent"></i>Rate Team Members</div>
     <div class="row g-4">
       ${teamData.map(e => `
         <div class="col-xl-4 col-md-6">
@@ -737,11 +830,11 @@ function renderScores() {
             </div>
 
             <div class="mb-4">
-              <label class="form-label-sm" style="color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; font-size:0.65rem">Strategic Feedback</label>
-              <textarea class="form-ctrl" id="feedback_${e.user_id}" rows="2" placeholder="Analyze unit performance..." style="font-size:0.85rem; padding:0.75rem; border-radius:12px"></textarea>
+              <label class="form-label-sm" style="color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:800; font-size:0.65rem">Performance Feedback</label>
+              <textarea class="form-ctrl" id="feedback_${e.user_id}" rows="2" placeholder="Enter comments here..." style="font-size:0.85rem; padding:0.75rem; border-radius:12px"></textarea>
             </div>
             
-            <button class="btn-primary-custom w-100" onclick="saveRating('${e.user_id}')" style="padding:0.75rem; font-size:0.8rem; border-radius:12px"><i class="fas fa-save me-2"></i>Calibrate Score</button>
+            <button class="btn-primary-custom w-100" onclick="saveRating('${e.user_id}')" style="padding:0.75rem; font-size:0.8rem; border-radius:12px"><i class="fas fa-save me-2"></i>Save Rating</button>
           </div>
         </div>
       `).join('')}
@@ -788,7 +881,7 @@ async function saveRating(uid) {
 }
 
 function renderLeaves() {
-  document.getElementById('pageTitle').textContent = 'Absence Governance';
+  document.getElementById('pageTitle').textContent = 'Team Leave Requests';
   const pending = leaveData.filter(l=>l.status==='Pending').length;
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4 mb-4">
