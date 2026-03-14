@@ -603,6 +603,7 @@ def disable_2fa():
         return jsonify({'success': True, 'message': '2FA has been disabled'})
         
     return jsonify({'success': False, 'message': 'User not found'}), 404
+@app.route('/api/employee/attendance-history')
 @login_required(roles=['employee', 'teamleader', 'hr', 'admin'])
 def get_attendance_history():
     db = get_db_data()

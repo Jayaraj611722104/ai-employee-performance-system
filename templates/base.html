@@ -109,7 +109,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink)
 }
 .menu-toggle { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); width: 44px; height: 44px; border-radius: 14px; align-items: center; justify-content: center; cursor: pointer; display: none; transition: .3s; }
 .menu-toggle:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 5px 15px var(--glow); }
-.topbar h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.5rem; margin:0; letter-spacing: -0.03em; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.topbar h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.5rem; margin:0; letter-spacing: -0.03em; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* --- Advanced Components --- */
 .page-content { padding: 2.5rem; width: 100%; flex: 1; animation: slideUp 0.7s cubic-bezier(0.23, 1, 0.32, 1); }
@@ -120,7 +120,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink)
 .sidebar-brand .logo { width:48px; height:48px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; color:#fff; box-shadow: 0 10px 25px var(--glow); position: relative; overflow: hidden; }
 .sidebar-brand .logo::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent); transform: rotate(45deg); animation: shine 3s infinite; }
 @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
-.sidebar-brand h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; letter-spacing: -0.02em; }
+.sidebar-brand h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin:0; letter-spacing: -0.02em; }
 
 .sidebar-nav { flex:1; overflow-y:auto; padding:1.5rem 0; }
 .nav-section { display: block; padding: 1.5rem 1.8rem 0.6rem; font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.6; }
