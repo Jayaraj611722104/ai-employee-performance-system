@@ -1,0 +1,14 @@
+templates/admin_dashboard.html:    if (i && i.classList) i.classList.remove('active');
+templates/admin_dashboard.html:  if(el && el.classList) el.classList.add('active');
+templates/base.html:  const isVisible = sidebar.classList.toggle('show');
+templates/base.html:  overlay.classList.toggle('show');
+templates/base.html:    if (n && n.classList) n.classList.remove('active');
+templates/base.html:  if (el && el.classList) el.classList.add('active');
+templates/base.html:    if(sidebar && sidebar.classList && sidebar.classList.contains('show')) {
+templates/base.html:      sidebar.classList.remove('show');
+templates/base.html:      if (overlay && overlay.classList) overlay.classList.remove('show');
+templates/base.html:  if (el && el.classList) el.classList.add('show');
+templates/base.html:  if (el && el.classList) el.classList.remove('show');
+templates/teamleader_dashboard.html:    if (!star || !star.classList) continue;
+templates/teamleader_dashboard.html:      star.classList.replace('far', 'fas');
+templates/teamleader_dashboard.html:      star.classList.replace('fas', 'far');

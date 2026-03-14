@@ -1,0 +1,8 @@
+templates/admin_dashboard.html:168:  document.querySelectorAll('.nav-item').forEach(i => {
+templates/admin_dashboard.html:171:  const el = document.querySelector(`.nav-item[data-section="${s}"]`);
+templates/base.html:318:  document.querySelectorAll('.nav-item').forEach(n => {
+templates/base.html:321:  const el = document.querySelector(`[data-section="${section}"]`);
+templates/employee_dashboard.html:527:    const activeSection = document.querySelector('.nav-item.active').dataset.section;
+templates/hr_dashboard.html:312:  const rows=document.querySelectorAll('#empTable tbody tr');
+templates/hr_dashboard.html:960:  const members = Array.from(document.querySelectorAll('input[name="sidebar_member"]:checked')).map(cb => cb.value);
+templates/teamleader_dashboard.html:755:  const starContainer = document.querySelector(`.star-rating[data-uid="${uid}"]`);

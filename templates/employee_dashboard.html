@@ -199,21 +199,22 @@ function renderOverview() {
   const pending = tasksData.filter(t=>t.status==='Pending').length;
   const inprog = tasksData.filter(t=>t.status==='In Progress').length;
   const done = tasksData.filter(t=>t.status==='Completed').length;
+  
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(108,99,255,.1);color:var(--accent)"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="icon" style="background:rgba(108,99,255,0.15);color:var(--accent)"><i class="fas fa-tachometer-alt glow-accent"></i></div>
         <div>
           <div class="label">Efficiency Vector</div>
           <div class="value">${perfData.productivity_score || 0}%</div>
-          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-arrow-up me-1"></i>3.2% vs last epoch</div>
+          <div style="font-size:0.75rem;color:var(--accent3);font-weight:700"><i class="fas fa-caret-up me-1"></i>3.2% vs last epoch</div>
         </div>
       </div>
     </div>
     <div class="col-xl-3 col-md-6">
       <div class="stat-card" onclick="navigate('attendance')" style="cursor:pointer">
-        <div class="icon" style="background:rgba(67,233,123,.1);color:var(--accent3)"><i class="fas fa-calendar-check"></i></div>
+        <div class="icon" style="background:rgba(67,233,123,0.15);color:var(--accent3)"><i class="fas fa-calendar-check glow-accent"></i></div>
         <div>
           <div class="label">Consistency</div>
           <div class="value">${perfData.attendance_pct || 0}%</div>
@@ -223,7 +224,7 @@ function renderOverview() {
     </div>
     <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(247,183,49,.1);color:var(--accent4)"><i class="fas fa-tasks"></i></div>
+        <div class="icon" style="background:rgba(247,183,49,0.15);color:var(--accent4)"><i class="fas fa-tasks glow-accent"></i></div>
         <div>
           <div class="label">Active Missions</div>
           <div class="value">${inprog + pending}</div>
@@ -233,7 +234,7 @@ function renderOverview() {
     </div>
     <div class="col-xl-3 col-md-6">
       <div class="stat-card">
-        <div class="icon" style="background:rgba(255,101,132,.1);color:var(--accent2)"><i class="fas fa-star"></i></div>
+        <div class="icon" style="background:rgba(255,101,132,0.15);color:var(--accent2)"><i class="fas fa-star glow-accent"></i></div>
         <div>
           <div class="label">Unit Leader Eval</div>
           <div class="value">${perfData.tl_score || 0}/10</div>
@@ -250,33 +251,43 @@ function renderOverview() {
           <div class="panel-title m-0"><i class="fas fa-fingerprint glow-accent" style="color:var(--accent3)"></i>Presence Verification</div>
           <div id="quickAttendAction">
             ${attendanceData.today_marked ? 
-              `<span class="badge-role badge-completed"><i class="fas fa-check-circle me-2"></i>SYNCED AT ${attendanceData.history && attendanceData.history.length > 0 ? attendanceData.history[0].check_in_time : '—'}</span>` :
-              `<button class="btn-primary-custom" style="padding:0.6rem 1.2rem; font-size:0.8rem;" onclick="markPresent()">MARK PRESENCE</button>`
+              `<span class="badge-role badge-completed" style="font-size:0.75rem; padding:0.6rem 1rem;"><i class="fas fa-check-circle me-2"></i>SYNCED AT ${attendanceData.history && attendanceData.history.length > 0 ? (attendanceData.history.find(h=>h.date===new Date().toISOString().split('T')[0])?.check_in_time || '—') : '—'}</span>` :
+              `<button class="btn-primary-custom" style="padding:0.6rem 1.5rem; font-size:0.85rem;" onclick="markPresent()"><i class="fas fa-bolt me-2"></i>AUTHORIZE PRESENCE</button>`
             }
           </div>
         </div>
+        <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:20px; border:1px solid var(--border)">
+            <div style="display:flex; align-items:center; gap:1rem">
+                <div style="width:48px; height:48px; background:rgba(67,233,123,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--accent3); font-size:1.2rem"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                    <div style="font-weight:800; font-family:'Syne'; font-size:1rem; color:var(--text)">Neural-Sync Protocol</div>
+                    <p style="margin:0; font-size:0.8rem; color:var(--muted)">Biometric check-in is mandatory for each 24-hour cycle.</p>
+                </div>
+            </div>
+        </div>
       </div>
 
-      <div class="panel mb-4" onclick="navigate('team')" style="cursor:pointer; border-left: 4px solid var(--accent);">
+      <div class="panel mb-4" onclick="navigate('team')" style="cursor:pointer; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent)"></div>
         <div class="panel-title"><i class="fas fa-users glow-accent" style="color:var(--accent)"></i>Strategic Unit & Deployment</div>
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
           <div>
-            <div style="font-weight:800; font-size:1.25rem; color:var(--text); letter-spacing:-0.02em;">${myTeamObj.team_name || 'UNASSIGNED'}</div>
-            <div style="color:var(--muted); font-size:0.85rem; font-weight:600;">ACTIVE MISSION: <span style="color:var(--accent)">${myTeamObj.project_name || 'IDLE'}</span></div>
+            <div style="font-weight:800; font-size:1.4rem; color:var(--text); letter-spacing:-0.03em; font-family:'Syne'">${myTeamObj.team_name || 'UNASSIGNED SECTOR'}</div>
+            <div style="color:var(--muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.3rem">Current Objective: <span style="color:var(--accent)">${myTeamObj.project_name || 'Standby Mode'}</span></div>
           </div>
-          <div style="text-align:right; min-width:220px">
+          <div style="text-align:right; min-width:250px">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted);">Deployment Progress</span>
-              <strong style="color:var(--accent)">${myTeamObj.project_completion || 0}%</strong>
+              <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.1em">Sync Velocity</span>
+              <strong style="color:var(--accent); font-family:'Syne'; font-size:1.1rem">${myTeamObj.project_completion || 0}%</strong>
             </div>
-            <div class="progress-bar-wrap" style="height:8px;"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%; background:linear-gradient(90deg,var(--accent),var(--accent3))"></div></div>
+            <div class="progress-bar-wrap" style="height:10px; background:rgba(255,255,255,0.05); border-radius:20px"><div class="progress-fill" style="width:${myTeamObj.project_completion || 0}%; background:linear-gradient(90deg,var(--accent),var(--accent3)); border-radius:20px"></div></div>
           </div>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-title"><i class="fas fa-chart-line glow-accent" style="color:var(--accent)"></i>Performance Velocity</div>
-        <div class="chart-wrap" style="height:300px"><canvas id="trendChart"></canvas></div>
+        <div class="chart-wrap" style="height:320px"><canvas id="trendChart"></canvas></div>
       </div>
     </div>
 
@@ -287,11 +298,16 @@ function renderOverview() {
       </div>
       <div class="panel">
         <div class="panel-title"><i class="fas fa-id-card-clip glow-accent" style="color:var(--accent3)"></i>Identity Metadata</div>
-        <div class="d-flex flex-column gap-3">
-          ${[['Subject Name',empData.name||'—'],['Role Designation',empData.role||'—'],['Assigned Unit',empData.department||'—'],['Completed Missions',empData.projects_completed||0]].map(([l,v])=>`
-          <div class="d-flex justify-content-between align-items-center p-2" style="border-bottom:1px solid var(--border)">
-            <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${l}</span>
-            <strong style="font-size:0.9rem; color:var(--text);">${v}</strong>
+        <div class="d-flex flex-direction-column gap-1">
+          ${[['Subject Name',empData.name||'—','user'],['Role Designation',empData.role||'—','user-shield'],['Assigned Unit',empData.department||'—','layer-group'],['Missions Complete',empData.projects_completed||0,'check-double']].map(([l,v,i])=>`
+          <div class="d-flex align-items-center p-3 mb-2" style="background:rgba(0,0,0,0.1); border-radius:16px; border:1px solid var(--border)">
+            <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--accent3); margin-right:1rem">
+                <i class="fas fa-${i}" style="font-size:0.9rem"></i>
+            </div>
+            <div style="flex:1">
+                <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.1rem">${l}</div>
+                <div style="font-weight:700; color:var(--text); font-size:0.95rem">${v}</div>
+            </div>
           </div>`).join('')}
         </div>
       </div>

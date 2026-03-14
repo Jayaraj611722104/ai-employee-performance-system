@@ -165,12 +165,15 @@
 const SECTIONS = {overview:renderOverview,users:renderUsers,logs:renderLogs,monitoring:renderMonitoring,activity:renderActivity,security:renderSecurity,config:renderConfig};
 window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 window.navigate = s => {
+  if (!s) return;
   document.querySelectorAll('.nav-item').forEach(i => {
     if (i && i.classList) i.classList.remove('active');
   });
   const el = document.querySelector(`.nav-item[data-section="${s}"]`);
-  if(el && el.classList) el.classList.add('active');
-  sessionStorage.setItem('lastSection_' + window.location.pathname, s);
+  if (el && el.classList) el.classList.add('active');
+  try {
+    sessionStorage.setItem('lastSection_' + window.location.pathname, s);
+  } catch(e) {}
   window.loadSection(s);
 };
 let users=[], sysStats={}, loginLogs=[], integrations={};

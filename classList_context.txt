@@ -1,0 +1,110 @@
+
+> templates\admin_dashboard.h
+tml:169:    if (i && 
+i.classList) 
+i.classList.remove('active');
+  templates\admin_dashboard.h
+tml:170:  });
+  templates\admin_dashboard.h
+tml:171:  const el = document
+.querySelector(`.nav-item[dat
+a-section="${s}"]`);
+> templates\admin_dashboard.h
+tml:172:  if(el && 
+el.classList) 
+el.classList.add('active');
+  templates\admin_dashboard.h
+tml:173:  sessionStorage.setI
+tem('lastSection_' + 
+window.location.pathname, s);
+  templates\admin_dashboard.h
+tml:174:  
+window.loadSection(s);
+> templates\base.html:307:  
+const isVisible = sidebar.cla
+ssList.toggle('show');
+> templates\base.html:308:  o
+verlay.classList.toggle('show
+');
+  templates\base.html:309:  
+document.body.style.overflow 
+= isVisible ? 'hidden' : 
+'auto';
+  templates\base.html:310:}
+> templates\base.html:319:   
+ if (n && n.classList) 
+n.classList.remove('active');
+  templates\base.html:320:  
+});
+  templates\base.html:321:  
+const el = document.querySele
+ctor(`[data-section="${sectio
+n}"]`);
+> templates\base.html:322:  
+if (el && el.classList) 
+el.classList.add('active');
+  templates\base.html:323:  
+if (window.loadSection) 
+window.loadSection(section);
+  templates\base.html:324:  
+try { sessionStorage.setItem(
+'lastSection_' + 
+window.location.pathname, 
+section); } catch(e) {}
+> templates\base.html:329:   
+ if(sidebar && 
+sidebar.classList && sidebar.
+classList.contains('show')) {
+> templates\base.html:330:   
+   sidebar.classList.remove('
+show');
+> templates\base.html:331:   
+   if (overlay && 
+overlay.classList) overlay.cl
+assList.remove('show');
+  templates\base.html:332:   
+   
+document.body.style.overflow 
+= 'auto';
+  templates\base.html:333:   
+ }
+> templates\base.html:339:  
+if (el && el.classList) 
+el.classList.add('show');
+  templates\base.html:340:  
+else console.warn(`Modal ID 
+"${id}" not found.`);
+  templates\base.html:341:}
+> templates\base.html:344:  
+if (el && el.classList) 
+el.classList.remove('show');
+  templates\base.html:345:  
+else console.warn(`Modal ID 
+"${id}" not found.`);
+  templates\base.html:346:}
+> templates\teamleader_dashbo
+ard.html:760:    if (!star 
+|| !star.classList) continue;
+  templates\teamleader_dashbo
+ard.html:761:    if(i < val) 
+{
+> templates\teamleader_dashbo
+ard.html:762:      star.class
+List.replace('far', 'fas');
+  templates\teamleader_dashbo
+ard.html:763:      
+star.style.color = 
+'var(--accent4)';
+  templates\teamleader_dashbo
+ard.html:764:    } else {
+> templates\teamleader_dashbo
+ard.html:765:      star.class
+List.replace('fas', 'far');
+  templates\teamleader_dashbo
+ard.html:766:      
+star.style.color = 
+'var(--muted)';
+  templates\teamleader_dashbo
+ard.html:767:    }
+
+

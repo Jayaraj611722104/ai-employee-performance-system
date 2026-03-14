@@ -294,7 +294,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   const errDisp = document.getElementById('critical-error-display');
   if (errDisp) {
     errDisp.style.display = 'block';
-    errDisp.innerHTML = `<div style="display:flex;align-items:center;gap:1rem;"><i class="fas fa-microchip fa-2x"></i><div><h6 style="font-weight:800;margin:0">CORE SYSTEM FAULT</h6><p style="margin:0;font-size:0.75rem;opacity:0.8">${message}</p></div></div>`;
+    errDisp.innerHTML = `<div style="display:flex;align-items:center;gap:1rem;"><i class="fas fa-microchip fa-2x"></i><div><h6 style="font-weight:800;margin:0">CORE SYSTEM FAULT</h6><p style="margin:0;font-size:0.75rem;opacity:0.8">${message}</p><p style="margin:0;font-size:0.6rem;opacity:0.5;max-width:500px;overflow:hidden;text-overflow:ellipsis">${error ? error.stack : (source + ':' + lineno)}</p></div></div>`;
   }
   const loader = document.getElementById('loadingIndicator');
   if (loader) loader.style.display = 'none';
@@ -303,7 +303,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
-  if (!sidebar || !overlay) return;
+  if (!sidebar || !sidebar.classList || !overlay || !overlay.classList) return;
   const isVisible = sidebar.classList.toggle('show');
   overlay.classList.toggle('show');
   document.body.style.overflow = isVisible ? 'hidden' : 'auto';
@@ -315,13 +315,16 @@ function runWhenReady(fn) {
 }
 
 function navigate(section) {
+  if (!section) return;
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n && n.classList) n.classList.remove('active');
   });
   const el = document.querySelector(`[data-section="${section}"]`);
   if (el && el.classList) el.classList.add('active');
   if (window.loadSection) window.loadSection(section);
-  try { sessionStorage.setItem('lastSection_' + window.location.pathname, section); } catch(e) {}
+  try {
+    sessionStorage.setItem('lastSection_' + window.location.pathname, section);
+  } catch(e) {}
   
   if (window.innerWidth < 992) {
     const sidebar = document.getElementById('sidebar');

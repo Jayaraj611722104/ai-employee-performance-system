@@ -41,6 +41,22 @@
     <div id="taskMsg" style="margin-top:.75rem;display:none"></div>
   </div>
 </div>
+
+<!-- Update Team Project Modal -->
+<div class="modal-custom" id="updateProjectModal">
+  <div class="modal-box" style="width:400px">
+    <div class="modal-header-custom">
+      <span class="modal-title-custom">Update Team Project</span>
+      <button class="modal-close" onclick="hideModal('updateProjectModal')">✕</button>
+    </div>
+    <input type="hidden" id="pTeamId">
+    <div class="mb-3"><label class="form-label-sm">Project Status</label>
+      <select class="form-ctrl" id="pStatus"><option>In Progress</option><option>On Track</option><option>Delayed</option><option>Completed</option></select></div>
+    <div class="mb-3"><label class="form-label-sm">Completion (%)</label>
+      <input type="number" class="form-ctrl" id="pComp" min="0" max="100" value="50"></div>
+    <button class="btn-primary-custom w-100" onclick="updateProject()"><i class="fas fa-save me-2"></i>Save Changes</button>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -319,28 +335,6 @@ function renderOverview() {
       backgroundColor:'rgba(108,99,255,0.6)',
       borderRadius:8
     }]);
-  },100);
-}
-  
-  <div class="modal-custom" id="updateProjectModal">
-    <div class="modal-box" style="width:400px">
-      <div class="modal-header-custom">
-        <span class="modal-title-custom">Update Team Project</span>
-        <button class="modal-close" onclick="hideModal('updateProjectModal')">✕</button>
-      </div>
-      <input type="hidden" id="pTeamId">
-      <div class="mb-3"><label class="form-label-sm">Project Status</label>
-        <select class="form-ctrl" id="pStatus"><option>In Progress</option><option>On Track</option><option>Delayed</option><option>Completed</option></select></div>
-      <div class="mb-3"><label class="form-label-sm">Completion (%)</label>
-        <input type="number" class="form-ctrl" id="pComp" min="0" max="100" value="50"></div>
-      <button class="btn-primary-custom w-100" onclick="updateProject()"><i class="fas fa-save me-2"></i>Save Changes</button>
-    </div>
-  </div>`;
-  setTimeout(()=>{
-    const pending=taskData.filter(t=>t.status==='Pending').length;
-    const inprog=taskData.filter(t=>t.status==='In Progress').length;
-    createChart('taskPieChart','doughnut',['Pending','In Progress','Completed'],[{data:[pending,inprog,done],backgroundColor:['rgba(247,183,49,.7)','rgba(108,99,255,.7)','rgba(67,233,123,.7)']}]);
-    createChart('teamPerfChart','bar',teamData.map(e=>e.name.split(' ')[0]),[{label:'Performance Score',data:teamData.map(()=>Math.floor(Math.random()*30)+65),backgroundColor:'rgba(108,99,255,.7)'}]);
   },100);
 }
 
