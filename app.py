@@ -712,10 +712,14 @@ def submit_weekly_update():
     db['weekly_updates'].append({
         'user_id': uid,
         'submitted_at': today.isoformat(),
+        'week_ending': (start_of_week + timedelta(days=6)).strftime('%Y-%m-%d'),
         'project_work': data.get('project_work', ''),
         'tech_learned': data.get('tech_learned', ''),
         'problems': data.get('problems', ''),
-        'task_completion': data.get('task_completion', 0)
+        'task_completion': data.get('task_completion', 0),
+        'title': data.get('project_work', '')[:40] + ('...' if len(data.get('project_work', '')) > 40 else ''),
+        'efficiency': data.get('task_completion', 0),
+        'status': 'Approved' # Auto-approved for now
     })
     
     # 1. Update Employee Skills
@@ -746,6 +750,16 @@ def submit_weekly_update():
 
     save_db_data(db)
     return jsonify({'success': True})
+
+@app.route('/api/employee/weekly-updates')
+@login_required(roles=['employee'])
+def get_employee_weekly_updates():
+    db = get_db_data()
+    uid = session['user_id']
+    updates = [wu for wu in db.get('weekly_updates', []) if wu['user_id'] == uid]
+    # Sort by date descending
+    updates.sort(key=lambda x: x['submitted_at'], reverse=True)
+    return jsonify(updates)
 
 @app.route('/api/admin/integrations/test/email', methods=['POST'])
 @login_required(roles=['admin'])

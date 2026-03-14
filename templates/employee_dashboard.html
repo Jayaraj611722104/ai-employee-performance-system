@@ -38,7 +38,7 @@ const SECTIONS = {
   security: renderSecurity
 };
 window.loadSection = (s) => { if (SECTIONS[s]) SECTIONS[s](); };
-let empData = {}, perfData = {}, tasksData = [], myTeamObj={}, myLeaves=[], attendanceData={};
+let empData = {}, perfData = {}, tasksData = [], myTeamObj={}, myLeaves=[], attendanceData={}, weeklyData = [];
 
 async function renderSecurity() {
   document.getElementById('pageTitle').textContent = 'Security Settings';
@@ -145,7 +145,8 @@ async function init() {
       fetch('/api/employee/tasks').then(r => r.ok ? r.json() : Promise.reject('Tasks failed')),
       fetch('/api/employee/my-team').then(r => r.ok ? r.json() : Promise.reject('Team failed')),
       fetch('/api/employee/my-leaves').then(r => r.ok ? r.json() : Promise.reject('Leaves failed')),
-      fetch('/api/employee/attendance-history').then(r => r.ok ? r.json() : Promise.reject('Attendance failed'))
+      fetch('/api/employee/attendance-history').then(r => r.ok ? r.json() : Promise.reject('Attendance failed')),
+      fetch('/api/employee/weekly-updates').then(r => r.ok ? r.json() : Promise.reject('Weekly failed'))
     ]);
     
     // Handle unauthorized redirects
@@ -165,6 +166,7 @@ async function init() {
     myTeamObj = (results[3].status === 'fulfilled' && !results[3].value?.error) ? results[3].value || {} : {};
     myLeaves = (results[4].status === 'fulfilled' && Array.isArray(results[4].value)) ? results[4].value : [];
     attendanceData = (results[5].status === 'fulfilled' && !results[5].value?.error) ? results[5].value || {} : {};
+    weeklyData = (results[6].status === 'fulfilled' && Array.isArray(results[6].value)) ? results[6].value : [];
 
     // Fallback if profile API returns null but we have sessionData
     if (!empData.name && sessionData.name) {
@@ -704,6 +706,8 @@ async function submitWeekly() {
     const profileRes = await fetch('/api/employee/profile').then(r=>r.json());
     empData = { ...sessionData, ...(profileRes || {}) };
     perfData = await fetch('/api/employee/performance').then(r=>r.json()) || {};
+    weeklyData = await fetch('/api/employee/weekly-updates').then(r=>r.json()) || [];
+    renderWeekly();
   } else {
     msg.innerHTML=`<div class="notif-item" style="border-left-color:var(--accent2)"><i class="fas fa-exclamation-triangle" style="color:var(--accent2)"></i><div>${json.message || 'Error submitting update'}</div></div>`;
   }
