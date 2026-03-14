@@ -165,9 +165,11 @@
 const SECTIONS = {overview:renderOverview,users:renderUsers,logs:renderLogs,monitoring:renderMonitoring,activity:renderActivity,security:renderSecurity,config:renderConfig};
 window.loadSection = s => { if(SECTIONS[s]) SECTIONS[s](); };
 window.navigate = s => {
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => {
+    if (i && i.classList) i.classList.remove('active');
+  });
   const el = document.querySelector(`.nav-item[data-section="${s}"]`);
-  if(el) el.classList.add('active');
+  if(el && el.classList) el.classList.add('active');
   sessionStorage.setItem('lastSection_' + window.location.pathname, s);
   window.loadSection(s);
 };

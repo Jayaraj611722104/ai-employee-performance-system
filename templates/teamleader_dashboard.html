@@ -756,15 +756,20 @@ function renderScores() {
 }
 
 function setStar(uid, val) {
-  document.getElementById('star_rating_'+uid).value = val;
-  const stars = document.querySelector(`.star-rating[data-uid="${uid}"]`).children;
+  const ratingInput = document.getElementById('star_rating_' + uid);
+  if (ratingInput) ratingInput.value = val;
+  const starContainer = document.querySelector(`.star-rating[data-uid="${uid}"]`);
+  if (!starContainer) return;
+  const stars = starContainer.children;
   for(let i=0; i<stars.length; i++) {
+    const star = stars[i];
+    if (!star || !star.classList) continue;
     if(i < val) {
-      stars[i].classList.replace('far', 'fas');
-      stars[i].style.color = 'var(--accent4)';
+      star.classList.replace('far', 'fas');
+      star.style.color = 'var(--accent4)';
     } else {
-      stars[i].classList.replace('fas', 'far');
-      stars[i].style.color = 'var(--muted)';
+      star.classList.replace('fas', 'far');
+      star.style.color = 'var(--muted)';
     }
   }
 }
