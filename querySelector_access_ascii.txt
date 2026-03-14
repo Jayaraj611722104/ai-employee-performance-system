@@ -1,0 +1,2 @@
+querySelector_git_grep_ascii.txt:5:templates/employee_dashboard.html:527:    const activeSection = document.querySelector('.nav-item.active').dataset.section;
+templates/employee_dashboard.html:527:    const activeSection = document.querySelector('.nav-item.active').dataset.section;

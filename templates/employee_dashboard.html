@@ -524,7 +524,8 @@ async function markPresent() {
     attendanceData = attendRes || {};
     
     // Refresh current view
-    const activeSection = document.querySelector('.nav-item.active').dataset.section;
+    const activeEl = document.querySelector('.nav-item.active');
+    const activeSection = activeEl ? activeEl.dataset.section : 'overview';
     if (SECTIONS[activeSection]) SECTIONS[activeSection]();
   } else {
     showToast('Error', r.message);

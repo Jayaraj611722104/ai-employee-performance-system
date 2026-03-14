@@ -1,0 +1,174 @@
+all_classList_matches.txt:2:classList_matches.txt:4:i.cla
+all_classList_matches.txt:4:classList_matches.txt:5:i.cla
+all_classList_matches.txt:6:classList_matches.txt:8:el.cl
+all_classList_matches.txt:8:classList_matches.txt:9:el.cl
+all_classList_matches.txt:10:classList_matches.txt:14:rlay
+all_classList_matches.txt:11:.classList.toggle('show')
+all_classList_matches.txt:12:classList_matches.txt:17:if 
+all_classList_matches.txt:13:(n && n.classList) 
+all_classList_matches.txt:14:classList_matches.txt:18:n.cl
+all_classList_matches.txt:16:classList_matches.txt:20:(el 
+all_classList_matches.txt:17:&& el.classList) 
+all_classList_matches.txt:18:classList_matches.txt:21:el.c
+all_classList_matches.txt:20:classList_matches.txt:24:side
+all_classList_matches.txt:21:bar.classList && sidebar.
+all_classList_matches.txt:22:classList_matches.txt:25:clas
+all_classList_matches.txt:24:classList_matches.txt:27: 
+all_classList_matches.txt:25:sidebar.classList.remove('sh
+all_classList_matches.txt:26:classList_matches.txt:31:over
+all_classList_matches.txt:27:lay.classList) overlay.cl
+all_classList_matches.txt:28:classList_matches.txt:34:(el 
+all_classList_matches.txt:29:&& el.classList) 
+all_classList_matches.txt:30:classList_matches.txt:35:el.c
+all_classList_matches.txt:32:classList_matches.txt:37:(el 
+all_classList_matches.txt:33:&& el.classList) 
+all_classList_matches.txt:34:classList_matches.txt:38:el.c
+all_classList_matches.txt:36:classList_matches.txt:41:!sta
+all_classList_matches.txt:37:r.classList) continue;
+all_classList_matches.txt:38:classList_matches_ascii.txt:4
+all_classList_matches.txt:39::i.classList) 
+all_classList_matches.txt:40:classList_matches_ascii.txt:5
+all_classList_matches.txt:41::i.classList.remove('active')
+all_classList_matches.txt:43:classList_matches_ascii.txt:8
+all_classList_matches.txt:44::el.classList) 
+all_classList_matches.txt:45:classList_matches_ascii.txt:9
+all_classList_matches.txt:46::el.classList.add('active');
+all_classList_matches.txt:47:classList_matches_ascii.txt:1
+all_classList_matches.txt:48:4:rlay.classList.toggle('show
+all_classList_matches.txt:50:classList_matches_ascii.txt:1
+all_classList_matches.txt:51:7:if (n && n.classList) 
+all_classList_matches.txt:52:classList_matches_ascii.txt:1
+all_classList_matches.txt:53:8:n.classList.remove('active'
+all_classList_matches.txt:55:classList_matches_ascii.txt:2
+all_classList_matches.txt:56:0:(el && el.classList) 
+all_classList_matches.txt:57:classList_matches_ascii.txt:2
+all_classList_matches.txt:58:1:el.classList.add('active');
+all_classList_matches.txt:59:classList_matches_ascii.txt:2
+all_classList_matches.txt:60:4:sidebar.classList && 
+all_classList_matches.txt:62:classList_matches_ascii.txt:2
+all_classList_matches.txt:63:5:classList.contains('show'))
+all_classList_matches.txt:65:classList_matches_ascii.txt:2
+all_classList_matches.txt:67:sidebar.classList.remove('sh
+all_classList_matches.txt:68:classList_matches_ascii.txt:3
+all_classList_matches.txt:69:1:overlay.classList) 
+all_classList_matches.txt:71:classList_matches_ascii.txt:3
+all_classList_matches.txt:72:4:(el && el.classList) 
+all_classList_matches.txt:73:classList_matches_ascii.txt:3
+all_classList_matches.txt:74:5:el.classList.add('show');
+all_classList_matches.txt:75:classList_matches_ascii.txt:3
+all_classList_matches.txt:76:7:(el && el.classList) 
+all_classList_matches.txt:77:classList_matches_ascii.txt:3
+all_classList_matches.txt:78:8:el.classList.remove('show')
+all_classList_matches.txt:80:classList_matches_ascii.txt:4
+all_classList_matches.txt:81:1:!star.classList) continue;
+all_classList_matches.txt:84:i.classList) 
+all_classList_matches.txt:85:i.classList.remove('active');
+all_classList_matches.txt:88:el.classList) 
+all_classList_matches.txt:89:el.classList.add('active');
+all_classList_matches.txt:94:rlay.classList.toggle('show')
+all_classList_matches.txt:97:if (n && n.classList) 
+all_classList_matches.txt:98:n.classList.remove('active');
+all_classList_matches.txt:100:(el && el.classList) 
+all_classList_matches.txt:101:el.classList.add('active');
+all_classList_matches.txt:104:sidebar.classList && sidebar.
+all_classList_matches.txt:105:classList.contains('show')) {
+all_classList_matches.txt:107: sidebar.classList.remove('sh
+all_classList_matches.txt:111:overlay.classList) overlay.cl
+all_classList_matches.txt:114:(el && el.classList) 
+all_classList_matches.txt:115:el.classList.add('show');
+all_classList_matches.txt:117:(el && el.classList) 
+all_classList_matches.txt:118:el.classList.remove('show');
+all_classList_matches.txt:121:!star.classList) continue;
+classList_context.txt:4:i.classList) 
+classList_context.txt:5:i.classList.remove('active');
+classList_context.txt:14:el.classList) 
+classList_context.txt:15:el.classList.add('active');
+classList_context.txt:27:verlay.classList.toggle('show
+classList_context.txt:35: if (n && n.classList) 
+classList_context.txt:36:n.classList.remove('active');
+classList_context.txt:44:if (el && el.classList) 
+classList_context.txt:45:el.classList.add('active');
+classList_context.txt:56:sidebar.classList && sidebar.
+classList_context.txt:57:classList.contains('show')) {
+classList_context.txt:59:   sidebar.classList.remove('
+classList_context.txt:63:overlay.classList) overlay.cl
+classList_context.txt:72:if (el && el.classList) 
+classList_context.txt:73:el.classList.add('show');
+classList_context.txt:79:if (el && el.classList) 
+classList_context.txt:80:el.classList.remove('show');
+classList_context.txt:87:|| !star.classList) continue;
+classList_git_grep_all_ascii.txt:1:templates/admin_dashboard.html:    if (i && i.classList) i.classList.remove('active');
+classList_git_grep_all_ascii.txt:2:templates/admin_dashboard.html:  if(el && el.classList) el.classList.add('active');
+classList_git_grep_all_ascii.txt:3:templates/base.html:  const isVisible = sidebar.classList.toggle('show');
+classList_git_grep_all_ascii.txt:4:templates/base.html:  overlay.classList.toggle('show');
+classList_git_grep_all_ascii.txt:5:templates/base.html:    if (n && n.classList) n.classList.remove('active');
+classList_git_grep_all_ascii.txt:6:templates/base.html:  if (el && el.classList) el.classList.add('active');
+classList_git_grep_all_ascii.txt:7:templates/base.html:    if(sidebar && sidebar.classList && sidebar.classList.contains('show')) {
+classList_git_grep_all_ascii.txt:8:templates/base.html:      sidebar.classList.remove('show');
+classList_git_grep_all_ascii.txt:9:templates/base.html:      if (overlay && overlay.classList) overlay.classList.remove('show');
+classList_git_grep_all_ascii.txt:10:templates/base.html:  if (el && el.classList) el.classList.add('show');
+classList_git_grep_all_ascii.txt:11:templates/base.html:  if (el && el.classList) el.classList.remove('show');
+classList_git_grep_all_ascii.txt:12:templates/teamleader_dashboard.html:    if (!star || !star.classList) continue;
+classList_git_grep_all_ascii.txt:13:templates/teamleader_dashboard.html:      star.classList.replace('far', 'fas');
+classList_git_grep_all_ascii.txt:14:templates/teamleader_dashboard.html:      star.classList.replace('fas', 'far');
+classList_git_grep_ascii.txt:1:templates/admin_dashboard.html:169:    if (i && i.classList) i.classList.remove('active');
+classList_git_grep_ascii.txt:2:templates/admin_dashboard.html:172:  if(el && el.classList) el.classList.add('active');
+classList_git_grep_ascii.txt:3:templates/base.html:307:  const isVisible = sidebar.classList.toggle('show');
+classList_git_grep_ascii.txt:4:templates/base.html:308:  overlay.classList.toggle('show');
+classList_git_grep_ascii.txt:5:templates/base.html:319:    if (n && n.classList) n.classList.remove('active');
+classList_git_grep_ascii.txt:6:templates/base.html:322:  if (el && el.classList) el.classList.add('active');
+classList_git_grep_ascii.txt:7:templates/base.html:329:    if(sidebar && sidebar.classList && sidebar.classList.contains('show')) {
+classList_git_grep_ascii.txt:8:templates/base.html:330:      sidebar.classList.remove('show');
+classList_git_grep_ascii.txt:9:templates/base.html:331:      if (overlay && overlay.classList) overlay.classList.remove('show');
+classList_git_grep_ascii.txt:10:templates/base.html:339:  if (el && el.classList) el.classList.add('show');
+classList_git_grep_ascii.txt:11:templates/base.html:344:  if (el && el.classList) el.classList.remove('show');
+classList_git_grep_ascii.txt:12:templates/teamleader_dashboard.html:760:    if (!star || !star.classList) continue;
+classList_git_grep_ascii.txt:13:templates/teamleader_dashboard.html:762:      star.classList.replace('far', 'fas');
+classList_git_grep_ascii.txt:14:templates/teamleader_dashboard.html:765:      star.classList.replace('fas', 'far');
+classList_matches_ascii.txt:4:i.classList) 
+classList_matches_ascii.txt:5:i.classList.remove('active');
+classList_matches_ascii.txt:8:el.classList) 
+classList_matches_ascii.txt:9:el.classList.add('active');
+classList_matches_ascii.txt:14:rlay.classList.toggle('show')
+classList_matches_ascii.txt:17:if (n && n.classList) 
+classList_matches_ascii.txt:18:n.classList.remove('active');
+classList_matches_ascii.txt:20:(el && el.classList) 
+classList_matches_ascii.txt:21:el.classList.add('active');
+classList_matches_ascii.txt:24:sidebar.classList && sidebar.
+classList_matches_ascii.txt:25:classList.contains('show')) {
+classList_matches_ascii.txt:27: sidebar.classList.remove('sh
+classList_matches_ascii.txt:31:overlay.classList) overlay.cl
+classList_matches_ascii.txt:34:(el && el.classList) 
+classList_matches_ascii.txt:35:el.classList.add('show');
+classList_matches_ascii.txt:37:(el && el.classList) 
+classList_matches_ascii.txt:38:el.classList.remove('show');
+classList_matches_ascii.txt:41:!star.classList) continue;
+final_classList_check.txt:1:templates/admin_dashboard.html:169:    if (i && i.classList) i.classList.remove('active');
+final_classList_check.txt:2:templates/admin_dashboard.html:172:  if(el && el.classList) el.classList.add('active');
+final_classList_check.txt:3:templates/base.html:307:  const isVisible = sidebar.classList.toggle('show');
+final_classList_check.txt:4:templates/base.html:308:  overlay.classList.toggle('show');
+final_classList_check.txt:5:templates/base.html:319:    if (n && n.classList) n.classList.remove('active');
+final_classList_check.txt:6:templates/base.html:322:  if (el && el.classList) el.classList.add('active');
+final_classList_check.txt:7:templates/base.html:329:    if(sidebar && sidebar.classList && sidebar.classList.contains('show')) {
+final_classList_check.txt:8:templates/base.html:330:      sidebar.classList.remove('show');
+final_classList_check.txt:9:templates/base.html:331:      if (overlay && overlay.classList) overlay.classList.remove('show');
+final_classList_check.txt:10:templates/base.html:339:  if (el && el.classList) el.classList.add('show');
+final_classList_check.txt:11:templates/base.html:344:  if (el && el.classList) el.classList.remove('show');
+final_classList_check.txt:12:templates/teamleader_dashboard.html:760:    if (!star || !star.classList) continue;
+final_classList_check.txt:13:templates/teamleader_dashboard.html:762:      star.classList.replace('far', 'fas');
+final_classList_check.txt:14:templates/teamleader_dashboard.html:765:      star.classList.replace('fas', 'far');
+templates/admin_dashboard.html:170:    if (i && i.classList) i.classList.remove('active');
+templates/admin_dashboard.html:173:  if (el && el.classList) el.classList.add('active');
+templates/base.html:306:  if (!sidebar || !sidebar.classList || !overlay || !overlay.classList) return;
+templates/base.html:307:  const isVisible = sidebar.classList.toggle('show');
+templates/base.html:308:  overlay.classList.toggle('show');
+templates/base.html:320:    if (n && n.classList) n.classList.remove('active');
+templates/base.html:323:  if (el && el.classList) el.classList.add('active');
+templates/base.html:332:    if(sidebar && sidebar.classList && sidebar.classList.contains('show')) {
+templates/base.html:333:      sidebar.classList.remove('show');
+templates/base.html:334:      if (overlay && overlay.classList) overlay.classList.remove('show');
+templates/base.html:342:  if (el && el.classList) el.classList.add('show');
+templates/base.html:347:  if (el && el.classList) el.classList.remove('show');
+templates/teamleader_dashboard.html:760:    if (!star || !star.classList) continue;
+templates/teamleader_dashboard.html:762:      star.classList.replace('far', 'fas');
+templates/teamleader_dashboard.html:765:      star.classList.replace('fas', 'far');
