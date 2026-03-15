@@ -1039,19 +1039,21 @@ function showTeamDetails(tid) {
       <div class="col-12">
         <div class="panel">
           <div class="panel-title">Team Members (${membersCount})</div>
-          <table class="tbl">
-            <thead><tr><th>Name</th><th>Role</th><th>Productivity</th><th>Quality</th></tr></thead>
-            <tbody>
-              ${t.members && t.members.length ? t.members.map(m => `
-                <tr>
-                  <td><strong>${m.name}</strong></td>
-                  <td>${m.role}</td>
-                  <td><div style="display:flex;align-items:center;gap:.4rem"><div class="progress-bar-wrap" style="width:50px"><div class="progress-fill" style="width:${m.productivity_score || 0}%;background:var(--accent)"></div></div><small>${m.productivity_score || 0}%</small></div></td>
-                  <td>${m.quality_rating}/10</td>
-                </tr>
-              `).join('') : '<tr><td colspan="4" class="text-center text-muted">No members in this team</td></tr>'}
-            </tbody>
-          </table>
+          <div class="tbl-wrap" style="max-height: 250px; overflow-y: auto;">
+            <table class="tbl">
+              <thead><tr><th>Name</th><th>Role</th><th>Productivity</th><th>Quality</th></tr></thead>
+              <tbody>
+                ${t.members && t.members.length ? t.members.map(m => `
+                  <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.role}</td>
+                    <td><div style="display:flex;align-items:center;gap:.4rem"><div class="progress-bar-wrap" style="width:50px"><div class="progress-fill" style="width:${m.productivity_score || 0}%;background:var(--accent)"></div></div><small>${m.productivity_score || 0}%</small></div></td>
+                    <td>${m.quality_rating}/10</td>
+                  </tr>
+                `).join('') : '<tr><td colspan="4" class="text-center text-muted">No members in this team</td></tr>'}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>`;

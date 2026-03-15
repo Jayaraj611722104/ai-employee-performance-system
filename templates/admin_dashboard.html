@@ -353,6 +353,7 @@ function renderUserRows() {
     <td>
       <div class="d-flex gap-2">
         <button class="btn-sm" style="background:rgba(247,183,49,0.1); border:1px solid rgba(247,183,49,0.2); color:var(--accent4); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="toggleUser('${u.id}')" title="Toggle Access"><i class="fas fa-power-off"></i></button>
+        <button class="btn-sm" style="background:rgba(67,233,123,0.1); border:1px solid rgba(67,233,123,0.2); color:var(--accent3); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="resetPassword('${u.id}')" title="Reset Password"><i class="fas fa-key"></i></button>
         <button class="btn-sm" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2); color:var(--accent); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="showEditModal('${u.id}')" title="Modify"><i class="fas fa-edit"></i></button>
         <button class="btn-sm" style="background:rgba(255,101,132,0.1); border:1px solid rgba(255,101,132,0.2); color:var(--accent2); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;" onclick="deleteUser('${u.id}','${u.name}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
