@@ -1455,20 +1455,28 @@ function handleTargetChange(val) {
 }
 
 async function loadRecentNotifs() {
+  try {
   const res = await fetch('/api/notifications');
   const data = await res.json();
   const notifs = data.notifications || [];
-  document.getElementById('recentNotifs').innerHTML = notifs.map(n => `
+  document.getElementById('recentNotifs').innerHTML = notifs.map(n => {
+    const senderName = n.sender || n.from || 'System';
+    const senderRole = n.sender_role ? n.sender_role.charAt(0).toUpperCase() + n.sender_role.slice(1) : 'System';
+    return `
     <div class="notif-item ${n.type || 'info'} mb-2" style="border-left: 4px solid var(--${n.type==='danger'?'accent2':n.type==='warning'?'accent4':n.type==='success'?'accent3':'accent'});">
       <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 0 12px 12px 0;">
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <span style="font-weight:800; font-size:0.75rem; color:var(--text); text-transform:uppercase;">${n.sender || 'System'} <span style="font-weight:400; opacity:0.6; text-transform:none;">(${n.sender_role || 'user'})</span></span>
+          <span style="font-weight:800; font-size:0.75rem; color:var(--text); text-transform:uppercase;">${senderName} <span style="font-weight:400; opacity:0.6; text-transform:none;">(${senderRole})</span></span>
           <small style="font-size:0.65rem; color:var(--muted); font-weight:700;">${new Date(n.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
         <div style="font-size:0.85rem; line-height:1.4; color:var(--text);">${n.message || 'No content available.'}</div>
       </div>
     </div>
-  `).join('') || '<div class="text-center py-5 text-muted"><p>No recent communications found</p></div>';
+  `;
+  }).join('') || '<div class="text-center py-5 text-muted"><p>No recent communications found</p></div>';
+  } catch(err) {
+    document.getElementById('recentNotifs').innerHTML = '<div class="text-center py-5 text-muted"><p>Could not load notifications.</p></div>';
+  }
 }
 
 async function sendNotif() {

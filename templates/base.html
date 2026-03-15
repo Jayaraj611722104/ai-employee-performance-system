@@ -457,11 +457,13 @@ async function loadGlobalNotifications() {
     }
     
     area.innerHTML = notifs.map(n => {
-      const isUnread = !n.read_by.includes(sessionData.user_id);
+      const isUnread = !(n.read_by || []).includes(sessionData.user_id);
+      const senderName = n.sender || n.from || 'System';
+      const senderRole = n.sender_role ? n.sender_role.charAt(0).toUpperCase() + n.sender_role.slice(1) : 'System';
       return `
       <div class="mb-3" style="background:${isUnread ? 'rgba(108,99,255,0.05)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isUnread ? 'var(--accent)' : 'var(--border)'}; border-radius:16px; padding:1.25rem;">
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <span style="font-weight:800; font-size:0.75rem; color:var(--text); text-transform:uppercase;">${n.sender || 'System'} <span style="font-weight:400; opacity:0.6; text-transform:none;">(${n.sender_role || 'user'})</span></span>
+          <span style="font-weight:800; font-size:0.75rem; color:var(--text); text-transform:uppercase;">${senderName} <span style="font-weight:400; opacity:0.6; text-transform:none;">(${senderRole})</span></span>
           <small style="font-size:0.65rem; color:var(--muted); font-weight:700;">${new Date(n.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
         <div style="font-size:0.85rem; line-height:1.4; color:var(--text);">${n.message || 'No message content available.'}</div>

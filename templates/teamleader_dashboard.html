@@ -240,19 +240,27 @@ function renderNotifications() {
 }
 
 async function loadTLNotifs() {
+  try {
   const res = await fetch('/api/notifications');
   const data = await res.json();
   const notifs = data.notifications || [];
   
-  document.getElementById('tlNotifList').innerHTML = notifs.map(n => `
+  document.getElementById('tlNotifList').innerHTML = notifs.map(n => {
+    const senderName = n.sender || n.from || 'System';
+    const senderRole = n.sender_role ? n.sender_role.charAt(0).toUpperCase() + n.sender_role.slice(1) : 'System';
+    return `
     <div class="mb-3" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:1rem;">
       <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-        <span style="font-weight:800; font-size:0.75rem; color:var(--accent)">${(n.sender || 'System').toUpperCase()} <small style="font-weight:400; color:var(--muted)">(${n.sender_role || 'user'})</small></span>
+        <span style="font-weight:800; font-size:0.75rem; color:var(--accent)">${senderName.toUpperCase()} <small style="font-weight:400; color:var(--muted)">(${senderRole})</small></span>
         <small style="color:var(--muted); font-size:0.65rem;">${new Date(n.time).toLocaleTimeString()}</small>
       </div>
       <div style="font-size:0.85rem; color:var(--text)">${n.message || 'No content available.'}</div>
     </div>
-  `).join('') || '<div class="text-center py-5 text-muted">No messages found.</div>';
+  `;
+  }).join('') || '<div class="text-center py-5 text-muted">No messages found.</div>';
+  } catch(err) {
+    document.getElementById('tlNotifList').innerHTML = '<div class="text-center py-5 text-muted">Could not load notifications.</div>';
+  }
 }
 
 async function sendTLNotif() {
