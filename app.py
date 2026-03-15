@@ -628,10 +628,13 @@ def setup_2fa():
     )
     
     # Generate QR Code image
-    img = qrcode.make(otp_uri)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
+    try:
+        img = qrcode.make(otp_uri)
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+    except Exception as qr_err:
+        return jsonify({'success': False, 'message': f'QR generation failed: {str(qr_err)}. Please install Pillow.'}), 500
     
     return jsonify({
         'success': True,

@@ -171,13 +171,22 @@ async function sendEmpNotif() {
 }
 
 function open2FASetup() {
-  fetch('/api/auth/setup-2fa').then(r=>r.json()).then(data => {
-    if(data.success) {
-      document.getElementById('qrCodeImg').src = data.qr_code;
-      document.getElementById('tfaSecret').textContent = data.secret;
-      showModal('tfaSetupModal');
-    }
-  });
+  showToast('Security', 'Loading QR code...', 'info');
+  fetch('/api/auth/setup-2fa')
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) {
+        document.getElementById('qrCodeImg').src = data.qr_code;
+        document.getElementById('tfaSecret').textContent = data.secret;
+        document.getElementById('tfaCode').value = '';
+        showModal('tfaSetupModal');
+      } else {
+        showToast('Error', data.message || 'Failed to generate QR code. Check server logs.', 'danger');
+      }
+    })
+    .catch(err => {
+      showToast('Error', 'Network error — could not reach the 2FA service.', 'danger');
+    });
 }
 
 async function verifyAndEnable2FA() {
