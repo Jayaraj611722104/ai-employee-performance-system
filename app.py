@@ -2399,6 +2399,22 @@ def create_team():
     save_db_data(db)
     return jsonify({'success': True, 'team_id': next_id})
 
+@app.route('/api/hr/teams/bulk-assign-project', methods=['POST'])
+@login_required(roles=['hr', 'admin'])
+def bulk_assign_project():
+    data = request.get_json(silent=True) or {}
+    project_name = data.get('project_name')
+    if not project_name:
+        return jsonify({'success': False, 'message': 'project_name required'}), 400
+        
+    db = get_db_data()
+    for t in db.get('teams', []):
+        t['project_name'] = project_name
+        
+    save_db_data(db)
+    log_system_activity(f"HR/Admin bulk assigned project '{project_name}' to all teams")
+    return jsonify({'success': True})
+
 @app.route('/api/hr/teams/delete', methods=['POST'])
 @login_required(roles=['hr', 'admin'])
 def delete_team():
@@ -2449,7 +2465,7 @@ def get_unallocated_members():
         e for e in db.get('employees', []) 
         if str(e.get('user_id')) not in allocated_ids 
         and e.get('status') == 'Active'
-        and users_dict.get(e.get('user_id'), {}).get('role', '').lower() != 'hr'
+        and users_dict.get(e.get('user_id'), {}).get('role', '').lower() == 'employee'
     ]
     return jsonify(unallocated)
 

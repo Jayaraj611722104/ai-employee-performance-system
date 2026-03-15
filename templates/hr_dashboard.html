@@ -864,6 +864,10 @@ function renderTeams() {
           <textarea class="form-ctrl" id="newTeamDesc" rows="2" placeholder="Brief focus area"></textarea>
         </div>
         <div class="mb-2">
+          <label class="form-label-sm">PROJECT (Optional)</label>
+          <input class="form-ctrl" id="newTeamProject" placeholder="e.g. Frontend Redesign">
+        </div>
+        <div class="mb-2">
           <label class="form-label-sm">LEADER</label>
           <select class="form-ctrl" id="newTeamLeader">
             <option value="">— Select Leader —</option>
@@ -885,7 +889,7 @@ function renderTeams() {
           <label class="form-label-sm">PROJECT NAME</label>
           <input class="form-ctrl" id="bulkProjName" placeholder="Global Project 2026">
         </div>
-        <button class="btn-primary-custom w-100" style="background:var(--accent3)" onclick="showToast('Coming Soon', 'Bulk assignment feature will be available in v3.0.', 'info')"><i class="fas fa-tasks me-2"></i>Assign to ALL Teams</button>
+        <button class="btn-primary-custom w-100" style="background:var(--accent3)" onclick="handleBulkAssignProject()"><i class="fas fa-tasks me-2"></i>Assign to ALL Teams</button>
       </div>
     </div>
 
@@ -967,6 +971,7 @@ async function loadUnallocatedForSidebar() {
 async function handleCreateTeam() {
   const name = document.getElementById('newTeamName').value;
   const desc = document.getElementById('newTeamDesc').value;
+  const project = document.getElementById('newTeamProject').value;
   const leader = document.getElementById('newTeamLeader').value;
   const members = Array.from(document.querySelectorAll('input[name="sidebar_member"]:checked')).map(cb => cb.value);
   
@@ -979,11 +984,33 @@ async function handleCreateTeam() {
     const res = await fetch('/api/hr/teams/create', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name, description:desc, leader_id:leader, member_ids:members})
+      body:JSON.stringify({name, description:desc, project_name:project, leader_id:leader, member_ids:members})
     });
     
     if((await res.json()).success) {
       showToast('Team Created', `Team "${name}" has been established.`, 'success');
+      await reloadTeams();
+      renderTeams();
+    }
+  });
+}
+
+async function handleBulkAssignProject() {
+  const projName = document.getElementById('bulkProjName').value.trim();
+  if(!projName) {
+    showToast('Missing Info', 'Please enter a project name to assign.', 'warning');
+    return;
+  }
+  
+  showConfirm('Bulk Assign Project', `Are you sure you want to assign project "${projName}" to ALL teams?`, async () => {
+    const res = await fetch('/api/hr/teams/bulk-assign-project', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ project_name: projName })
+    });
+    
+    if((await res.json()).success) {
+      showToast('Success', `Project "${projName}" assigned to all teams.`, 'success');
       await reloadTeams();
       renderTeams();
     }
