@@ -449,8 +449,8 @@ async function loadGlobalNotifications() {
     const unread = data.unread_count || 0;
     const today = data.today_count || 0;
     
-    if (today > 0) {
-      badge.textContent = today;
+    if (unread > 0) {
+      badge.textContent = unread;
       badge.style.display = 'flex';
     } else {
       badge.style.display = 'none';
