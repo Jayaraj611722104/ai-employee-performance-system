@@ -120,10 +120,6 @@ def log_system_activity(message, db=None):
         'ip': request.remote_addr if request else '127.0.0.1'
     })
     
-    # Keep only last 200 activities to prevent DB bloat
-    if len(_db['system_activities']) > 200:
-        _db['system_activities'] = _db['system_activities'][-200:]
-        
     save_db_data(_db)
 
 # ═══════════════════════════════════════════════════════
@@ -2099,6 +2095,7 @@ def create_user():
         })
 
     save_db_data(db)
+    log_system_activity(f"Admin created a new user profile: {data['name']} ({data['role']})")
     return jsonify({'success': True, 'user_id': uid})
 
 
@@ -2142,6 +2139,7 @@ def update_user():
             break
 
     save_db_data(db)
+    log_system_activity(f"Admin updated user profile details for user ID: {uid}")
     return jsonify({'success': True})
 
 
@@ -2163,6 +2161,7 @@ def toggle_user():
             break
 
     save_db_data(db)
+    log_system_activity(f"Admin toggled access state for user ID: {data['user_id']}")
     return jsonify({'success': True})
 
 
@@ -2184,6 +2183,7 @@ def delete_user():
     db['tasks']       = [t for t in db['tasks']
                          if t.get('assigned_to') != uid and t.get('assigned_by') != uid]
     save_db_data(db)
+    log_system_activity(f"Admin permanently deleted user account: {uid}")
     return jsonify({'success': True})
 
 
@@ -2204,6 +2204,7 @@ def reset_password():
             u['password'] = generate_password_hash(new_pass)
             break
     save_db_data(db)
+    log_system_activity(f"Admin enforced a password reset for user ID: {uid}")
     return jsonify({'success': True})
 
 
