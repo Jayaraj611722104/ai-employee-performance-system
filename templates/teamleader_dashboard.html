@@ -444,17 +444,13 @@ function renderTeam() {
   
   const grouped = {};
   teamInfo.forEach(t => grouped[t.id] = { name: t.name, members: [] });
-  grouped['unassigned'] = { name: 'Direct Reports', members: [] };
 
   teamData.forEach(e => {
-    let found = false;
     teamInfo.forEach(t => {
       if (t.member_ids && t.member_ids.includes(String(e.user_id))) {
         grouped[t.id].members.push(e);
-        found = true;
       }
     });
-    if (!found) grouped['unassigned'].members.push(e);
   });
 
   let html = '';
