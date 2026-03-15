@@ -444,6 +444,21 @@ def get_notifications():
     role = session.get('role', 'employee')
     uid  = session.get('user_id', '')
     
+    # Inline migration: fix old-format notifications that use 'from' instead of 'sender'
+    migrated = False
+    for n in db.get('notifications', []):
+        if 'sender' not in n and 'from' in n:
+            n['sender'] = n.pop('from')
+            n.setdefault('sender_role', 'system')
+            n.setdefault('sender_id', 'SYSTEM')
+            n.setdefault('read_by', [])
+            migrated = True
+        elif 'read_by' not in n:
+            n['read_by'] = []
+            migrated = True
+    if migrated:
+        save_db_data(db)
+    
     # Get all notifications for this user
     user_notifs = [
         n for n in db.get('notifications', [])
