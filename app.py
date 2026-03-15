@@ -1106,7 +1106,7 @@ def get_employee_notifications():
 def get_tl_team_info():
     db = get_db_data()
     uid = session['user_id']
-    teams = [t for t in db.get('teams', []) if t.get('leader_id') == uid]
+    teams = [t for t in db.get('teams', []) if str(t.get('leader_id')) == str(uid)]
     return jsonify(teams)
 
 @app.route('/api/tl/team')
@@ -1114,10 +1114,10 @@ def get_tl_team_info():
 def get_tl_team():
     db   = get_db_data()
     uid  = session['user_id']
-    primary = [e for e in db['employees'] if e.get('team_leader_id') == uid]
+    primary = [e for e in db['employees'] if str(e.get('team_leader_id')) == str(uid)]
     member_ids = set()
     for t in db.get('teams', []):
-        if t.get('leader_id') == uid:
+        if str(t.get('leader_id')) == str(uid):
             for mid in t.get('member_ids', []):
                 member_ids.add(str(mid))
     by_team = []
@@ -2429,12 +2429,25 @@ def delete_team():
         return jsonify({'success': False, 'message': 'Team not found'}), 404
         
     # Reset team_leader_id for members
+    leader_id = team.get('leader_id')
     for mid in team.get('member_ids', []):
         for emp in db.get('employees', []):
             if str(emp.get('user_id')) == str(mid):
                 emp['team_leader_id'] = None
                 break
                 
+    # Also reset any employee who was manually assigned to this leader, IF this was their only team
+    # (To be safe, we just reset team_leader_id if they no longer belong to *any* team of this leader)
+    other_teams_of_leader = [t for t in db.get('teams', []) if str(t.get('leader_id')) == str(leader_id) and t['id'] != tid]
+    other_member_ids = set()
+    for ot in other_teams_of_leader:
+        for om in ot.get('member_ids', []):
+            other_member_ids.add(str(om))
+            
+    for emp in db.get('employees', []):
+        if str(emp.get('team_leader_id')) == str(leader_id) and str(emp.get('user_id')) not in other_member_ids:
+            emp['team_leader_id'] = None
+
     db['teams'] = [t for t in db.get('teams', []) if t['id'] != tid]
     
     # Also cleanup related data
