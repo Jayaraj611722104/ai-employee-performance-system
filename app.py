@@ -2249,7 +2249,15 @@ def _ensure_integrations(db):
         db['integrations'] = {
             'email':    {'enabled': False, 'smtp_host': '', 'smtp_port': 587, 'smtp_user': '', 'smtp_password': '', 'from_email': '', 'use_tls': True},
             'slack':    {'enabled': False, 'webhook_url': '', 'channel': ''},
-            'calendar': {'enabled': False, 'provider': '', 'calendar_id': '', 'api_key': '', 'ics_url': ''}
+            'calendar': {'enabled': False, 'provider': '', 'calendar_id': '', 'api_key': '', 'ics_url': ''},
+            'system':   {
+                'company_name': 'PulseHR Technologies',
+                'system_version': 'v2.4.0',
+                'ai_engine': 'Ensemble Random Forest',
+                'database_type': 'Atomic JSON Store',
+                'auth_timeout': '1800 Seconds',
+                'log_retention': '365 Days'
+            }
         }
     return db['integrations']
 
@@ -2279,7 +2287,15 @@ def get_integrations():
             'calendar_id': integ['calendar'].get('calendar_id', ''),
             'api_key': _mask(integ['calendar'].get('api_key', '')),
             'ics_url': _mask(integ['calendar'].get('ics_url', ''))
-        }
+        },
+        'system': integ.get('system', {
+            'company_name': 'PulseHR Technologies',
+            'system_version': 'v2.4.0',
+            'ai_engine': 'Ensemble Random Forest',
+            'database_type': 'Atomic JSON Store',
+            'auth_timeout': '1800 Seconds',
+            'log_retention': '365 Days'
+        })
     }
     return jsonify(safe)
 
@@ -2287,7 +2303,7 @@ def get_integrations():
 @login_required(roles=['admin'])
 def update_integration(service):
     data = request.get_json(silent=True) or {}
-    if service not in ['email','slack','calendar']:
+    if service not in ['email','slack','calendar','system']:
         return jsonify({'success': False, 'message': 'Unknown service'}), 400
     db = get_db_data()
     integ = _ensure_integrations(db)
@@ -2316,6 +2332,15 @@ def update_integration(service):
             c['api_key']  = data['api_key']
         if 'ics_url' in data and data.get('ics_url'):
             c['ics_url']  = data['ics_url']
+    elif service == 'system':
+        s = integ.get('system', {})
+        s['company_name'] = data.get('company_name', s.get('company_name', 'PulseHR Technologies'))
+        s['system_version'] = data.get('system_version', s.get('system_version', 'v2.4.0'))
+        s['ai_engine'] = data.get('ai_engine', s.get('ai_engine', 'Ensemble Random Forest'))
+        s['database_type'] = data.get('database_type', s.get('database_type', 'Atomic JSON Store'))
+        s['auth_timeout'] = data.get('auth_timeout', s.get('auth_timeout', '1800 Seconds'))
+        s['log_retention'] = data.get('log_retention', s.get('log_retention', '365 Days'))
+        integ['system'] = s
     save_db_data(db)
     return jsonify({'success': True})
 

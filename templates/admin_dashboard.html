@@ -684,20 +684,49 @@ function renderConfig() {
   const emailConfigured = integrations.email?.enabled && integrations.email?.smtp_host && (integrations.email?.from_email);
   const slackConfigured = integrations.slack?.enabled && integrations.slack?.webhook_url;
   const calConfigured = integrations.calendar?.enabled && (integrations.calendar?.provider) && ((integrations.calendar?.api_key) || (integrations.calendar?.ics_url));
+
+  const sys = integrations.system || {
+    company_name: 'PulseHR Technologies',
+    system_version: 'v2.4.0',
+    ai_engine: 'Ensemble Random Forest',
+    database_type: 'Atomic JSON Store',
+    auth_timeout: '1800 Seconds',
+    log_retention: '365 Days'
+  };
+  
   document.getElementById('sectionContent').innerHTML = `
   <div class="row g-4">
     <div class="col-lg-6">
       <div class="panel h-100">
         <div class="panel-title"><i class="fas fa-cog glow-accent" style="color:var(--accent)"></i>System Information</div>
         <div class="d-flex flex-column gap-3">
-          ${[['Company Name','PulseHR Technologies'],['System Version','v2.4.0'],['AI Engine','Ensemble Random Forest'],['Database Type','Atomic JSON Store'],['Auth Timeout','1800 Seconds'],['Log Retention','365 Days']].map(([k,v])=>`
           <div>
-            <label class="form-label-sm">${k}</label>
-            <input class="form-ctrl" value="${v}" readonly style="background:rgba(0,0,0,0.2) !important; border-color:transparent !important;">
-          </div>`).join('')}
+            <label class="form-label-sm">Company Name</label>
+            <input class="form-ctrl" id="sysCompany" value="${sys.company_name}">
+          </div>
+          <div>
+            <label class="form-label-sm">System Version</label>
+            <input class="form-ctrl" id="sysVersion" value="${sys.system_version}">
+          </div>
+          <div>
+            <label class="form-label-sm">AI Engine</label>
+            <input class="form-ctrl" id="sysAI" value="${sys.ai_engine}">
+          </div>
+          <div>
+            <label class="form-label-sm">Database Type</label>
+            <input class="form-ctrl" id="sysDB" value="${sys.database_type}">
+          </div>
+          <div>
+            <label class="form-label-sm">Auth Timeout</label>
+            <input class="form-ctrl" id="sysAuth" value="${sys.auth_timeout}">
+          </div>
+          <div>
+            <label class="form-label-sm">Log Retention</label>
+            <input class="form-ctrl" id="sysLog" value="${sys.log_retention}">
+          </div>
         </div>
-        <button class="btn-primary-custom w-100 mt-4" style="background:rgba(255,255,255,0.05) !important; border:1px solid var(--border) !important; color:var(--text) !important;" onclick="showToast('Read-Only', 'Global settings are immutable in this environment.', 'info')">
-          <i class="fas fa-lock me-2"></i>SYSTEM SETTINGS
+        <button class="btn-primary-custom w-100 mt-4" onclick="saveSystemCfg()">
+          <i class="fas fa-save me-2"></i>SAVE SYSTEM SETTINGS
         </button>
       </div>
     </div>
@@ -875,6 +904,33 @@ async function testCalendar(){
     msg.innerHTML = '<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:var(--accent2)"></i><div>'+r.message+'</div></div>';
   }
   msg.style.display='block';
+}
+
+async function saveSystemCfg() {
+  const body = {
+    company_name: document.getElementById('sysCompany').value,
+    system_version: document.getElementById('sysVersion').value,
+    ai_engine: document.getElementById('sysAI').value,
+    database_type: document.getElementById('sysDB').value,
+    auth_timeout: document.getElementById('sysAuth').value,
+    log_retention: document.getElementById('sysLog').value
+  };
+  
+  showConfirm('Save System Config', 'Apply these global system settings?', async () => {
+    const res = await fetch('/api/admin/integrations/system', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const r = await res.json();
+    if(r.success) {
+      showToast('Settings Saved', 'System configuration updated successfully.');
+      integrations = await fetch('/api/admin/integrations').then(r=>r.json());
+      renderConfig();
+    } else {
+      showToast('Error', 'Failed to save system settings.', 'danger');
+    }
+  });
 }
 
 async function verifyAndEnable2FA() {

@@ -157,6 +157,14 @@ DEMO_DATA = {
             "api_key": "",
             "calendar_id": "",
             "ics_url": ""
+        },
+        "system": {
+            "company_name": "PulseHR Technologies",
+            "system_version": "v2.4.0",
+            "ai_engine": "Ensemble Random Forest",
+            "database_type": "Atomic JSON Store",
+            "auth_timeout": "1800 Seconds",
+            "log_retention": "365 Days"
         }
     }
 }
