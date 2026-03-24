@@ -229,6 +229,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink)
 {% block extra_head %}{% endblock %}
 </head>
 <body>
+<input type="file" id="globalPhotoUpload" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
 <div id="critical-error-display"></div>
 <div class="app-container">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -245,7 +246,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink)
     </nav>
     <div class="sidebar-footer">
       <div class="user-card" style="background:rgba(255,255,255,0.03); border-radius:16px; padding:1rem; display:flex; align-items:center; gap:1rem; border:1px solid var(--border); transition: 0.3s;">
-        <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:1.1rem; box-shadow: 0 4px 12px var(--glow);">{{ user.name[0] | upper }}</div>
+        <div class="profile-avatar-node" style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:1.1rem; box-shadow: 0 4px 12px var(--glow);">{{ user.name[0] | upper }}</div>
         <div style="overflow: hidden; flex: 1;">
           <p style="font-weight:800; font-size:.95rem; margin:0; white-space: nowrap; text-overflow: ellipsis; color:var(--text);">{{ user.name }}</p>
           <span style="font-size:.8rem; color:var(--muted); font-weight:600; letter-spacing: 0.02em;">{{ user.role | title }}</span>
@@ -391,7 +392,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: var(--ink)
       
       <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; border:1px solid var(--border); margin-bottom:2rem; text-align:left">
         <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.4rem">Manual Setup Key</div>
-        <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center"></div>
+        <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center; word-break: break-all; overflow-wrap: break-word;"></div>
       </div>
       
       <div class="mb-4 text-start">
@@ -722,6 +723,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 10000);
 });
+
+// --- PROFILE PHOTO UTILS ---
+function initProfilePhoto() {
+  const uid = sessionData.id || sessionData.user_id;
+  if(!uid) return;
+  const key = 'profilePhoto_' + uid;
+  const photoData = localStorage.getItem(key);
+  if(photoData) {
+    document.querySelectorAll('.profile-avatar-node').forEach(el => {
+      el.innerHTML = '';
+      el.style.backgroundImage = `url(${photoData})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+    });
+  }
+}
+function handlePhotoUpload(input) {
+  if(input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const uid = sessionData.id || sessionData.user_id;
+      if(!uid) return;
+      const key = 'profilePhoto_' + uid;
+      localStorage.setItem(key, e.target.result);
+      initProfilePhoto();
+      showToast('Success', 'Profile photo updated successfully!', 'success');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+runWhenReady(initProfilePhoto);
 
 </script>
 {% block scripts %}{% endblock %}

@@ -439,14 +439,14 @@ function renderProfile() {
     <div class="col-lg-4">
       <div class="panel h-100 text-center">
         <div class="mb-4" style="position:relative; display:inline-block;">
-          <div style="width:120px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#fff;box-shadow:0 15px 35px var(--glow);margin:0 auto;">${(empData.name||'?')[0]}</div>
+          <div class="profile-avatar-node" style="width:120px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#fff;box-shadow:0 15px 35px var(--glow);margin:0 auto;">${(empData.name||'?')[0]}</div>
           <div style="position:absolute;bottom:-5px;right:-5px;width:36px;height:36px;border-radius:12px;background:var(--accent3);border:4px solid var(--surface);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8rem;"><i class="fas fa-check"></i></div>
         </div>
         <h3 style="font-family:'Syne';font-weight:800;margin-bottom:0.5rem;letter-spacing:-0.02em;">${empData.name}</h3>
         <div class="badge-role badge-inprogress mb-4">${empData.role}</div>
         
         <div class="d-flex flex-column gap-2 mt-2">
-          <button class="btn-primary-custom w-100" onclick="showToast('Read-Only', 'Profile editing is restricted to HR.', 'info')"><i class="fas fa-camera me-2"></i>CHANGE PHOTO</button>
+          <button class="btn-primary-custom w-100" onclick="document.getElementById('globalPhotoUpload').click()"><i class="fas fa-camera me-2"></i>CHANGE PHOTO</button>
           <button class="btn-primary-custom w-100" style="background:rgba(255,255,255,0.05) !important; color:var(--text) !important; border:1px solid var(--border) !important;" onclick="navigate('security')"><i class="fas fa-shield-alt me-2"></i>SECURITY SETTINGS</button>
         </div>
       </div>
@@ -474,6 +474,7 @@ function renderProfile() {
       </div>
     </div>
   </div>`;
+  setTimeout(initProfilePhoto, 50);
 }
 
 function renderTasks() {
@@ -1149,7 +1150,7 @@ async function submitLeaveRequest() {
       
       <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; border:1px solid var(--border); margin-bottom:2rem; text-align:left">
         <div style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.1em; margin-bottom:0.4rem">Manual Setup Key</div>
-        <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center"></div>
+        <div id="tfaSecret" style="font-weight:800; letter-spacing:3px; color:var(--accent); font-family:monospace; font-size:1.1rem; text-align:center; word-break: break-all; overflow-wrap: break-word;"></div>
       </div>
       
       <div class="mb-4 text-start">
